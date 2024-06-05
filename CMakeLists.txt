@@ -90,6 +90,7 @@ endif()
 
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
+find_package(example-robot-data 4.0.9 REQUIRED)
 add_project_dependency(OpenMP REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
@@ -97,17 +98,20 @@ add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
 add_project_dependency(aligator REQUIRED)
 
 # Main Library
-set(${PROJECT_NAME}_HEADERS include/${PROJECT_NAME}/fwd.hpp
-                            include/${PROJECT_NAME}/fulldynamics.hpp)
+set(${PROJECT_NAME}_HEADERS
+    include/${PROJECT_NAME}/fwd.hpp include/${PROJECT_NAME}/fulldynamics.hpp
+    include/${PROJECT_NAME}/model-utils.hpp
+    include/${PROJECT_NAME}/settings.hpp)
 
-set(${PROJECT_NAME}_SOURCES src/fulldynamics.cpp)
+set(${PROJECT_NAME}_SOURCES src/fulldynamics.cpp src/model-utils.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SOURCES}
                                    ${${PROJECT_NAME}_HEADERS})
 target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(
-  ${PROJECT_NAME} PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp
-                         aligator::aligator)
+  ${PROJECT_NAME}
+  PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp aligator::aligator
+         example-robot-data::example-robot-data)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX
                                                  INSTALL_RPATH "\$ORIGIN")

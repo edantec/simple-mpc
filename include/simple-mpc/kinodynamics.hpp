@@ -23,7 +23,6 @@
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/fwd.hpp"
-#include "simple-mpc/settings.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -47,7 +46,7 @@ using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
  * @brief Build a full dynamics problem
  */
 
-struct FullDynamicsSettings {
+struct KinodynamicsSettings {
   /// @brief reference 0 state and control
   Eigen::VectorXd x0;
   Eigen::VectorXd u0;
@@ -66,19 +65,24 @@ struct FullDynamicsSettings {
   /// @brief List of controlled joint names
   std::vector<std::string> controlled_joints_names;
 
-  Eigen::VectorXd w_x;
-  Eigen::VectorXd w_u;
-  Eigen::VectorXd w_frame;
+  Eigen::MatrixXd w_x;
+  Eigen::MatrixXd w_u;
+  Eigen::MatrixXd w_frame;
+
+  KinodynamicsSettings();
+  virtual ~KinodynamicsSettings() {}
 };
 
 class FullDynamicsProblem {
+  typedef std::vector<aligator::context::StageModel> StageList;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   FullDynamicsProblem();
-  FullDynamicsProblem(const FullDynamicsSettings &settings,
+  FullDynamicsProblem(const KinodynamicsSettings &settings,
                       const pinocchio::Model &rmodel);
-  void initialize(const FullDynamicsSettings &settings,
+  void initialize(const KinodynamicsSettings &settings,
                   const pinocchio::Model &rmodel);
   virtual ~FullDynamicsProblem() {}
 
@@ -87,7 +91,7 @@ public:
   void create_problem(std::vector<ContactMap> contact_sequence);
 
   /// @brief Parameters to tune the algorithm, given at init.
-  FullDynamicsSettings settings_;
+  KinodynamicsSettings settings_;
 
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;

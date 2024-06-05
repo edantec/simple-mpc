@@ -35,6 +35,7 @@ typedef std::shared_ptr<aligator::FramePlacementResidualTpl<double>>
 
 // MPC
 class fullDynamicsMPC;
+struct Settings;
 
 } // namespace simple_mpc
 
