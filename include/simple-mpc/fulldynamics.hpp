@@ -9,14 +9,17 @@
 #ifndef SIMPLE_MPC_HPP_
 #define SIMPLE_MPC_HPP_
 
-#include <Eigen/src/Core/Matrix.h>
+#include "aligator/modelling/contact-map.hpp"
+#include "aligator/modelling/costs/quad-state-cost.hpp"
+#include "aligator/modelling/costs/sum-of-costs.hpp"
+#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
+#include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/context.hpp>
 #include <aligator/core/stage-model.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/core/workspace-base.hpp>
-#include <aligator/fwd.hpp>
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
-#include <pinocchio/fwd.hpp>
-#include <proxsuite-nlp/fwd.hpp>
+#include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/fwd.hpp"
@@ -24,13 +27,29 @@
 namespace simple_mpc {
 using namespace aligator;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
+using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
+using StageModel = aligator::StageModelTpl<double>;
+using CostStack = aligator::CostStackTpl<double>;
+using IntegratorSemiImplEuler =
+    aligator::dynamics::IntegratorSemiImplEulerTpl<double>;
+using MultibodyConstraintFwdDynamics =
+    aligator::dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
+using ODEAbstract = aligator::dynamics::ODEAbstractTpl<double>;
+using QuadraticStateCost = aligator::QuadraticStateCostTpl<double>;
+using QuadraticControlCost = aligator::QuadraticControlCostTpl<double>;
+using ContactMap = aligator::ContactMapTpl<double>;
+using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
+using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
+using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
+
 /**
  * @brief Build a full dynamics problem
  */
 
 struct FullDynamicsSettings {
-  /// @brief reference 0 state
+  /// @brief reference 0 state and control
   Eigen::VectorXd x0;
+  Eigen::VectorXd u0;
   /// @brief Duration of the OCP horizon.
   int T;
   /// @brief timestep in problem shooting nodes
@@ -41,6 +60,14 @@ struct FullDynamicsSettings {
   double solver_reg_min;
   /// @brief Solver max number of iteration
   int solver_maxiter;
+  /// @brief List of end effector names
+  std::vector<std::string> end_effectors;
+  /// @brief List of controlled joint names
+  std::vector<std::string> controlled_joints_names;
+
+  Eigen::MatrixXd w_x;
+  Eigen::MatrixXd w_u;
+  Eigen::MatrixXd w_frame;
 
   FullDynamicsSettings();
   virtual ~FullDynamicsSettings() {}
@@ -59,20 +86,32 @@ public:
                   const pinocchio::Model &rmodel);
   virtual ~FullDynamicsProblem() {}
 
+  StageModel create_stage(ContactMap &contact_map);
+  CostStack create_terminal_cost();
+  void create_problem(std::vector<ContactMap> contact_sequence);
+
   /// @brief Parameters to tune the algorithm, given at init.
   FullDynamicsSettings settings_;
 
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;
 
-  /// @brief The manifold space for multibody dynamics
-  std::shared_ptr<MultibodyPhaseSpace> space_;
-
   /// @brief The robot model
   pinocchio::Model rmodel_;
 
+  /// @brief Robot data
+  pinocchio::Data rdata_;
+
+  /// @brief List of stage models forming the horizon
+  std::vector<xyz::polymorphic<StageModel>> stage_models_;
+
 protected:
-  double reg;
+  Eigen::MatrixXd actuation_matrix_;
+  int nq_;
+  int nv_;
+  int nu_;
+  ProximalSettings prox_settings_;
+  pinocchio::context::RigidConstraintModelVector constraint_models_;
 };
 
 } // namespace simple_mpc

@@ -10,7 +10,9 @@
 #define SIMPLE_MPC_FWD_HPP_
 
 #include <Eigen/Core>
+#include <aligator/fwd.hpp>
 #include <pinocchio/fwd.hpp>
+#include <proxsuite-nlp/fwd.hpp>
 
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/center-of-mass.hpp>
