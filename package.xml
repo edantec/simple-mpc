@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>simple-mpc</name>
+  <version>0.1</version>
+  <description>MPC schemes for locomotion</description>
+  <maintainer email="ewen.dantec@inria.fr">Ewen Dantec</maintainer>
+  <author email="ewen.dantec@inria.fr">Ewen Dantec</author>
+  <license>BSD</license>
+
+  <url type="website">https://github.com/edantec/simple-mpc</url>
+
+  <build_depend>git</build_depend>
+  <build_depend>doxygen</build_depend>
+  <depend>boost</depend>
+  <depend>pinocchio</depend>
+  <depend>proxsuite-nlp</depend>
+  <depend>aligator</depend>
+
+  <buildtool_depend>cmake</buildtool_depend>
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>
