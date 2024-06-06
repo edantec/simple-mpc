@@ -9,18 +9,11 @@
 #ifndef SIMPLE_MPC_HPP_
 #define SIMPLE_MPC_HPP_
 
-#include "aligator/modelling/contact-map.hpp"
 #include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/costs/sum-of-costs.hpp"
-#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
-#include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
-#include <aligator/context.hpp>
-#include <aligator/core/stage-model.hpp>
-#include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/core/workspace-base.hpp>
-#include <aligator/solvers/proxddp/solver-proxddp.hpp>
+#include "aligator/modelling/multibody/centroidal-momentum.hpp"
+#include "aligator/modelling/multibody/centroidal-momentum-derivative.hpp"
+#include "aligator/modelling/dynamics/kinodynamics-fwd.hpp"
 #include <pinocchio/algorithm/proximal.hpp>
-#include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/fwd.hpp"
 
@@ -32,8 +25,8 @@ using StageModel = aligator::StageModelTpl<double>;
 using CostStack = aligator::CostStackTpl<double>;
 using IntegratorSemiImplEuler =
     aligator::dynamics::IntegratorSemiImplEulerTpl<double>;
-using MultibodyConstraintFwdDynamics =
-    aligator::dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
+using KinodynamicsFwdDynamics =
+    aligator::dynamics::KinodynamicsFwdDynamicsTpl<double>;
 using ODEAbstract = aligator::dynamics::ODEAbstractTpl<double>;
 using QuadraticStateCost = aligator::QuadraticStateCostTpl<double>;
 using QuadraticControlCost = aligator::QuadraticControlCostTpl<double>;
@@ -41,6 +34,8 @@ using ContactMap = aligator::ContactMapTpl<double>;
 using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
 using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
 using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
+using CentroidalMomentumResidual = aligator::CentroidalMomentumResidualTpl<double>;
+using CentroidalMomentumDerivativeResidual = aligator::CentroidalMomentumDerivativeResidualTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -68,23 +63,25 @@ struct KinodynamicsSettings {
   Eigen::MatrixXd w_x;
   Eigen::MatrixXd w_u;
   Eigen::MatrixXd w_frame;
+  Eigen::VectorXd w_cent;
+  Eigen::Vector3d w_centder;
+
+  Eigen::Vector3d gravity;
 
   KinodynamicsSettings();
   virtual ~KinodynamicsSettings() {}
 };
 
-class FullDynamicsProblem {
-  typedef std::vector<aligator::context::StageModel> StageList;
-
+class KinodynamicsProblem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  FullDynamicsProblem();
-  FullDynamicsProblem(const KinodynamicsSettings &settings,
+  KinodynamicsProblem();
+  KinodynamicsProblem(const KinodynamicsSettings &settings,
                       const pinocchio::Model &rmodel);
   void initialize(const KinodynamicsSettings &settings,
                   const pinocchio::Model &rmodel);
-  virtual ~FullDynamicsProblem() {}
+  virtual ~KinodynamicsProblem() {}
 
   StageModel create_stage(ContactMap &contact_map);
   CostStack create_terminal_cost();
@@ -106,6 +103,7 @@ public:
   std::vector<xyz::polymorphic<StageModel>> stage_models_;
 
 protected:
+  std::vector<unsigned long> frame_ids_vector_;
   Eigen::MatrixXd actuation_matrix_;
   int nq_;
   int nv_;

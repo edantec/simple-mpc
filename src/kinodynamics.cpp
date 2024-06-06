@@ -14,17 +14,17 @@
 #include <pinocchio/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
-#include "simple-mpc/fulldynamics.hpp"
+#include "simple-mpc/kinodynamics.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
 
-FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
+KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
                                          const pinocchio::Model &rmodel) {
   initialize(settings, rmodel);
 }
 
-void FullDynamicsProblem::initialize(const FullDynamicsSettings settings,
+void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings,
                                      const pinocchio::Model &rmodel) {
   settings_ = settings;
   rmodel_ = rmodel;
@@ -42,37 +42,32 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings settings,
   pinocchio::updateFramePlacements(rmodel, rdata_);
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 10);
-
+  
   for (auto &ee_name : settings_.end_effectors) {
-    auto frame_ids = rmodel_.getFrameId(ee_name);
-    auto joint_ids = rmodel_.frames[frame_ids].parentJoint;
-    pinocchio::SE3 pl1 = rmodel_.frames[frame_ids].placement;
-    pinocchio::SE3 pl2 = rdata_.oMf[frame_ids];
-    pinocchio::RigidConstraintModel constraint_model =
-        pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
-                                        rmodel_, joint_ids, pl1, 0, pl2,
-                                        pinocchio::LOCAL_WORLD_ALIGNED);
-    constraint_model.corrector.Kp << 0, 0, 100, 0, 0, 0;
-    constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
-    constraint_model.name = ee_name;
-    constraint_models_.push_back(constraint_model);
+    frame_ids_vector_.push_back(rmodel_.getFrameId(ee_name));
   }
 }
 
-StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
+StageModel KinodynamicsProblem::create_stage(ContactMap &contact_map) {
   auto space = MultibodyPhaseSpace(rmodel_);
   auto rcost = CostStack(space, nu_);
+  std::vector<bool> contact_states = contact_map.getContactStates();
+  auto contact_poses = contact_map.getContactPoses();
+
+  auto cent_mom = CentroidalMomentumResidual(
+        space.ndx(), nu_, rmodel_, Eigen::VectorXd::Zero(6)
+  );
+  auto centder_mom = CentroidalMomentumDerivativeResidual(
+        space.ndx(), rmodel_, settings_.gravity, contact_states, frame_ids_vector_, 6
+  );
 
   rcost.addCost(QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
   rcost.addCost(QuadraticControlCost(space, settings_.u0, settings_.w_u));
+  rcost.addCost(QuadraticResidualCost(space, cent_mom, settings_.w_cent));
+  rcost.addCost(QuadraticResidualCost(space, centder_mom, settings_.w_centder));
 
-  pinocchio::context::RigidConstraintModelVector cms;
-  std::vector<bool> contact_states = contact_map.getContactStates();
-  auto contact_poses = contact_map.getContactPoses();
   for (std::size_t i = 0; i < contact_states.size(); i++) {
-    if (contact_states[i]) {
-      cms.push_back(constraint_models_[i]);
-    } else {
+    if (not(contact_states[i])) {
       pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
       frame_placement.translation() = contact_poses[i];
       FramePlacementResidual frame_residual = FramePlacementResidual(
@@ -84,15 +79,15 @@ StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
     }
   }
 
-  MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
-      space, actuation_matrix_, cms, prox_settings_);
+  KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
+      space, rmodel_, settings_.gravity, contact_states, frame_ids_vector_, 6);
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
 }
 
-CostStack FullDynamicsProblem::create_terminal_cost() {
+CostStack KinodynamicsProblem::create_terminal_cost() {
   auto ter_space = MultibodyPhaseSpace(rmodel_);
   auto term_cost = CostStack(ter_space, nu_);
   term_cost.addCost(
@@ -101,7 +96,7 @@ CostStack FullDynamicsProblem::create_terminal_cost() {
   return term_cost;
 }
 
-void FullDynamicsProblem::create_problem(
+void KinodynamicsProblem::create_problem(
     std::vector<ContactMap> contact_sequence) {
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (auto cm : contact_sequence) {

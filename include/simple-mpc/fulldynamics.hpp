@@ -9,21 +9,12 @@
 #ifndef SIMPLE_MPC_HPP_
 #define SIMPLE_MPC_HPP_
 
-#include "aligator/modelling/contact-map.hpp"
 #include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/costs/sum-of-costs.hpp"
-#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
-#include <aligator/context.hpp>
-#include <aligator/core/stage-model.hpp>
-#include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/core/workspace-base.hpp>
-#include <aligator/solvers/proxddp/solver-proxddp.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/fwd.hpp"
-#include "simple-mpc/settings.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -47,28 +38,28 @@ using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
  * @brief Build a full dynamics problem
  */
 
-struct FullDynamicsSettings {
-  /// @brief reference 0 state and control
-  Eigen::VectorXd x0;
-  Eigen::VectorXd u0;
-  /// @brief Duration of the OCP horizon.
-  int T;
-  /// @brief timestep in problem shooting nodes
-  double DT;
-  /// @brief stop threshold to configure the solver
-  double solver_th_stop;
-  /// @brief solver param reg_min
-  double solver_reg_min;
-  /// @brief Solver max number of iteration
-  int solver_maxiter;
-  /// @brief List of end effector names
-  std::vector<std::string> end_effectors;
-  /// @brief List of controlled joint names
-  std::vector<std::string> controlled_joints_names;
+ struct FullDynamicsSettings {
+  public:
+    Eigen::VectorXd x0;
+    Eigen::VectorXd u0;
+    /// @brief Duration of the OCP horizon.
+    int T;
+    /// @brief timestep in problem shooting nodes
+    double DT;
+    /// @brief stop threshold to configure the solver
+    double solver_th_stop;
+    /// @brief solver param reg_min
+    double solver_reg_min;
+    /// @brief Solver max number of iteration
+    int solver_maxiter;
+    /// @brief List of end effector names
+    std::vector<std::string> end_effectors;
+    /// @brief List of controlled joint names
+    std::vector<std::string> controlled_joints_names;
 
-  Eigen::VectorXd w_x;
-  Eigen::VectorXd w_u;
-  Eigen::VectorXd w_frame;
+    Eigen::VectorXd w_x;
+    Eigen::VectorXd w_u;
+    Eigen::VectorXd w_frame;
 };
 
 class FullDynamicsProblem {
@@ -76,9 +67,9 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   FullDynamicsProblem();
-  FullDynamicsProblem(const FullDynamicsSettings &settings,
+  FullDynamicsProblem(const FullDynamicsSettings settings,
                       const pinocchio::Model &rmodel);
-  void initialize(const FullDynamicsSettings &settings,
+  void initialize(const FullDynamicsSettings settings,
                   const pinocchio::Model &rmodel);
   virtual ~FullDynamicsProblem() {}
 

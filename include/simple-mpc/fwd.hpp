@@ -15,7 +15,11 @@
 #include <proxsuite-nlp/fwd.hpp>
 
 #include <aligator/modelling/multibody/frame-placement.hpp>
-#include <pinocchio/algorithm/center-of-mass.hpp>
+#include "aligator/modelling/costs/sum-of-costs.hpp"
+#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
+#include "aligator/modelling/contact-map.hpp"
+#include <aligator/core/stage-model.hpp>
+#include <aligator/core/traj-opt-problem.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/joint-configuration.hpp>
 #include <pinocchio/algorithm/model.hpp>
@@ -36,6 +40,8 @@ typedef std::shared_ptr<aligator::FramePlacementResidualTpl<double>>
 // MPC
 class fullDynamicsMPC;
 struct Settings;
+struct FullDynamicsSettings;
+class RobotHandler;
 
 } // namespace simple_mpc
 

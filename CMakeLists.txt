@@ -98,12 +98,12 @@ add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
 add_project_dependency(aligator REQUIRED)
 
 # Main Library
+file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB mpc_HEADER CONFIGURE_DEPENDS include/${PROJECT_NAME}/*.hpp)
 set(${PROJECT_NAME}_HEADERS
-    include/${PROJECT_NAME}/fwd.hpp include/${PROJECT_NAME}/fulldynamics.hpp
-    include/${PROJECT_NAME}/model-utils.hpp
-    include/${PROJECT_NAME}/settings.hpp)
+    ${mpc_HEADER} )
 
-set(${PROJECT_NAME}_SOURCES src/fulldynamics.cpp src/model-utils.cpp)
+set(${PROJECT_NAME}_SOURCES ${mpc_SOURCE})
 
 add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SOURCES}
                                    ${${PROJECT_NAME}_HEADERS})
