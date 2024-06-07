@@ -1,17 +1,17 @@
 #include "simple-mpc/model-utils.hpp"
 
-#include <pinocchio/context.hpp>
-#include <pinocchio/parsers/urdf.hpp>
-#include <pinocchio/parsers/srdf.hpp>
 #include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/context.hpp>
+#include <pinocchio/parsers/srdf.hpp>
+#include <pinocchio/parsers/urdf.hpp>
 
-void makeTalosReduced(std::vector<std::string> controlled_joints_names, Model &model,
-                      Eigen::VectorXd &q0) {
+void makeTalosReduced(std::vector<std::string> controlled_joints_names,
+                      Model &model, Eigen::VectorXd &q0) {
   const std::string talos_path =
       EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
   const std::string srdf_path =
       EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
-  
+
   pinocchio::Model model_complete;
   pin::urdf::buildModel(talos_path, pin::JointModelFreeFlyer(), model_complete);
   pin::srdf::loadReferenceConfigurations(model_complete, srdf_path, false);

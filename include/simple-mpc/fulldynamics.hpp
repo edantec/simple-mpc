@@ -6,18 +6,24 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SIMPLE_MPC_HPP_
-#define SIMPLE_MPC_HPP_
+#ifndef SIMPLE_MPC_FULLDYNAMICS_HPP_
+#define SIMPLE_MPC_FULLDYNAMICS_HPP_
 
+#include "aligator/modelling/contact-map.hpp"
 #include "aligator/modelling/costs/quad-state-cost.hpp"
+#include "aligator/modelling/costs/sum-of-costs.hpp"
+#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
+#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
+using Base = Problem;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 using StageModel = aligator::StageModelTpl<double>;
@@ -38,65 +44,29 @@ using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
  * @brief Build a full dynamics problem
  */
 
- struct FullDynamicsSettings {
-  public:
-    Eigen::VectorXd x0;
-    Eigen::VectorXd u0;
-    /// @brief Duration of the OCP horizon.
-    int T;
-    /// @brief timestep in problem shooting nodes
-    double DT;
-    /// @brief stop threshold to configure the solver
-    double solver_th_stop;
-    /// @brief solver param reg_min
-    double solver_reg_min;
-    /// @brief Solver max number of iteration
-    int solver_maxiter;
-    /// @brief List of end effector names
-    std::vector<std::string> end_effectors;
-    /// @brief List of controlled joint names
-    std::vector<std::string> controlled_joints_names;
-
-    Eigen::VectorXd w_x;
-    Eigen::VectorXd w_u;
-    Eigen::VectorXd w_frame;
+struct FullDynamicsSettings : public Settings {
+public:
+  Eigen::VectorXd w_forces;
+  Eigen::VectorXd w_frame;
 };
 
-class FullDynamicsProblem {
+class FullDynamicsProblem : public Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   FullDynamicsProblem();
   FullDynamicsProblem(const FullDynamicsSettings settings,
-                      const pinocchio::Model &rmodel);
+                      const RobotHandler &handler);
   void initialize(const FullDynamicsSettings settings,
-                  const pinocchio::Model &rmodel);
+                  const RobotHandler &handler);
   virtual ~FullDynamicsProblem() {}
 
   StageModel create_stage(ContactMap &contact_map);
   CostStack create_terminal_cost();
   void create_problem(std::vector<ContactMap> contact_sequence);
 
-  /// @brief Parameters to tune the algorithm, given at init.
-  FullDynamicsSettings settings_;
-
-  /// @brief The reference shooting problem storing all shooting nodes
-  std::shared_ptr<aligator::context::TrajOptProblem> problem_;
-
-  /// @brief The robot model
-  pinocchio::Model rmodel_;
-
-  /// @brief Robot data
-  pinocchio::Data rdata_;
-
-  /// @brief List of stage models forming the horizon
-  std::vector<xyz::polymorphic<StageModel>> stage_models_;
-
 protected:
   Eigen::MatrixXd actuation_matrix_;
-  int nq_;
-  int nv_;
-  int nu_;
   ProximalSettings prox_settings_;
   pinocchio::context::RigidConstraintModelVector constraint_models_;
 };

@@ -100,8 +100,7 @@ add_project_dependency(aligator REQUIRED)
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB mpc_HEADER CONFIGURE_DEPENDS include/${PROJECT_NAME}/*.hpp)
-set(${PROJECT_NAME}_HEADERS
-    ${mpc_HEADER} )
+set(${PROJECT_NAME}_HEADERS ${mpc_HEADER})
 
 set(${PROJECT_NAME}_SOURCES ${mpc_SOURCE})
 

@@ -9,63 +9,80 @@ namespace simple_mpc {
 
 RobotHandler::RobotHandler() {}
 
-RobotHandler::RobotHandler(const RobotHandlerSettings &settings) { initialize(settings); }
+RobotHandler::RobotHandler(const RobotHandlerSettings &settings) {
+  initialize(settings);
+}
 
 void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   settings_ = settings;
 
   // COMPLETE MODEL //
   if (settings_.robot_description.size() > 0) {
-    pinocchio::urdf::buildModelFromXML(settings_.robot_description, pinocchio::JointModelFreeFlyer(), rmodel_complete_);
-    std::cout << "### Build pinocchio model from rosparam robot_description." << std::endl;
+    pinocchio::urdf::buildModelFromXML(settings_.robot_description,
+                                       pinocchio::JointModelFreeFlyer(),
+                                       rmodel_complete_);
+    std::cout << "### Build pinocchio model from rosparam robot_description."
+              << std::endl;
   } else if (settings_.urdf_path.size() > 0) {
-    pinocchio::urdf::buildModel(settings_.urdf_path, pinocchio::JointModelFreeFlyer(), rmodel_complete_);
+    pinocchio::urdf::buildModel(settings_.urdf_path,
+                                pinocchio::JointModelFreeFlyer(),
+                                rmodel_complete_);
     std::cout << "### Build pinocchio model from urdf file." << std::endl;
   } else {
-    throw std::invalid_argument("the urdf file, or robotDescription must be specified.");
+    throw std::invalid_argument(
+        "the urdf file, or robotDescription must be specified.");
   }
 
-  pinocchio::srdf::loadReferenceConfigurations(rmodel_complete_, settings_.srdf_path, false);
-  pinocchio::srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path, false);
+  pinocchio::srdf::loadReferenceConfigurations(rmodel_complete_,
+                                               settings_.srdf_path, false);
+  pinocchio::srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path,
+                                       false);
   q0Complete_ = rmodel_complete_.referenceConfigurations["half_sitting"];
   v0Complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
 
   // REDUCED MODEL //
 
   if (settings_.controlled_joints_names[0] != "root_joint") {
-    throw std::invalid_argument("the joint at index 0 must be called 'root_joint' ");
+    throw std::invalid_argument(
+        "the joint at index 0 must be called 'root_joint' ");
   }
 
   // Check if listed joints belong to model
-  for (std::vector<std::string>::const_iterator it = settings_.controlled_joints_names.begin();
+  for (std::vector<std::string>::const_iterator it =
+           settings_.controlled_joints_names.begin();
        it != settings_.controlled_joints_names.end(); ++it) {
     const std::string &joint_name = *it;
     std::cout << joint_name << std::endl;
     std::cout << rmodel_complete_.getJointId(joint_name) << std::endl;
     if (not(rmodel_complete_.existJointName(joint_name))) {
-      std::cout << "joint: " << joint_name << " does not belong to the model" << std::endl;
+      std::cout << "joint: " << joint_name << " does not belong to the model"
+                << std::endl;
     }
   }
 
   // making list of blocked joints
   std::vector<unsigned long> locked_joints_id;
-  for (std::vector<std::string>::const_iterator it = rmodel_complete_.names.begin() + 1;
+  for (std::vector<std::string>::const_iterator it =
+           rmodel_complete_.names.begin() + 1;
        it != rmodel_complete_.names.end(); ++it) {
     const std::string &joint_name = *it;
-    if (std::find(settings_.controlled_joints_names.begin(), settings_.controlled_joints_names.end(), joint_name) ==
-        settings_.controlled_joints_names.end()) {
+    if (std::find(settings_.controlled_joints_names.begin(),
+                  settings_.controlled_joints_names.end(),
+                  joint_name) == settings_.controlled_joints_names.end()) {
       locked_joints_id.push_back(rmodel_complete_.getJointId(joint_name));
     }
   }
 
-  rmodel_ = pinocchio::buildReducedModel(rmodel_complete_, locked_joints_id, q0Complete_);
+  rmodel_ = pinocchio::buildReducedModel(rmodel_complete_, locked_joints_id,
+                                         q0Complete_);
   for (auto &name : settings_.end_effector_names) {
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
   }
   root_ids_ = rmodel_.getFrameId(settings_.root_name);
   rdata_ = pinocchio::Data(rmodel_);
 
-  pinocchio::srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path, false);
+  pinocchio::srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path,
+                                               false);
   pinocchio::srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
   q0_ = rmodel_.referenceConfigurations[settings_.base_configuration];
   v0_ = Eigen::VectorXd::Zero(rmodel_.nv);
@@ -74,10 +91,12 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   x0_ << q0_, v0_;
   x_internal_ << q0_, v0_;
   // Generating list of indices for controlled joints //
-  for (std::vector<std::string>::const_iterator it = rmodel_.names.begin() + 1; it != rmodel_.names.end(); ++it) {
+  for (std::vector<std::string>::const_iterator it = rmodel_.names.begin() + 1;
+       it != rmodel_.names.end(); ++it) {
     const std::string &joint_name = *it;
-    if (std::find(settings_.controlled_joints_names.begin(), settings_.controlled_joints_names.end(), joint_name) !=
-        settings_.controlled_joints_names.end()) {
+    if (std::find(settings_.controlled_joints_names.begin(),
+                  settings_.controlled_joints_names.end(),
+                  joint_name) != settings_.controlled_joints_names.end()) {
       controlled_joints_id_.push_back(rmodel_complete_.getJointId(joint_name));
     }
   }
@@ -97,13 +116,13 @@ void RobotHandler::updateInternalData(const Eigen::VectorXd &x) {
    * elements */
   pinocchio::forwardKinematics(rmodel_, rdata_, x.head(rmodel_.nq));
   pinocchio::updateFramePlacements(rmodel_, rdata_);
-  com_position_ = pinocchio::centerOfMass(rmodel_, rdata_, x.head(rmodel_.nq), false);
+  com_position_ =
+      pinocchio::centerOfMass(rmodel_, rdata_, x.head(rmodel_.nq), false);
 }
 
 const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,
                                                 const Eigen::VectorXd &v) {
-  if (q.size() == rmodel_complete_.nq &&
-      v.size() == rmodel_complete_.nv) {
+  if (q.size() == rmodel_complete_.nq && v.size() == rmodel_complete_.nv) {
     x_internal_.head<7>() = q.head<7>();
     x_internal_.segment<6>(rmodel_.nq) = v.head<6>();
 
@@ -115,22 +134,20 @@ const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,
         i++;
       }
     return x_internal_;
-  } 
-  else if (q.size() == rmodel_.nq &&
-           v.size() == rmodel_.nv) {
+  } else if (q.size() == rmodel_.nq && v.size() == rmodel_.nv) {
     x_internal_ << q, v;
     return x_internal_;
-  } 
-  else {
+  } else {
     throw std::runtime_error(
         "q and v must have the dimentions of the reduced or complete model.");
   }
 }
 
-double RobotHandler::getRobotMass() {
+double RobotHandler::get_robot_mass() {
   mass_ = 0;
-  for (pinocchio::Inertia &I : rmodel_.inertias) mass_ += I.mass();
+  for (pinocchio::Inertia &I : rmodel_.inertias)
+    mass_ += I.mass();
   return mass_;
 }
 
-}  // namespace sobec
+} // namespace simple_mpc

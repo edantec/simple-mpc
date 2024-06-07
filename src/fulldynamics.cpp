@@ -20,47 +20,32 @@ namespace simple_mpc {
 using namespace aligator;
 
 FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
-                                         const pinocchio::Model &rmodel) {
-  initialize(settings, rmodel);
-}
-
-void FullDynamicsProblem::initialize(const FullDynamicsSettings settings,
-                                     const pinocchio::Model &rmodel) {
-  settings_ = settings;
-  rmodel_ = rmodel;
-  rdata_ = pinocchio::Data(rmodel_);
-
-  nq_ = rmodel.nq;
-  nv_ = rmodel.nv;
-  nu_ = nv_ - 6;
-
+                                         const RobotHandler &handler)
+    : Base(settings, handler) {
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
-  pinocchio::forwardKinematics(rmodel_, rdata_, settings_.x0.head(nq_));
-  pinocchio::updateFramePlacements(rmodel, rdata_);
-
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 10);
 
-  for (auto &ee_name : settings_.end_effectors) {
-    auto frame_ids = rmodel_.getFrameId(ee_name);
-    auto joint_ids = rmodel_.frames[frame_ids].parentJoint;
-    pinocchio::SE3 pl1 = rmodel_.frames[frame_ids].placement;
-    pinocchio::SE3 pl2 = rdata_.oMf[frame_ids];
+  for (std::size_t i = 0; i < handler_.get_ee_ids().size(); i++) {
+    auto frame_ids = handler_.get_ee_id(i);
+    auto joint_ids = handler_.get_rmodel().frames[frame_ids].parentJoint;
+    pinocchio::SE3 pl1 = handler_.get_rmodel().frames[frame_ids].placement;
+    pinocchio::SE3 pl2 = handler_.get_ee_frame(i);
     pinocchio::RigidConstraintModel constraint_model =
         pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
-                                        rmodel_, joint_ids, pl1, 0, pl2,
-                                        pinocchio::LOCAL_WORLD_ALIGNED);
+                                        handler_.get_rmodel(), joint_ids, pl1,
+                                        0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
     constraint_model.corrector.Kp << 0, 0, 100, 0, 0, 0;
     constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
-    constraint_model.name = ee_name;
+    constraint_model.name = handler_.get_ee_name(i);
     constraint_models_.push_back(constraint_model);
   }
 }
 
 StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
-  auto space = MultibodyPhaseSpace(rmodel_);
+  auto space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto rcost = CostStack(space, nu_);
 
   rcost.addCost(QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
@@ -75,9 +60,9 @@ StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
     } else {
       pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
       frame_placement.translation() = contact_poses[i];
-      FramePlacementResidual frame_residual = FramePlacementResidual(
-          space.ndx(), nu_, rmodel_, frame_placement,
-          rmodel_.getFrameId(settings_.end_effectors[i]));
+      FramePlacementResidual frame_residual =
+          FramePlacementResidual(space.ndx(), nu_, handler_.get_rmodel(),
+                                 frame_placement, handler_.get_ee_id(i));
 
       rcost.addCost(
           QuadraticResidualCost(space, frame_residual, settings_.w_frame));
@@ -93,7 +78,7 @@ StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
 }
 
 CostStack FullDynamicsProblem::create_terminal_cost() {
-  auto ter_space = MultibodyPhaseSpace(rmodel_);
+  auto ter_space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto term_cost = CostStack(ter_space, nu_);
   term_cost.addCost(
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
