@@ -71,14 +71,19 @@ public:
 
   virtual ~KinodynamicsProblem(){};
 
-  StageModel create_stage(ContactMap &contact_map);
+  StageModel create_stage(const ContactMap &contact_map,
+                          const std::vector<Eigen::VectorXd> &force_refs);
+  virtual void set_reference_control(const std::size_t i,
+                                     const Eigen::VectorXd &u_ref);
   CostStack create_terminal_cost();
-  void create_problem(std::vector<ContactMap> contact_sequence);
+
+  Eigen::VectorXd control_ref_;
 
   /// @brief Parameters to tune the algorithm, given at init.
   // KinodynamicsSettings settings_;
 
 protected:
+  KinodynamicsSettings settings_;
 };
 
 } // namespace simple_mpc

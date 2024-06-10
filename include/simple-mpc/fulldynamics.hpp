@@ -14,6 +14,7 @@
 #include "aligator/modelling/costs/sum-of-costs.hpp"
 #include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/modelling/multibody/contact-force.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
@@ -39,6 +40,7 @@ using ContactMap = aligator::ContactMapTpl<double>;
 using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
 using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
 using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
+using ContactForceResidual = aligator::ContactForceResidualTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -61,11 +63,16 @@ public:
                   const RobotHandler &handler);
   virtual ~FullDynamicsProblem() {}
 
-  StageModel create_stage(ContactMap &contact_map);
+  StageModel create_stage(const ContactMap &contact_map,
+                          const std::vector<Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t i,
+                            const std::vector<Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t i, const std::string &ee_name,
+                            Eigen::VectorXd &force_ref);
   CostStack create_terminal_cost();
-  void create_problem(std::vector<ContactMap> contact_sequence);
 
 protected:
+  FullDynamicsSettings settings_;
   Eigen::MatrixXd actuation_matrix_;
   ProximalSettings prox_settings_;
   pinocchio::context::RigidConstraintModelVector constraint_models_;

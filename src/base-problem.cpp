@@ -11,30 +11,35 @@
 namespace simple_mpc {
 using namespace aligator;
 
-Problem::Problem(const Settings &settings, const RobotHandler &handler) {
-  initialize(settings, handler);
-}
-
-void Problem::initialize(const Settings &settings,
-                         const RobotHandler &handler) {
-  settings_ = settings;
-  handler_ = handler;
-
+Problem::Problem(const RobotHandler &handler) : handler_(handler) {
   nq_ = handler_.get_rmodel().nq;
   nv_ = handler_.get_rmodel().nv;
   nu_ = nv_ - 6;
-
-  handler_.set_q0(settings_.x0.head(nq_));
 }
 
-void Problem::create_problem(std::vector<ContactMap> contact_sequence) {
+void Problem::create_problem(const Eigen::VectorXd &x0,
+                             const std::vector<ContactMap> &contact_sequence) {
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (auto cm : contact_sequence) {
-    stage_models.push_back(create_stage(cm));
+    std::vector<bool> contact_states = cm.getContactStates();
+    std::vector<Eigen::VectorXd> force_ref;
+    for (std::size_t i = 0; i < contact_states.size(); i++) {
+      force_ref.push_back(Eigen::VectorXd::Zero(6));
+    }
+    stage_models.push_back(create_stage(cm, force_ref));
   }
 
-  problem_ = std::make_shared<TrajOptProblem>(settings_.x0, stage_models,
+  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
                                               create_terminal_cost());
+}
+
+void Problem::insert_cost(CostStack &cost_stack,
+                          const xyz::polymorphic<CostAbstract> &cost,
+                          std::map<std::string, std::size_t> &cost_map,
+                          const std::string &name, int &cost_incr) {
+  cost_stack.addCost(cost);
+  cost_map.insert({"name", cost_incr});
+  cost_incr++;
 }
 
 } // namespace simple_mpc

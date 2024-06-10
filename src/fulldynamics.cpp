@@ -11,6 +11,7 @@
 #include <aligator/core/workspace-base.hpp>
 #include <aligator/fwd.hpp>
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
+#include <aligator/utils/exceptions.hpp>
 #include <pinocchio/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
@@ -21,7 +22,7 @@ using namespace aligator;
 
 FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
                                          const RobotHandler &handler)
-    : Base(settings, handler) {
+    : Base(handler), settings_(settings) {
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
@@ -42,9 +43,26 @@ FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
     constraint_model.name = handler_.get_ee_name(i);
     constraint_models_.push_back(constraint_model);
   }
+
+  // Set up cost names used in full dynamics problem
+  int cost_incr = 0;
+  cost_map_.insert({"state_cost", cost_incr});
+  cost_incr++;
+  cost_map_.insert({"control_cost", cost_incr});
+  cost_incr++;
+  for (auto cname : handler_.get_ee_names()) {
+    cost_map_.insert({cname + "_pose_cost", cost_incr});
+    cost_incr++;
+  }
+  for (auto cname : handler_.get_ee_names()) {
+    cost_map_.insert({cname + "_force_cost", cost_incr});
+    cost_incr++;
+  }
 }
 
-StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
+StageModel FullDynamicsProblem::create_stage(
+    const ContactMap &contact_map,
+    const std::vector<Eigen::VectorXd> &force_refs) {
   auto space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto rcost = CostStack(space, nu_);
 
@@ -54,19 +72,38 @@ StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
   pinocchio::context::RigidConstraintModelVector cms;
   std::vector<bool> contact_states = contact_map.getContactStates();
   auto contact_poses = contact_map.getContactPoses();
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
-    if (contact_states[i]) {
-      cms.push_back(constraint_models_[i]);
-    } else {
-      pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
-      frame_placement.translation() = contact_poses[i];
-      FramePlacementResidual frame_residual =
-          FramePlacementResidual(space.ndx(), nu_, handler_.get_rmodel(),
-                                 frame_placement, handler_.get_ee_id(i));
 
-      rcost.addCost(
-          QuadraticResidualCost(space, frame_residual, settings_.w_frame));
-    }
+  if (contact_states.size() != handler_.get_ee_ids().size()) {
+    throw std::runtime_error(
+        "contact states size does not match number of end effectors");
+  }
+
+  for (std::size_t i = 0; i < contact_states.size(); i++) {
+    pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
+    frame_placement.translation() = contact_poses[i];
+    FramePlacementResidual frame_residual =
+        FramePlacementResidual(space.ndx(), nu_, handler_.get_rmodel(),
+                               frame_placement, handler_.get_ee_id(i));
+
+    int is_active = 0;
+    if (contact_states[i])
+      cms.push_back(constraint_models_[i]);
+    else
+      is_active = 1;
+
+    rcost.addCost(QuadraticResidualCost(space, frame_residual,
+                                        settings_.w_frame * is_active));
+  }
+
+  for (std::size_t i = 0; i < contact_states.size(); i++) {
+    ContactForceResidual frame_force = ContactForceResidual(
+        space.ndx(), handler_.get_rmodel(), actuation_matrix_, cms,
+        prox_settings_, force_refs[i], handler_.get_ee_name(i));
+    int is_active = 0;
+    if (contact_states[i])
+      is_active = 1;
+    rcost.addCost(QuadraticResidualCost(space, frame_force,
+                                        settings_.w_forces * is_active));
   }
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
@@ -77,6 +114,42 @@ StageModel FullDynamicsProblem::create_stage(ContactMap &contact_map) {
   return StageModel(rcost, dyn_model);
 }
 
+void FullDynamicsProblem::set_reference_forces(
+    const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
+  if (i >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  if (force_refs.size() != handler_.get_ee_names().size()) {
+    throw std::runtime_error(
+        "force_refs size does not match number of end effectors");
+  }
+
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  for (std::size_t i = 0; i < force_refs.size(); i++) {
+    QuadraticResidualCost *qrc =
+        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
+            handler_.get_ee_names()[i] + "_force_cost")]);
+    ContactForceResidual *cfr =
+        dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
+    cfr->setReference(force_refs[i]);
+  }
+}
+
+void FullDynamicsProblem::set_reference_forces(const std::size_t i,
+                                               const std::string &ee_name,
+                                               Eigen::VectorXd &force_ref) {
+  if (i >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);
+  ContactForceResidual *cfr =
+      dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
+  cfr->setReference(force_ref);
+}
+
 CostStack FullDynamicsProblem::create_terminal_cost() {
   auto ter_space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto term_cost = CostStack(ter_space, nu_);
@@ -84,17 +157,6 @@ CostStack FullDynamicsProblem::create_terminal_cost() {
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
 
   return term_cost;
-}
-
-void FullDynamicsProblem::create_problem(
-    std::vector<ContactMap> contact_sequence) {
-  std::vector<xyz::polymorphic<StageModel>> stage_models;
-  for (auto cm : contact_sequence) {
-    stage_models.push_back(create_stage(cm));
-  }
-
-  problem_ = std::make_shared<TrajOptProblem>(settings_.x0, stage_models,
-                                              create_terminal_cost());
 }
 
 } // namespace simple_mpc

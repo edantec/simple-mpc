@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <aligator/core/cost-abstract.hpp>
 #ifndef SIMPLE_MPC_BASEDYNAMICS_HPP_
 #define SIMPLE_MPC_BASEDYNAMICS_HPP_
 
@@ -22,6 +23,7 @@ using StageModel = aligator::StageModelTpl<double>;
 using CostStack = aligator::CostStackTpl<double>;
 using ContactMap = aligator::ContactMapTpl<double>;
 using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
+using CostAbstract = CostAbstractTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -63,16 +65,25 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Problem();
-  Problem(const Settings &settings, const RobotHandler &handler);
-  void initialize(const Settings &settings, const RobotHandler &handler);
+  Problem(const RobotHandler &handler);
   virtual ~Problem() {}
 
-  virtual StageModel create_stage(ContactMap &contact_map);
+  virtual StageModel
+  create_stage(const ContactMap &contact_map,
+               const std::vector<Eigen::VectorXd> &force_refs);
   virtual CostStack create_terminal_cost();
-  virtual void create_problem(std::vector<ContactMap> contact_sequence);
+  virtual void create_problem(const Eigen::VectorXd &x0,
+                              const std::vector<ContactMap> &contact_sequence);
 
-  /// @brief Parameters to tune the algorithm, given at init.
-  Settings settings_;
+  virtual void
+  set_reference_forces(const std::size_t i,
+                       const std::vector<Eigen::VectorXd> &force_refs);
+  virtual void set_reference_control(const std::size_t i,
+                                     const Eigen::VectorXd &u_ref);
+  virtual void insert_cost(CostStack &cost_stack,
+                           const xyz::polymorphic<CostAbstract> &cost,
+                           std::map<std::string, std::size_t> &cost_map,
+                           const std::string &name, int &cost_incr);
 
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;
@@ -80,8 +91,8 @@ public:
   /// @brief The robot model
   RobotHandler handler_;
 
-  /// @brief List of stage models forming the horizon
-  std::vector<xyz::polymorphic<StageModel>> stage_models_;
+  /// @brief Dictionnary of cost name + cost id
+  std::map<std::string, std::size_t> cost_map_;
 
 protected:
   int nq_;
