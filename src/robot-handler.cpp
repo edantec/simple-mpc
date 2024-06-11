@@ -102,6 +102,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   }
 
   updateInternalData(q0_);
+  compute_mass();
   initialized_ = true;
 }
 
@@ -143,11 +144,10 @@ const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,
   }
 }
 
-double RobotHandler::get_robot_mass() {
+void RobotHandler::compute_mass() {
   mass_ = 0;
   for (pinocchio::Inertia &I : rmodel_.inertias)
     mass_ += I.mass();
-  return mass_;
 }
 
 } // namespace simple_mpc

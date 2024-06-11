@@ -11,6 +11,9 @@
 #ifndef SIMPLE_MPC_BASEDYNAMICS_HPP_
 #define SIMPLE_MPC_BASEDYNAMICS_HPP_
 
+#include "aligator/modelling/costs/quad-state-cost.hpp"
+#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
+#include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/modelling/contact-map.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
 
@@ -24,7 +27,10 @@ using CostStack = aligator::CostStackTpl<double>;
 using ContactMap = aligator::ContactMapTpl<double>;
 using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
 using CostAbstract = CostAbstractTpl<double>;
-
+using QuadraticControlCost = QuadraticControlCostTpl<double>;
+using QuadraticStateCost = QuadraticStateCostTpl<double>;
+using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 /**
  * @brief Build a full dynamics problem
  */
@@ -55,6 +61,7 @@ struct Settings {
   Eigen::MatrixXd w_centder;
 
   Eigen::Vector3d gravity;
+  int force_size;
 
   Settings();
   virtual ~Settings() {}
@@ -87,6 +94,9 @@ public:
                            const xyz::polymorphic<CostAbstract> &cost,
                            std::map<std::string, std::size_t> &cost_map,
                            const std::string &name, int &cost_incr);
+
+  void
+  compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
 
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;

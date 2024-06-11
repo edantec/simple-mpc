@@ -9,10 +9,6 @@
 #ifndef SIMPLE_MPC_FULLDYNAMICS_HPP_
 #define SIMPLE_MPC_FULLDYNAMICS_HPP_
 
-#include "aligator/modelling/contact-map.hpp"
-#include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/costs/sum-of-costs.hpp"
-#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/contact-force.hpp>
@@ -28,17 +24,9 @@ using namespace aligator;
 using Base = Problem;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = StageModelTpl<double>;
-using CostStack = CostStackTpl<double>;
-using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 using MultibodyConstraintFwdDynamics =
     dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
-using ODEAbstract = dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = QuadraticStateCostTpl<double>;
-using QuadraticControlCost = QuadraticControlCostTpl<double>;
-using ContactMap = ContactMapTpl<double>;
 using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
 using TrajOptProblem = TrajOptProblemTpl<double>;
 using ContactForceResidual = ContactForceResidualTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;

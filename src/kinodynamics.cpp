@@ -41,10 +41,7 @@ StageModel KinodynamicsProblem::create_stage(
   std::vector<bool> contact_states = contact_map.getContactStates();
   auto contact_poses = contact_map.getContactPoses();
 
-  for (std::size_t i = 0; i < force_refs.size(); i++) {
-    control_ref_.segment((long)i * force_refs[0].size(), force_refs[0].size()) =
-        force_refs[i];
-  }
+  compute_control_from_forces(force_refs);
 
   auto cent_mom = CentroidalMomentumResidual(
       space.ndx(), nu_, handler_.get_rmodel(), Eigen::VectorXd::Zero(6));
@@ -111,6 +108,24 @@ void KinodynamicsProblem::set_reference_control(const std::size_t i,
       &*cs->components_[cost_map_.at("control_cost")]);
 
   qc->setTarget(u_ref);
+}
+
+void KinodynamicsProblem::compute_control_from_forces(
+    const std::vector<Eigen::VectorXd> &force_refs) {
+  for (std::size_t i = 0; i < force_refs.size(); i++) {
+    if (settings_.force_size != force_refs[i].size()) {
+      throw std::runtime_error(
+          "force size in settings does not match reference force size");
+    }
+    control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
+        force_refs[i];
+  }
+}
+
+void KinodynamicsProblem::set_reference_forces(
+    const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
+  compute_control_from_forces(force_refs);
+  set_reference_control(i, control_ref_);
 }
 
 CostStack KinodynamicsProblem::create_terminal_cost() {

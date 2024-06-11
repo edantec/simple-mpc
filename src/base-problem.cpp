@@ -33,6 +33,18 @@ void Problem::create_problem(const Eigen::VectorXd &x0,
                                               create_terminal_cost());
 }
 
+void Problem::set_reference_control(const std::size_t i,
+                                    const Eigen::VectorXd &u_ref) {
+  if (i >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
+      &*cs->components_[cost_map_.at("control_cost")]);
+
+  qc->setTarget(u_ref);
+}
+
 void Problem::insert_cost(CostStack &cost_stack,
                           const xyz::polymorphic<CostAbstract> &cost,
                           std::map<std::string, std::size_t> &cost_map,

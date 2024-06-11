@@ -10,12 +10,6 @@
 #ifndef SIMPLE_MPC_KINODYNAMICS_HPP_
 #define SIMPLE_MPC_KINODYNAMICS_HPP_
 
-#include <aligator/core/stage-model.hpp>
-#include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/modelling/contact-map.hpp>
-#include <aligator/modelling/costs/quad-state-cost.hpp>
-#include <aligator/modelling/costs/sum-of-costs.hpp>
-#include <aligator/modelling/dynamics/integrator-semi-euler.hpp>
 #include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
@@ -29,17 +23,8 @@ namespace simple_mpc {
 using namespace aligator;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = StageModelTpl<double>;
-using CostStack = CostStackTpl<double>;
-using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
-using ODEAbstract = dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = QuadraticStateCostTpl<double>;
-using QuadraticControlCost = QuadraticControlCostTpl<double>;
-using ContactMap = ContactMapTpl<double>;
 using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
-using TrajOptProblem = TrajOptProblemTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using CentroidalMomentumDerivativeResidual =
     CentroidalMomentumDerivativeResidualTpl<double>;
@@ -73,6 +58,10 @@ public:
   void set_reference_poses(const std::size_t i,
                            const std::vector<pinocchio::SE3> &pose_refs);
   void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
+  void set_reference_forces(const std::size_t i,
+                            const std::vector<Eigen::VectorXd> &force_refs);
+  void
+  compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();
 
   Eigen::VectorXd control_ref_;

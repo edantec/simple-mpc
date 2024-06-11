@@ -72,8 +72,9 @@ public:
 
   const pinocchio::SE3 &get_root_frame();
 
-  double get_robot_mass();
+  void compute_mass();
 
+  const double &get_mass() { return mass_; }
   const pinocchio::Model &get_rmodel() { return rmodel_; }
   const pinocchio::Model &get_rmodel_complete() { return rmodel_complete_; }
   const pinocchio::Data &get_rdata() { return rdata_; }
