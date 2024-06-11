@@ -29,23 +29,20 @@ namespace simple_mpc {
 using namespace aligator;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = aligator::StageModelTpl<double>;
-using CostStack = aligator::CostStackTpl<double>;
-using IntegratorSemiImplEuler =
-    aligator::dynamics::IntegratorSemiImplEulerTpl<double>;
-using KinodynamicsFwdDynamics =
-    aligator::dynamics::KinodynamicsFwdDynamicsTpl<double>;
-using ODEAbstract = aligator::dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = aligator::QuadraticStateCostTpl<double>;
-using QuadraticControlCost = aligator::QuadraticControlCostTpl<double>;
-using ContactMap = aligator::ContactMapTpl<double>;
-using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
-using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
-using CentroidalMomentumResidual =
-    aligator::CentroidalMomentumResidualTpl<double>;
+using StageModel = StageModelTpl<double>;
+using CostStack = CostStackTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
+using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
+using ODEAbstract = dynamics::ODEAbstractTpl<double>;
+using QuadraticStateCost = QuadraticStateCostTpl<double>;
+using QuadraticControlCost = QuadraticControlCostTpl<double>;
+using ContactMap = ContactMapTpl<double>;
+using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
+using TrajOptProblem = TrajOptProblemTpl<double>;
+using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using CentroidalMomentumDerivativeResidual =
-    aligator::CentroidalMomentumDerivativeResidualTpl<double>;
+    CentroidalMomentumDerivativeResidualTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -73,8 +70,9 @@ public:
 
   StageModel create_stage(const ContactMap &contact_map,
                           const std::vector<Eigen::VectorXd> &force_refs);
-  virtual void set_reference_control(const std::size_t i,
-                                     const Eigen::VectorXd &u_ref);
+  void set_reference_poses(const std::size_t i,
+                           const std::vector<pinocchio::SE3> &pose_refs);
+  void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
   CostStack create_terminal_cost();
 
   Eigen::VectorXd control_ref_;

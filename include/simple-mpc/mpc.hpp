@@ -17,6 +17,7 @@
 #include "aligator/modelling/multibody/centroidal-momentum.hpp"
 #include <pinocchio/algorithm/proximal.hpp>
 
+#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
@@ -24,24 +25,22 @@ namespace simple_mpc {
 using namespace aligator;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = aligator::StageModelTpl<double>;
-using CostStack = aligator::CostStackTpl<double>;
-using IntegratorSemiImplEuler =
-    aligator::dynamics::IntegratorSemiImplEulerTpl<double>;
-using KinodynamicsFwdDynamics =
-    aligator::dynamics::KinodynamicsFwdDynamicsTpl<double>;
-using ODEAbstract = aligator::dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = aligator::QuadraticStateCostTpl<double>;
-using QuadraticControlCost = aligator::QuadraticControlCostTpl<double>;
-using ContactMap = aligator::ContactMapTpl<double>;
-using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
-using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
-using CentroidalMomentumResidual =
-    aligator::CentroidalMomentumResidualTpl<double>;
+using StageModel = StageModelTpl<double>;
+using StageData = StageDataTpl<double>;
+using CostStack = CostStackTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
+using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
+using ODEAbstract = dynamics::ODEAbstractTpl<double>;
+using QuadraticStateCost = QuadraticStateCostTpl<double>;
+using QuadraticControlCost = QuadraticControlCostTpl<double>;
+using ContactMap = ContactMapTpl<double>;
+using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
+using TrajOptProblem = TrajOptProblemTpl<double>;
+using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using CentroidalMomentumDerivativeResidual =
-    aligator::CentroidalMomentumDerivativeResidualTpl<double>;
-
+    CentroidalMomentumDerivativeResidualTpl<double>;
+using SolverProxDDP = SolverProxDDPTpl<double>;
 /**
  * @brief Build a full dynamics problem
  */
@@ -83,16 +82,21 @@ class MPC {
 
 protected:
   MPCSettings settings_;
-  std::shared_ptr<TrajOptProblem> problem_;
+  std::shared_ptr<Problem> problem_;
   std::vector<StageModel> full_horizon_;
+  std::vector<std::shared_ptr<StageData>> full_horizon_data_;
   RobotHandler handler_;
+  std::shared_ptr<SolverProxDDP> solver_;
+
+  std::vector<Eigen::VectorXd> xs_;
+  std::vector<Eigen::VectorXd> us_;
+  Eigen::MatrixXd K0_;
 
   Eigen::VectorXd x0_;
 
-  int horizon_iteration_;
-
   // timings
   std::vector<int> takeoff_RF_, takeoff_LF_, land_RF_, land_LF_;
+  std::size_t horizon_iteration_;
 
   // INTERNAL UPDATING functions
   void updateStepTrackerReferences();
@@ -109,21 +113,24 @@ protected:
 public:
   MPC();
   MPC(const MPCSettings &settings, const RobotHandler &handler,
-      std::shared_ptr<TrajOptProblem> &problem, const Eigen::VectorXd &x0);
+      std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0);
 
   void initialize(const MPCSettings &settings, const RobotHandler &handler,
-                  std::shared_ptr<TrajOptProblem> &problem,
-                  const Eigen::VectorXd &x0);
+                  std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0);
 
-  /* void updateSupportTiming();
-
-  void setForceAlongHorizon();
-
-  std::vector<Support> generateSupportCycle();
-
-  void generateFullHorizon(ModelMaker &mm, const Experiment &experiment);
+  void generateFullHorizon(
+      const std::vector<ContactMap> &contact_phases,
+      const std::vector<std::vector<Eigen::VectorXd>> &contact_forces);
 
   bool timeToSolveDDP(int iteration);
+
+  void iterate(const Eigen::VectorXd &q_current,
+               const Eigen::VectorXd &v_current);
+
+  void recedeWithCycle();
+
+  void updateSupportTiming();
+  /* void updateSupportTiming();
 
   void iterate(const Eigen::VectorXd &q_current, const Eigen::VectorXd
   &v_current, bool is_feasible);

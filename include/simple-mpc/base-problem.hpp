@@ -76,6 +76,9 @@ public:
                               const std::vector<ContactMap> &contact_sequence);
 
   virtual void
+  set_reference_poses(const std::size_t i,
+                      const std::vector<pinocchio::SE3> &pose_refs);
+  virtual void
   set_reference_forces(const std::size_t i,
                        const std::vector<Eigen::VectorXd> &force_refs);
   virtual void set_reference_control(const std::size_t i,

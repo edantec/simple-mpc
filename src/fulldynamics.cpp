@@ -45,10 +45,12 @@ FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
   }
 
   // Set up cost names used in full dynamics problem
-  int cost_incr = 0;
+  std::size_t cost_incr = 0;
   cost_map_.insert({"state_cost", cost_incr});
   cost_incr++;
   cost_map_.insert({"control_cost", cost_incr});
+  cost_incr++;
+  cost_map_.insert({"centroidal_cost", cost_incr});
   cost_incr++;
   for (auto cname : handler_.get_ee_names()) {
     cost_map_.insert({cname + "_pose_cost", cost_incr});
@@ -68,6 +70,10 @@ StageModel FullDynamicsProblem::create_stage(
 
   rcost.addCost(QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
   rcost.addCost(QuadraticControlCost(space, settings_.u0, settings_.w_u));
+
+  auto cent_mom = CentroidalMomentumResidual(
+      space.ndx(), nu_, handler_.get_rmodel(), Eigen::VectorXd::Zero(6));
+  rcost.addCost(QuadraticResidualCost(space, cent_mom, settings_.w_cent));
 
   pinocchio::context::RigidConstraintModelVector cms;
   std::vector<bool> contact_states = contact_map.getContactStates();
@@ -111,7 +117,37 @@ StageModel FullDynamicsProblem::create_stage(
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
 
-  return StageModel(rcost, dyn_model);
+  StageModel stm = StageModel(rcost, dyn_model);
+
+  // Constraints
+  ControlErrorResidual ctrl_fn =
+      ControlErrorResidual(space.ndx(), Eigen::VectorXd::Zero(nu_));
+  stm.addConstraint(ctrl_fn, BoxConstraint(settings_.umin, settings_.umax));
+  StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
+  stm.addConstraint(state_fn, BoxConstraint(-settings_.qmax, -settings_.qmin));
+
+  return stm;
+}
+
+void FullDynamicsProblem::set_reference_poses(
+    const std::size_t i, const std::vector<pinocchio::SE3> &pose_refs) {
+  if (i >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  if (pose_refs.size() != handler_.get_ee_names().size()) {
+    throw std::runtime_error(
+        "pose_refs size does not match number of end effectors");
+  }
+
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  for (std::size_t i = 0; i < pose_refs.size(); i++) {
+    QuadraticResidualCost *qrc =
+        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
+            handler_.get_ee_names()[i] + "_pose_cost")]);
+    FramePlacementResidual *cfr =
+        dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
+    cfr->setReference(pose_refs[i]);
+  }
 }
 
 void FullDynamicsProblem::set_reference_forces(

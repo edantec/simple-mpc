@@ -18,7 +18,7 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
   control_ref_ = settings_.u0;
 
   // Set up cost names used in kinodynamics problem
-  int cost_incr = 0;
+  std::size_t cost_incr = 0;
   cost_map_.insert({"state_cost", cost_incr});
   cost_incr++;
   cost_map_.insert({"control_cost", cost_incr});
@@ -78,6 +78,27 @@ StageModel KinodynamicsProblem::create_stage(
       IntegratorSemiImplEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
+}
+
+void KinodynamicsProblem::set_reference_poses(
+    const std::size_t i, const std::vector<pinocchio::SE3> &pose_refs) {
+  if (i >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  if (pose_refs.size() != handler_.get_ee_names().size()) {
+    throw std::runtime_error(
+        "pose_refs size does not match number of end effectors");
+  }
+
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  for (std::size_t i = 0; i < pose_refs.size(); i++) {
+    QuadraticResidualCost *qrc =
+        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
+            handler_.get_ee_names()[i] + "_pose_cost")]);
+    FramePlacementResidual *cfr =
+        dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
+    cfr->setReference(pose_refs[i]);
+  }
 }
 
 void KinodynamicsProblem::set_reference_control(const std::size_t i,

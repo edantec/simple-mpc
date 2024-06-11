@@ -14,6 +14,7 @@
 #include "aligator/modelling/costs/sum-of-costs.hpp"
 #include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/contact-force.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
@@ -27,20 +28,23 @@ using namespace aligator;
 using Base = Problem;
 using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = aligator::StageModelTpl<double>;
-using CostStack = aligator::CostStackTpl<double>;
-using IntegratorSemiImplEuler =
-    aligator::dynamics::IntegratorSemiImplEulerTpl<double>;
+using StageModel = StageModelTpl<double>;
+using CostStack = CostStackTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 using MultibodyConstraintFwdDynamics =
-    aligator::dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
-using ODEAbstract = aligator::dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = aligator::QuadraticStateCostTpl<double>;
-using QuadraticControlCost = aligator::QuadraticControlCostTpl<double>;
-using ContactMap = aligator::ContactMapTpl<double>;
-using FramePlacementResidual = aligator::FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = aligator::QuadraticResidualCostTpl<double>;
-using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
-using ContactForceResidual = aligator::ContactForceResidualTpl<double>;
+    dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
+using ODEAbstract = dynamics::ODEAbstractTpl<double>;
+using QuadraticStateCost = QuadraticStateCostTpl<double>;
+using QuadraticControlCost = QuadraticControlCostTpl<double>;
+using ContactMap = ContactMapTpl<double>;
+using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
+using TrajOptProblem = TrajOptProblemTpl<double>;
+using ContactForceResidual = ContactForceResidualTpl<double>;
+using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
+using ControlErrorResidual = ControlErrorResidualTpl<double>;
+using StateErrorResidual = StateErrorResidualTpl<double>;
+using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -50,6 +54,12 @@ struct FullDynamicsSettings : public Settings {
 public:
   Eigen::VectorXd w_forces;
   Eigen::VectorXd w_frame;
+
+  Eigen::VectorXd umin;
+  Eigen::VectorXd umax;
+
+  Eigen::VectorXd qmin;
+  Eigen::VectorXd qmax;
 };
 
 class FullDynamicsProblem : public Problem {
@@ -65,6 +75,8 @@ public:
 
   StageModel create_stage(const ContactMap &contact_map,
                           const std::vector<Eigen::VectorXd> &force_refs);
+  void set_reference_poses(const std::size_t i,
+                           const std::vector<pinocchio::SE3> &pose_refs);
   void set_reference_forces(const std::size_t i,
                             const std::vector<Eigen::VectorXd> &force_refs);
   void set_reference_forces(const std::size_t i, const std::string &ee_name,
