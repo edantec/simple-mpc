@@ -32,8 +32,7 @@ else()
         "\nCan't find jrl-cmakemodules. Please either:\n"
         "  - use git submodule: 'git submodule update --init'\n"
         "  - or install https://github.com/jrl-umi3218/jrl-cmakemodules\n"
-        "  - or upgrade your CMake version to >= 3.14 to allow automatic fetching\n"
-    )
+        "  - or upgrade your CMake to >= 3.14 to allow automatic fetching\n")
   else()
     message(STATUS "JRL cmakemodules not found. Let's fetch it.")
     FetchContent_Declare(
@@ -54,40 +53,6 @@ project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 add_compile_options(-Wno-error)
 
-option(ENABLE_TRACY_PROFILING "Enable Tracy profiler" OFF)
-option(DOWNLOAD_TRACY "Use FetchContent to install Tracy." ON)
-if(DOWNLOAD_TRACY)
-  FetchContent_Declare(
-    tracy
-    GIT_REPOSITORY https://github.com/Simple-Robotics/tracy.git
-    GIT_TAG patches
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-  FetchContent_GetProperties(tracy)
-  if(NOT tracy_POPULATED)
-    FetchContent_Populate(tracy)
-    set(TRACY_STATIC
-        ON
-        CACHE INTERNAL "")
-    set(TRACY_ENABLE
-        ${ENABLE_TRACY_PROFILING}
-        CACHE INTERNAL "")
-    add_subdirectory(${tracy_SOURCE_DIR} ${tracy_BINARY_DIR} EXCLUDE_FROM_ALL)
-    # Extract the target include directories, set as system
-    get_target_property(tracy_INCLUDE_DIR TracyClient
-                        INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(
-      TracyClient
-      PROPERTIES POSITION_INDEPENDENT_CODE True
-                 INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${tracy_INCLUDE_DIR}")
-  endif()
-else()
-  # assume it is installed somewhere
-  find_package(Tracy REQUIRED)
-  set_target_properties(Tracy::TracyClient PROPERTIES POSITION_INDEPENDENT_CODE
-                                                      True)
-endif()
-
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
@@ -100,12 +65,8 @@ add_project_dependency(aligator REQUIRED)
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB mpc_HEADER CONFIGURE_DEPENDS include/${PROJECT_NAME}/*.hpp)
-set(${PROJECT_NAME}_HEADERS ${mpc_HEADER})
 
-set(${PROJECT_NAME}_SOURCES ${mpc_SOURCE})
-
-add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SOURCES}
-                                   ${${PROJECT_NAME}_HEADERS})
+add_library(${PROJECT_NAME} SHARED ${mpc_HEADER} ${mpc_SOURCE})
 target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(
   ${PROJECT_NAME}
@@ -136,14 +97,3 @@ install(
   EXPORT ${TARGETS_EXPORT_NAME}
   DESTINATION lib)
 install(FILES package.xml DESTINATION share/${PROJECT_NAME})
-
-if(DOWNLOAD_TRACY)
-  install(
-    TARGETS TracyClient
-    EXPORT ${TARGETS_EXPORT_NAME}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}/aligator
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}/aligator)
-  message(
-    STATUS
-      "Installing TracyClient target to ${CMAKE_INSTALL_FULL_LIBDIR}/aligator")
-endif()
