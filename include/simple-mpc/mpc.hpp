@@ -129,7 +129,7 @@ public:
 
   void recedeWithCycle();
 
-  void updateSupportTiming();
+  // void updateSupportTiming();
 
   // getters and setters
   MPCSettings &get_settings() { return settings_; }

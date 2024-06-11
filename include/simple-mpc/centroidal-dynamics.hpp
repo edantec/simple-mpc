@@ -61,7 +61,6 @@ public:
   compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
   void set_reference_poses(const std::size_t i,
                            const std::vector<pinocchio::SE3> &pose_refs) {};
-  void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
   void set_reference_forces(const std::size_t i,
                             const std::vector<Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();

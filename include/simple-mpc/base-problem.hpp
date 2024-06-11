@@ -16,6 +16,7 @@
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/modelling/contact-map.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
+#include <aligator/modelling/dynamics/centroidal-fwd.hpp>
 
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/robot-handler.hpp"
@@ -31,6 +32,8 @@ using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;
 using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
+using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
+using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
 /**
  * @brief Build a full dynamics problem
  */
@@ -73,30 +76,26 @@ public:
 
   Problem();
   Problem(const RobotHandler &handler);
-  virtual ~Problem() {}
+  virtual ~Problem();
 
   virtual StageModel
   create_stage(const ContactMap &contact_map,
                const std::vector<Eigen::VectorXd> &force_refs);
   virtual CostStack create_terminal_cost();
-  virtual void create_problem(const Eigen::VectorXd &x0,
-                              const std::vector<ContactMap> &contact_sequence);
+  void create_problem(const Eigen::VectorXd &x0,
+                      const std::vector<ContactMap> &contact_sequence);
 
   virtual void
   set_reference_poses(const std::size_t i,
-                      const std::vector<pinocchio::SE3> &pose_refs);
+                      const std::vector<pinocchio::SE3> &pose_refs) {};
   virtual void
   set_reference_forces(const std::size_t i,
-                       const std::vector<Eigen::VectorXd> &force_refs);
-  virtual void set_reference_control(const std::size_t i,
-                                     const Eigen::VectorXd &u_ref);
-  virtual void insert_cost(CostStack &cost_stack,
-                           const xyz::polymorphic<CostAbstract> &cost,
-                           std::map<std::string, std::size_t> &cost_map,
-                           const std::string &name, int &cost_incr);
-
-  void
-  compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
+                       const std::vector<Eigen::VectorXd> &force_refs) {};
+  void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
+  void insert_cost(CostStack &cost_stack,
+                   const xyz::polymorphic<CostAbstract> &cost,
+                   std::map<std::string, std::size_t> &cost_map,
+                   const std::string &name, int &cost_incr);
 
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;

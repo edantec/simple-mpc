@@ -11,6 +11,8 @@
 namespace simple_mpc {
 using namespace aligator;
 
+Problem::~Problem() {}
+
 Problem::Problem(const RobotHandler &handler) : handler_(handler) {
   nq_ = handler_.get_rmodel().nq;
   nv_ = handler_.get_rmodel().nv;
@@ -33,6 +35,29 @@ void Problem::create_problem(const Eigen::VectorXd &x0,
                                               create_terminal_cost());
 }
 
+StageModel
+Problem::create_stage(const ContactMap &contact_map,
+                      const std::vector<Eigen::VectorXd> &force_refs) {
+  auto space = VectorSpace(10);
+  auto rcost = CostStack(space, nu_);
+  Eigen::Vector3d gravity;
+  gravity << 0, 0, 9;
+
+  CentroidalFwdDynamics ode =
+      CentroidalFwdDynamics(space, handler_.get_mass(), gravity, contact_map,
+                            (int)force_refs[0].size());
+  IntegratorSemiImplEuler dyn_model = IntegratorSemiImplEuler(ode, 0.01);
+
+  return StageModel(rcost, dyn_model);
+}
+
+CostStack Problem::create_terminal_cost() {
+  auto ter_space = VectorSpace(10);
+  auto term_cost = CostStack(ter_space, nu_);
+
+  return term_cost;
+}
+
 void Problem::set_reference_control(const std::size_t i,
                                     const Eigen::VectorXd &u_ref) {
   if (i >= problem_->stages_.size()) {
@@ -50,7 +75,7 @@ void Problem::insert_cost(CostStack &cost_stack,
                           std::map<std::string, std::size_t> &cost_map,
                           const std::string &name, int &cost_incr) {
   cost_stack.addCost(cost);
-  cost_map.insert({"name", cost_incr});
+  cost_map.insert({name, cost_incr});
   cost_incr++;
 }
 

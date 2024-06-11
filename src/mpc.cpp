@@ -97,7 +97,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   // ~~TIMING~~ //
   recedeWithCycle();
-  updateSupportTiming();
+  // updateSupportTiming();
 
   // ~~REFERENCES~~ //
   handler_.updateInternalData(x0_);
