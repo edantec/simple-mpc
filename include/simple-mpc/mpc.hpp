@@ -95,7 +95,7 @@ protected:
   Eigen::VectorXd x0_;
 
   // timings
-  std::vector<int> takeoff_RF_, takeoff_LF_, land_RF_, land_LF_;
+  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
   std::size_t horizon_iteration_;
 
   // INTERNAL UPDATING functions
@@ -130,82 +130,27 @@ public:
   void recedeWithCycle();
 
   void updateSupportTiming();
-  /* void updateSupportTiming();
-
-  void iterate(const Eigen::VectorXd &q_current, const Eigen::VectorXd
-  &v_current, bool is_feasible);
-
-  void iterate(int iteration, const Eigen::VectorXd &q_current, const
-  Eigen::VectorXd &v_current, bool is_feasible); void iterateNoThinking(const
-  Eigen::VectorXd &q_current, const Eigen::VectorXd &v_current, bool
-  is_feasible);
-
-  void iterateNoThinking(int iteration, const Eigen::VectorXd &q_current, const
-  Eigen::VectorXd &v_current, bool is_feasible); void
-  iterateNoThinkingWithDelay(const Eigen::VectorXd &q_current, const
-  Eigen::VectorXd &v_current, bool contact_left, bool contact_right, bool
-  is_feasible); void recedeWithCycle(); void goToNextDoubleSupport();
 
   // getters and setters
-  WBCHorizonSettings &get_settings() { return settings_; }
+  MPCSettings &get_settings() { return settings_; }
 
   const Eigen::VectorXd &get_x0() const { return x0_; }
   void set_x0(const Eigen::VectorXd &x0) { x0_ = x0; }
 
-  HorizonManager &get_fullHorizon() { return fullHorizon_; }
-  void set_fullHorizon(const HorizonManager &fullHorizon) { fullHorizon_ =
-  fullHorizon; }
+  std::vector<StageModel> &get_fullHorizon() { return full_horizon_; }
 
-  HorizonManager &get_horizon() { return horizon_; }
-  void set_horizon(const HorizonManager &horizon) { horizon_ = horizon; }
+  std::shared_ptr<Problem> &get_problem() { return problem_; }
 
-  RobotDesigner &get_designer() { return designer_; }
-  void set_designer(const RobotDesigner &designer) { designer_ = designer; }
+  RobotHandler &get_handler() { return handler_; }
 
-  const std::vector<int> &get_land_LF() { return land_LF_; }
-  const std::vector<int> &get_land_RF() { return land_RF_; }
-  const std::vector<int> &get_takeoff_LF() { return takeoff_LF_; }
-  const std::vector<int> &get_takeoff_RF() { return takeoff_RF_; }
+  const std::map<std::string, std::vector<int>> &get_land_times() {
+    return foot_land_times_;
+  }
+  const std::map<std::string, std::vector<int>> &get_takeoff_time() {
+    return foot_takeoff_times_;
+  }
 
-  const int &get_horizon_iteration() { return horizon_iteration_; }
-
-  // USER REFERENCE SETTERS AND GETTERS
-  const std::vector<Eigen::VectorXd> &getTorqueRef() { return torqueRef_; }
-  const Eigen::VectorXd &getTorqueRef(unsigned long time) { return
-  torqueRef_[time]; } void setTorqueRef(const std::vector<Eigen::VectorXd>
-  &ref_torque) {torqueRef_ = ref_torque; }
-
-  const std::vector<pinocchio::SE3> &getPoseRef_LF() { return ref_LF_poses_; }
-  const pinocchio::SE3 &getPoseRef_LF(unsigned long time) { return
-  ref_LF_poses_[time]; } void setPoseRef_LF(const std::vector<pinocchio::SE3>
-  &ref_LF_poses) { ref_LF_poses_ = ref_LF_poses; } void setPoseRef_LF(const
-  pinocchio::SE3 &ref_LF_pose, unsigned long time) { ref_LF_poses_[time] =
-  ref_LF_pose; }
-
-  const std::vector<pinocchio::SE3> &getPoseRef_RF() { return ref_RF_poses_; }
-  const pinocchio::SE3 &getPoseRef_RF(unsigned long time) { return
-  ref_RF_poses_[time]; } void setPoseRef_RF(const std::vector<pinocchio::SE3>
-  &ref_RF_poses) { ref_RF_poses_ = ref_RF_poses; } void setPoseRef_RF(const
-  pinocchio::SE3 &ref_RF_pose, unsigned long time) { ref_RF_poses_[time] =
-  ref_RF_pose; }
-
-  const eVector3 &getCoMRef() { return ref_com_; }
-  void setCoMRef(eVector3 ref_com) { ref_com_ = ref_com; }
-
-  const Eigen::Matrix3d &getBaseRotRef() { return ref_base_rotation_; }
-  void setBaseRotRef(Eigen::Matrix3d ref_base_rotation) { ref_base_rotation_ =
-  ref_base_rotation; }
-
-  const eVector3 &getVelRef_COM() { return ref_com_vel_; }
-  void setVelRef_COM(eVector3 ref_com_vel) { ref_com_vel_ = ref_com_vel; }
-  bool horizonEnd() { return horizon_iteration_ == fullHorizon_.size(); }
-
-  // For the python bindings:
-  std::vector<pinocchio::SE3> &ref_LF_poses() { return ref_LF_poses_; }
-  std::vector<pinocchio::SE3> &ref_RF_poses() { return ref_RF_poses_; }
-  eVector3 &ref_com() { return ref_com_; }
-  Eigen::Matrix3d &ref_base_rot() { return ref_base_rotation_; }
-  eVector3 &ref_com_vel() { return ref_com_vel_; } */
+  const std::size_t &get_horizon_iteration() { return horizon_iteration_; }
 };
 
 } // namespace simple_mpc

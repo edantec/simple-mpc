@@ -129,28 +129,21 @@ void MPC::recedeWithCycle() {
   }
 }
 
-void MPC::updateSupportTiming() {
-  for (unsigned long i = 0; i < land_LF_.size(); i++)
-    land_LF_[i] -= 1;
-  for (unsigned long i = 0; i < land_RF_.size(); i++)
-    land_RF_[i] -= 1;
-  for (unsigned long i = 0; i < takeoff_LF_.size(); i++)
-    takeoff_LF_[i] -= 1;
-  for (unsigned long i = 0; i < takeoff_RF_.size(); i++)
-    takeoff_RF_[i] -= 1;
-
-  if (land_LF_.size() > 0 && land_LF_[0] < 0)
-    land_LF_.erase(land_LF_.begin());
-
-  if (land_RF_.size() > 0 && land_RF_[0] < 0)
-    land_RF_.erase(land_RF_.begin());
-
-  if (takeoff_LF_.size() > 0 && takeoff_LF_[0] < 0)
-    takeoff_LF_.erase(takeoff_LF_.begin());
-
-  if (takeoff_RF_.size() > 0 && takeoff_RF_[0] < 0)
-    takeoff_RF_.erase(takeoff_RF_.begin());
-}
+/* void MPC::updateSupportTiming() {
+  for (auto name : handler_.get_ee_names()) {
+    for (std::size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
+      foot_land_times_.at(name)[i] -= 1;
+    }
+    if (foot_land_times_.at(name).size() > 0 && foot_land_times_.at(name)[0] <
+0) foot_land_times_.at(name).erase(foot_land_times_.at(name).begin()); for
+(std::size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++) {
+      foot_takeoff_times_.at(name)[i] -= 1;
+    }
+    if (foot_takeoff_times_.at(name).size() > 0 &&
+foot_takeoff_times_.at(name)[0] < 0)
+      foot_takeoff_times_.at(name).erase(foot_takeoff_times_.at(name).begin());
+    }
+} */
 
 void MPC::updateStepTrackerReferences() {
   for (unsigned long time = 0; time < problem_->problem_->stages_.size();
