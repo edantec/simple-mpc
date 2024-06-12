@@ -38,38 +38,6 @@ using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
  * @brief Build a full dynamics problem
  */
 
-struct Settings {
-  /// @brief reference 0 state and control
-  Eigen::VectorXd x0;
-  Eigen::VectorXd u0;
-  /// @brief Duration of the OCP horizon.
-  int T;
-  /// @brief timestep in problem shooting nodes
-  double DT;
-  /// @brief stop threshold to configure the solver
-  double solver_th_stop;
-  /// @brief solver param reg_min
-  double solver_reg_min;
-  /// @brief Solver max number of iteration
-  int solver_maxiter;
-  /// @brief List of end effector names
-  std::vector<std::string> end_effectors;
-  /// @brief List of controlled joint names
-  std::vector<std::string> controlled_joints_names;
-
-  Eigen::MatrixXd w_x;
-  Eigen::MatrixXd w_u;
-  Eigen::MatrixXd w_frame;
-  Eigen::MatrixXd w_cent;
-  Eigen::MatrixXd w_centder;
-
-  Eigen::Vector3d gravity;
-  int force_size;
-
-  Settings();
-  virtual ~Settings() {}
-};
-
 class Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -80,23 +48,30 @@ public:
 
   virtual StageModel
   create_stage(const ContactMap &contact_map,
-               const std::vector<Eigen::VectorXd> &force_refs);
-  virtual CostStack create_terminal_cost();
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence);
+               const std::vector<Eigen::VectorXd> &force_refs) = 0;
+  virtual CostStack create_terminal_cost() = 0;
+  virtual void
+  create_problem(const Eigen::VectorXd &x0,
+                 const std::vector<ContactMap> &contact_sequence) = 0;
+  std::vector<xyz::polymorphic<StageModel>>
+  create_stages(const std::vector<ContactMap> &contact_sequence);
 
   virtual void
   set_reference_poses(const std::size_t i,
-                      const std::vector<pinocchio::SE3> &pose_refs) {};
+                      const std::vector<pinocchio::SE3> &pose_refs) = 0;
   virtual void
   set_reference_forces(const std::size_t i,
-                       const std::vector<Eigen::VectorXd> &force_refs) {};
+                       const std::vector<Eigen::VectorXd> &force_refs) = 0;
   void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
   void insert_cost(CostStack &cost_stack,
                    const xyz::polymorphic<CostAbstract> &cost,
                    std::map<std::string, std::size_t> &cost_map,
                    const std::string &name, int &cost_incr);
 
+  CostStack *get_cost_stack(std::size_t i);
+  std::size_t get_cost_number();
+  pinocchio::SE3 get_reference_pose(const std::size_t i,
+                                    const std::string cost_name);
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;
 

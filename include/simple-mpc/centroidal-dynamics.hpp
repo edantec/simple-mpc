@@ -33,7 +33,19 @@ using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
  * @brief Build a full dynamics problem
  */
 
-struct CentroidalSettings : public Settings {
+struct CentroidalSettings {
+  /// @brief reference 0 state and control
+  Eigen::VectorXd x0;
+  Eigen::VectorXd u0;
+  /// @brief timestep in problem shooting nodes
+  double DT;
+
+  Eigen::MatrixXd w_x;
+  Eigen::MatrixXd w_u;
+
+  Eigen::Vector3d gravity;
+  int force_size;
+
   Eigen::VectorXd w_linear_mom;
   Eigen::Vector3d w_angular_mom;
   Eigen::VectorXd w_linear_acc;

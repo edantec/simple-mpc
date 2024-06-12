@@ -38,10 +38,24 @@ using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
  * @brief Build a full dynamics problem
  */
 
-struct FullDynamicsSettings : public Settings {
+struct FullDynamicsSettings {
 public:
-  Eigen::VectorXd w_forces;
-  Eigen::VectorXd w_frame;
+  /// @brief reference 0 state and control
+  Eigen::VectorXd x0;
+  Eigen::VectorXd u0;
+  /// @brief timestep in problem shooting nodes
+  double DT;
+
+  Eigen::MatrixXd w_x;
+  Eigen::MatrixXd w_u;
+  Eigen::MatrixXd w_cent;
+  Eigen::MatrixXd w_centder;
+
+  Eigen::Vector3d gravity;
+  int force_size;
+
+  Eigen::MatrixXd w_forces;
+  Eigen::MatrixXd w_frame;
 
   Eigen::VectorXd umin;
   Eigen::VectorXd umax;
@@ -61,6 +75,9 @@ public:
                   const RobotHandler &handler);
   virtual ~FullDynamicsProblem() {}
 
+  void create_problem(const Eigen::VectorXd &x0,
+                      const std::vector<ContactMap> &contact_sequence);
+
   StageModel create_stage(const ContactMap &contact_map,
                           const std::vector<Eigen::VectorXd> &force_refs);
   void set_reference_poses(const std::size_t i,
@@ -69,6 +86,10 @@ public:
                             const std::vector<Eigen::VectorXd> &force_refs);
   void set_reference_forces(const std::size_t i, const std::string &ee_name,
                             Eigen::VectorXd &force_ref);
+  pinocchio::SE3 get_reference_pose(const std::size_t i,
+                                    const std::string &cost_name);
+  Eigen::VectorXd get_reference_force(const std::size_t i,
+                                      const std::string &cost_name);
   CostStack create_terminal_cost();
 
 protected:

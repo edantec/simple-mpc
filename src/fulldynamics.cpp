@@ -102,13 +102,20 @@ StageModel FullDynamicsProblem::create_stage(
   }
 
   for (std::size_t i = 0; i < contact_states.size(); i++) {
-    ContactForceResidual frame_force = ContactForceResidual(
-        space.ndx(), handler_.get_rmodel(), actuation_matrix_, cms,
-        prox_settings_, force_refs[i], handler_.get_ee_name(i));
+    std::shared_ptr<ContactForceResidual> frame_force;
     int is_active = 0;
-    if (contact_states[i])
+    if (contact_states[i]) {
+      frame_force = std::make_shared<ContactForceResidual>(
+          space.ndx(), handler_.get_rmodel(), actuation_matrix_, cms,
+          prox_settings_, force_refs[i], handler_.get_ee_name(i));
       is_active = 1;
-    rcost.addCost(QuadraticResidualCost(space, frame_force,
+    } else {
+      frame_force = std::make_shared<ContactForceResidual>(
+          space.ndx(), handler_.get_rmodel(), actuation_matrix_,
+          constraint_models_, prox_settings_, force_refs[i],
+          handler_.get_ee_name(i));
+    }
+    rcost.addCost(QuadraticResidualCost(space, *frame_force,
                                         settings_.w_forces * is_active));
   }
 
@@ -152,15 +159,11 @@ void FullDynamicsProblem::set_reference_poses(
 
 void FullDynamicsProblem::set_reference_forces(
     const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
-  if (i >= problem_->stages_.size()) {
-    throw std::runtime_error("Stage index exceeds stage vector size");
-  }
+  CostStack *cs = get_cost_stack(i);
   if (force_refs.size() != handler_.get_ee_names().size()) {
     throw std::runtime_error(
         "force_refs size does not match number of end effectors");
   }
-
-  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
   for (std::size_t i = 0; i < force_refs.size(); i++) {
     QuadraticResidualCost *qrc =
         dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
@@ -168,22 +171,42 @@ void FullDynamicsProblem::set_reference_forces(
     ContactForceResidual *cfr =
         dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
     cfr->setReference(force_refs[i]);
+
+    // std::cout << cfr->getReference() << std::endl;
   }
 }
 
 void FullDynamicsProblem::set_reference_forces(const std::size_t i,
                                                const std::string &ee_name,
                                                Eigen::VectorXd &force_ref) {
-  if (i >= problem_->stages_.size()) {
-    throw std::runtime_error("Stage index exceeds stage vector size");
-  }
-
-  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
+  CostStack *cs = get_cost_stack(i);
   QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);
   ContactForceResidual *cfr =
       dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
   cfr->setReference(force_ref);
+}
+
+pinocchio::SE3
+FullDynamicsProblem::get_reference_pose(const std::size_t i,
+                                        const std::string &cost_name) {
+  CostStack *cs = get_cost_stack(i);
+  QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(cost_name)]);
+  FramePlacementResidual *cfr =
+      dynamic_cast<FramePlacementResidual *>(&*qc->residual_);
+  return cfr->getReference();
+}
+
+Eigen::VectorXd
+FullDynamicsProblem::get_reference_force(const std::size_t i,
+                                         const std::string &cost_name) {
+  CostStack *cs = get_cost_stack(i);
+  QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(cost_name)]);
+  ContactForceResidual *cfr =
+      dynamic_cast<ContactForceResidual *>(&*qc->residual_);
+  return cfr->getReference();
 }
 
 CostStack FullDynamicsProblem::create_terminal_cost() {
@@ -193,6 +216,15 @@ CostStack FullDynamicsProblem::create_terminal_cost() {
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
 
   return term_cost;
+}
+
+void FullDynamicsProblem::create_problem(
+    const Eigen::VectorXd &x0,
+    const std::vector<ContactMap> &contact_sequence) {
+  std::vector<xyz::polymorphic<StageModel>> stage_models =
+      create_stages(contact_sequence);
+  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
+                                              create_terminal_cost());
 }
 
 } // namespace simple_mpc

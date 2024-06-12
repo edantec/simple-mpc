@@ -35,16 +35,19 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
 
   pinocchio::srdf::loadReferenceConfigurations(rmodel_complete_,
                                                settings_.srdf_path, false);
-  pinocchio::srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path,
-                                       false);
-  q0Complete_ = rmodel_complete_.referenceConfigurations["half_sitting"];
+  if (settings.loadRotor) {
+    pinocchio::srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path,
+                                         false);
+  }
+  q0Complete_ =
+      rmodel_complete_.referenceConfigurations[settings.base_configuration];
   v0Complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
 
   // REDUCED MODEL //
 
-  if (settings_.controlled_joints_names[0] != "root_joint") {
-    throw std::invalid_argument(
-        "the joint at index 0 must be called 'root_joint' ");
+  if (settings_.controlled_joints_names[0] != settings.root_name) {
+    throw std::invalid_argument("the joint at index 0 must be called " +
+                                settings.root_name);
   }
 
   // Check if listed joints belong to model
@@ -83,7 +86,9 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
 
   pinocchio::srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path,
                                                false);
-  pinocchio::srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
+  if (settings.loadRotor) {
+    pinocchio::srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
+  }
   q0_ = rmodel_.referenceConfigurations[settings_.base_configuration];
   v0_ = Eigen::VectorXd::Zero(rmodel_.nv);
   x0_.resize(rmodel_.nq + rmodel_.nv);

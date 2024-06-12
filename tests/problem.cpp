@@ -1,105 +1,143 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "aligator/core/function-abstract.hpp"
-#include "aligator/modelling/state-error.hpp"
+#include "simple-mpc/centroidal-dynamics.hpp"
+#include "simple-mpc/fulldynamics.hpp"
+#include "simple-mpc/fwd.hpp"
+#include "simple-mpc/kinodynamics.hpp"
+#include "simple-mpc/robot-handler.hpp"
 
-#include "aligator/modelling/costs/quad-state-cost.hpp"
-#include <proxsuite-nlp/modelling/spaces/pinocchio-groups.hpp>
-#include <proxsuite-nlp/modelling/spaces/vector-space.hpp>
+BOOST_AUTO_TEST_SUITE(problem)
 
-BOOST_AUTO_TEST_SUITE(costs)
-
-using namespace aligator;
+using namespace simple_mpc;
 using T = double;
 using context::MatrixXs;
 using context::VectorXs;
 using QuadraticResidualCost = QuadraticResidualCostTpl<T>;
 
-void fd_test(VectorXs x0, VectorXs u0, MatrixXs weights,
-             QuadraticResidualCost qres, shared_ptr<context::CostData> data) {
+RobotHandler getTalosHandler() {
+  RobotHandlerSettings settings;
+  settings.urdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
+  settings.srdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
 
-  const xyz::polymorphic<StageFunctionTpl<T>> fun = qres.residual_;
-  const auto fd = fun->createData();
-  const auto ndx = fd->ndx1;
-  const auto nu = fd->nu;
-  qres.evaluate(x0, u0, *data);
-  qres.computeGradients(x0, u0, *data);
-  qres.computeHessians(x0, u0, *data);
+  settings.controlled_joints_names = {
+      "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
+      "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
+      "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
+      "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint",
+      "leg_right_6_joint", "torso_1_joint",     "torso_2_joint",
+      "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",
+      "arm_left_4_joint",  "arm_right_1_joint", "arm_right_2_joint",
+      "arm_right_3_joint", "arm_right_4_joint",
+  };
+  settings.end_effector_names = {"left_sole_link", "right_sole_link"};
+  settings.base_configuration = "half_sitting";
+  settings.root_name = "root_joint";
+  settings.loadRotor = true;
 
-  // analytical formula
-  fun->evaluate(x0, u0, x0, *fd);
-  fun->computeJacobians(x0, u0, x0, *fd);
+  RobotHandler handler(settings);
 
-  auto n = (long)(ndx + nu);
-  auto J = fd->jac_buffer_.leftCols(n);
-
-  auto grad_ref = J.transpose() * weights * fd->value_;
-  auto hess_ref = J.transpose() * weights * J;
-  BOOST_CHECK(grad_ref.isApprox(data->grad_));
-  BOOST_CHECK(hess_ref.isApprox(data->hess_));
+  return handler;
 }
 
-BOOST_AUTO_TEST_CASE(quad_state_se2) {
-  using SE2 = proxsuite::nlp::SETpl<2, T>;
-  auto space = std::make_shared<SE2>();
+BOOST_AUTO_TEST_CASE(fulldynamics) {
+  RobotHandler handler = getTalosHandler();
+  int nv = handler.get_rmodel().nv;
+  int nu = nv - 6;
 
-  const Eigen::Index ndx = space->ndx();
-  const Eigen::Index nu = 1UL;
-  Eigen::VectorXd u0(nu);
-  u0.setZero();
+  FullDynamicsSettings settings;
+  settings.x0 = handler.get_x0();
+  settings.u0 = Eigen::VectorXd::Zero(nu);
+  settings.DT = 0.01;
+  settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
+  settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
+  settings.w_cent = Eigen::MatrixXd::Identity(6, 6);
+  settings.w_centder = Eigen::MatrixXd::Identity(6, 6);
+  settings.gravity << 0, 0, 9;
+  settings.force_size = 6;
+  settings.w_forces = Eigen::MatrixXd::Identity(6, 6);
+  settings.w_frame = Eigen::MatrixXd::Identity(6, 6);
+  settings.umin =
+      -handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
+  settings.umin =
+      handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
+  settings.qmin = -Eigen::VectorXd::Ones(handler.get_rmodel().nv);
+  settings.qmax = Eigen::VectorXd::Ones(handler.get_rmodel().nv);
 
-  const auto target = space->rand();
+  FullDynamicsProblem fdproblem(settings, handler);
 
-  const auto fun =
-      std::make_shared<StateErrorResidualTpl<T>>(*space, nu, target);
+  BOOST_CHECK_EQUAL(fdproblem.cost_map_.at("control_cost"), 1);
+  BOOST_CHECK_EQUAL(fdproblem.cost_map_.at("centroidal_cost"), 2);
+  BOOST_CHECK_EQUAL(fdproblem.cost_map_.at("left_sole_link_pose_cost"), 3);
 
-  BOOST_CHECK_EQUAL(fun->nr, ndx);
-  Eigen::MatrixXd weights(ndx, ndx);
-  weights.setIdentity();
-  const auto qres =
-      std::make_shared<QuadraticStateCostTpl<T>>(*space, nu, target, weights);
+  std::vector<bool> contact_states = {true, false};
+  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+  Eigen::Vector3d p1 = {0, 0.1, 0};
+  Eigen::Vector3d p2 = {0, -0.1, 0};
+  contact_poses.push_back(p1);
+  contact_poses.push_back(p2);
+  ContactMap cm(contact_states, contact_poses);
 
-  shared_ptr<context::CostData> data = qres->createData();
-  auto fd = fun->createData();
+  std::vector<Eigen::VectorXd> force_refs;
+  Eigen::VectorXd f1(6);
+  f1 << 0, 0, 800, 0, 0, 0;
+  force_refs.push_back(f1);
+  force_refs.push_back(Eigen::VectorXd::Zero(6));
+  StageModel sm = fdproblem.create_stage(cm, force_refs);
+  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
-  const int nrepeats = 10;
+  BOOST_CHECK_EQUAL(cs->components_.size(), 7);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 2);
 
-  for (int k = 0; k < nrepeats; k++) {
-    Eigen::VectorXd x0 = space->rand();
-    fd_test(x0, u0, weights, *qres, data);
+  std::vector<ContactMap> contact_sequence;
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
   }
-}
-
-BOOST_AUTO_TEST_CASE(quad_state_highdim) {
-  using VectorSpace = proxsuite::nlp::VectorSpaceTpl<T>;
-  const Eigen::Index ndx = 56;
-  const auto space = std::make_shared<VectorSpace>(ndx);
-  const Eigen::Index nu = 1UL;
-
-  Eigen::VectorXd u0(nu);
-  u0.setZero();
-
-  const auto target = space->rand();
-
-  const auto fun =
-      std::make_shared<StateErrorResidualTpl<T>>(*space, nu, target);
-
-  BOOST_CHECK_EQUAL(fun->nr, ndx);
-  Eigen::MatrixXd weights(ndx, ndx);
-  weights.setIdentity();
-  const auto qres =
-      std::make_shared<QuadraticStateCostTpl<T>>(*space, nu, target, weights);
-
-  shared_ptr<context::CostData> data = qres->createData();
-  auto fd = fun->createData();
-
-  const int nrepeats = 10;
-
-  for (int k = 0; k < nrepeats; k++) {
-    Eigen::VectorXd x0 = space->rand();
-    fd_test(x0, u0, weights, *qres, data);
+  for (std::size_t i = 0; i < 50; i++) {
+    std::vector<bool> contact_states = {true, false};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
   }
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0.5, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+  }
+  fdproblem.create_problem(settings.x0, contact_sequence);
+  BOOST_CHECK_EQUAL(fdproblem.problem_->stages_.size(), 70);
+
+  pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
+  new_pose_left.translation() << 1, 0, 2;
+  pinocchio::SE3 new_pose_right = pinocchio::SE3::Identity();
+  new_pose_right.translation() << -1, 0, 2;
+  std::vector<pinocchio::SE3> new_poses = {new_pose_left, new_pose_right};
+
+  fdproblem.set_reference_poses(3, new_poses);
+  BOOST_CHECK_EQUAL(fdproblem.get_reference_pose(3, "left_sole_link_pose_cost"),
+                    new_poses[0]);
+  BOOST_CHECK_EQUAL(
+      fdproblem.get_reference_pose(3, "right_sole_link_pose_cost"),
+      new_poses[1]);
+
+  force_refs[0][1] = 1;
+  force_refs[1][0] = 1;
+  fdproblem.set_reference_forces(3, force_refs);
+  BOOST_CHECK_EQUAL(
+      fdproblem.get_reference_force(3, "left_sole_link_force_cost"),
+      force_refs[0]);
+  BOOST_CHECK_EQUAL(
+      fdproblem.get_reference_force(3, "right_sole_link_force_cost"),
+      force_refs[1]);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

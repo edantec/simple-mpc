@@ -33,12 +33,21 @@ using CentroidalMomentumDerivativeResidual =
  * @brief Build a full dynamics problem
  */
 
-struct KinodynamicsSettings : public Settings {
-  Eigen::VectorXd w_cent;
-  Eigen::Vector3d w_centder;
+struct KinodynamicsSettings {
+  /// @brief reference 0 state and control
+  Eigen::VectorXd x0;
+  Eigen::VectorXd u0;
+  /// @brief timestep in problem shooting nodes
+  double DT;
 
-  KinodynamicsSettings();
-  virtual ~KinodynamicsSettings() {}
+  Eigen::MatrixXd w_x;
+  Eigen::MatrixXd w_u;
+  Eigen::VectorXd w_frame;
+  Eigen::MatrixXd w_cent;
+  Eigen::MatrixXd w_centder;
+
+  Eigen::Vector3d gravity;
+  int force_size;
 };
 
 class KinodynamicsProblem : public Problem {

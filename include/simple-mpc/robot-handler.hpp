@@ -23,6 +23,7 @@ public:
   std::vector<std::string> end_effector_names;
   std::string root_name = "";
   std::string base_configuration = "";
+  bool loadRotor = false;
 };
 
 class RobotHandler {
