@@ -42,9 +42,12 @@ struct KinodynamicsSettings {
 
   Eigen::MatrixXd w_x;
   Eigen::MatrixXd w_u;
-  Eigen::VectorXd w_frame;
+  Eigen::MatrixXd w_frame;
   Eigen::MatrixXd w_cent;
   Eigen::MatrixXd w_centder;
+
+  Eigen::VectorXd qmin;
+  Eigen::VectorXd qmax;
 
   Eigen::Vector3d gravity;
   int force_size;
@@ -62,13 +65,21 @@ public:
 
   virtual ~KinodynamicsProblem(){};
 
+  void create_problem(const Eigen::VectorXd &x0,
+                      const std::vector<ContactMap> &contact_sequence);
+
   StageModel create_stage(const ContactMap &contact_map,
                           const std::vector<Eigen::VectorXd> &force_refs);
   void set_reference_poses(const std::size_t i,
                            const std::vector<pinocchio::SE3> &pose_refs);
-  void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
   void set_reference_forces(const std::size_t i,
                             const std::vector<Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t i, const std::string &ee_name,
+                            Eigen::VectorXd &force_ref);
+  Eigen::VectorXd get_reference_force(const std::size_t i,
+                                      const std::string &cost_name);
+  pinocchio::SE3 get_reference_pose(const std::size_t i,
+                                    const std::string &cost_name);
   void
   compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();

@@ -11,7 +11,6 @@
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
-#include <aligator/modelling/multibody/contact-force.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
@@ -27,8 +26,6 @@ using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 using MultibodyConstraintFwdDynamics =
     dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
 using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using TrajOptProblem = TrajOptProblemTpl<double>;
-using ContactForceResidual = ContactForceResidualTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;

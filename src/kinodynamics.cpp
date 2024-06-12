@@ -15,6 +15,7 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
                                          const RobotHandler &handler)
     : Base(handler), settings_(settings) {
 
+  nu_ = nv_ - 6 + settings_.force_size * (int)handler_.get_ee_names().size();
   control_ref_ = settings_.u0;
 
   // Set up cost names used in kinodynamics problem
@@ -98,16 +99,15 @@ void KinodynamicsProblem::set_reference_poses(
   }
 }
 
-void KinodynamicsProblem::set_reference_control(const std::size_t i,
-                                                const Eigen::VectorXd &u_ref) {
-  if (i >= problem_->stages_.size()) {
-    throw std::runtime_error("Stage index exceeds stage vector size");
-  }
-  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
-  QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
-      &*cs->components_[cost_map_.at("control_cost")]);
-
-  qc->setTarget(u_ref);
+pinocchio::SE3
+KinodynamicsProblem::get_reference_pose(const std::size_t i,
+                                        const std::string &ee_name) {
+  CostStack *cs = get_cost_stack(i);
+  QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
+  FramePlacementResidual *cfr =
+      dynamic_cast<FramePlacementResidual *>(&*qc->residual_);
+  return cfr->getReference();
 }
 
 void KinodynamicsProblem::compute_control_from_forces(
@@ -128,6 +128,30 @@ void KinodynamicsProblem::set_reference_forces(
   set_reference_control(i, control_ref_);
 }
 
+void KinodynamicsProblem::set_reference_forces(const std::size_t i,
+                                               const std::string &ee_name,
+                                               Eigen::VectorXd &force_ref) {
+  std::vector<std::string> hname = handler_.get_ee_names();
+  std::vector<std::string>::iterator it =
+      std::find(hname.begin(), hname.end(), ee_name);
+  long id = it - hname.begin();
+  control_ref_.segment(id * settings_.force_size, settings_.force_size) =
+      force_ref;
+  set_reference_control(i, control_ref_);
+}
+
+Eigen::VectorXd
+KinodynamicsProblem::get_reference_force(const std::size_t i,
+                                         const std::string &ee_name) {
+  std::vector<std::string> hname = handler_.get_ee_names();
+  std::vector<std::string>::iterator it =
+      std::find(hname.begin(), hname.end(), ee_name);
+  long id = it - hname.begin();
+
+  return get_reference_control(i).segment(id * settings_.force_size,
+                                          settings_.force_size);
+}
+
 CostStack KinodynamicsProblem::create_terminal_cost() {
   auto ter_space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto term_cost = CostStack(ter_space, nu_);
@@ -135,6 +159,15 @@ CostStack KinodynamicsProblem::create_terminal_cost() {
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
 
   return term_cost;
+}
+
+void KinodynamicsProblem::create_problem(
+    const Eigen::VectorXd &x0,
+    const std::vector<ContactMap> &contact_sequence) {
+  std::vector<xyz::polymorphic<StageModel>> stage_models =
+      create_stages(contact_sequence);
+  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
+                                              create_terminal_cost());
 }
 
 } // namespace simple_mpc

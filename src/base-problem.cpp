@@ -43,13 +43,12 @@ void Problem::set_reference_control(const std::size_t i,
   qc->setTarget(u_ref);
 }
 
-void Problem::insert_cost(CostStack &cost_stack,
-                          const xyz::polymorphic<CostAbstract> &cost,
-                          std::map<std::string, std::size_t> &cost_map,
-                          const std::string &name, int &cost_incr) {
-  cost_stack.addCost(cost);
-  cost_map.insert({name, cost_incr});
-  cost_incr++;
+Eigen::VectorXd Problem::get_reference_control(const std::size_t i) {
+  CostStack *cs = get_cost_stack(i);
+  QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
+      &*cs->components_[cost_map_.at("control_cost")]);
+
+  return qc->getTarget();
 }
 
 CostStack *Problem::get_cost_stack(std::size_t i) {

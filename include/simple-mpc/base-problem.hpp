@@ -17,6 +17,7 @@
 #include <aligator/modelling/contact-map.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
 #include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+#include <aligator/modelling/multibody/contact-force.hpp>
 
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/robot-handler.hpp"
@@ -34,6 +35,7 @@ using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
+using ContactForceResidual = ContactForceResidualTpl<double>;
 /**
  * @brief Build a full dynamics problem
  */
@@ -59,10 +61,19 @@ public:
   virtual void
   set_reference_poses(const std::size_t i,
                       const std::vector<pinocchio::SE3> &pose_refs) = 0;
+  virtual pinocchio::SE3 get_reference_pose(const std::size_t i,
+                                            const std::string &ee_name) = 0;
+
   virtual void
   set_reference_forces(const std::size_t i,
                        const std::vector<Eigen::VectorXd> &force_refs) = 0;
+  virtual void set_reference_forces(const std::size_t i,
+                                    const std::string &ee_name,
+                                    Eigen::VectorXd &force_ref) = 0;
   void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
+  Eigen::VectorXd get_reference_control(const std::size_t i);
+  virtual Eigen::VectorXd get_reference_force(const std::size_t i,
+                                              const std::string &ee_name) = 0;
   void insert_cost(CostStack &cost_stack,
                    const xyz::polymorphic<CostAbstract> &cost,
                    std::map<std::string, std::size_t> &cost_map,
@@ -70,8 +81,6 @@ public:
 
   CostStack *get_cost_stack(std::size_t i);
   std::size_t get_cost_number();
-  pinocchio::SE3 get_reference_pose(const std::size_t i,
-                                    const std::string cost_name);
   /// @brief The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;
 

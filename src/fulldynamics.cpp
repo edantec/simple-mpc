@@ -171,8 +171,6 @@ void FullDynamicsProblem::set_reference_forces(
     ContactForceResidual *cfr =
         dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
     cfr->setReference(force_refs[i]);
-
-    // std::cout << cfr->getReference() << std::endl;
   }
 }
 
@@ -189,10 +187,10 @@ void FullDynamicsProblem::set_reference_forces(const std::size_t i,
 
 pinocchio::SE3
 FullDynamicsProblem::get_reference_pose(const std::size_t i,
-                                        const std::string &cost_name) {
+                                        const std::string &ee_name) {
   CostStack *cs = get_cost_stack(i);
   QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
-      &*cs->components_[cost_map_.at(cost_name)]);
+      &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
   FramePlacementResidual *cfr =
       dynamic_cast<FramePlacementResidual *>(&*qc->residual_);
   return cfr->getReference();
@@ -200,10 +198,10 @@ FullDynamicsProblem::get_reference_pose(const std::size_t i,
 
 Eigen::VectorXd
 FullDynamicsProblem::get_reference_force(const std::size_t i,
-                                         const std::string &cost_name) {
+                                         const std::string &ee_name) {
   CostStack *cs = get_cost_stack(i);
   QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
-      &*cs->components_[cost_map_.at(cost_name)]);
+      &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);
   ContactForceResidual *cfr =
       dynamic_cast<ContactForceResidual *>(&*qc->residual_);
   return cfr->getReference();
