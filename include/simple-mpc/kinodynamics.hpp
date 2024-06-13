@@ -84,8 +84,6 @@ public:
   compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();
 
-  Eigen::VectorXd control_ref_;
-
   /// @brief Parameters to tune the algorithm, given at init.
   // KinodynamicsSettings settings_;
 

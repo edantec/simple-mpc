@@ -46,13 +46,10 @@ struct CentroidalSettings {
   Eigen::Vector3d gravity;
   int force_size;
 
-  Eigen::VectorXd w_linear_mom;
-  Eigen::Vector3d w_angular_mom;
-  Eigen::VectorXd w_linear_acc;
-  Eigen::Vector3d w_angular_acc;
-
-  CentroidalSettings();
-  virtual ~CentroidalSettings() {}
+  Eigen::Matrix3d w_linear_mom;
+  Eigen::Matrix3d w_angular_mom;
+  Eigen::Matrix3d w_linear_acc;
+  Eigen::Matrix3d w_angular_acc;
 };
 
 class CentroidalProblem : public Problem {
@@ -69,15 +66,25 @@ public:
 
   StageModel create_stage(const ContactMap &contact_map,
                           const std::vector<Eigen::VectorXd> &force_refs);
+
+  void create_problem(const Eigen::VectorXd &x0,
+                      const std::vector<ContactMap> &contact_sequence);
+
+  void set_reference_poses(const std::size_t i,
+                           const std::vector<pinocchio::SE3> &pose_refs) {}
+  pinocchio::SE3 get_reference_pose(const std::size_t i,
+                                    const std::string &ee_name) {
+    return pinocchio::SE3::Identity();
+  }
   void
   compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_poses(const std::size_t i,
-                           const std::vector<pinocchio::SE3> &pose_refs) {};
   void set_reference_forces(const std::size_t i,
                             const std::vector<Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t i, const std::string &ee_name,
+                            Eigen::VectorXd &force_ref);
+  Eigen::VectorXd get_reference_force(const std::size_t i,
+                                      const std::string &ee_name);
   CostStack create_terminal_cost();
-
-  Eigen::VectorXd control_ref_;
 
 protected:
   CentroidalSettings settings_;

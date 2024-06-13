@@ -94,6 +94,7 @@ protected:
   int nq_;
   int nv_;
   int nu_;
+  Eigen::VectorXd control_ref_;
 };
 
 } // namespace simple_mpc

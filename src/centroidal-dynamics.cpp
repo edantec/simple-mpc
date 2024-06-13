@@ -15,7 +15,7 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
                                      const RobotHandler &handler)
     : Base(handler), settings_(settings) {
 
-  nx_ = 9;
+  nx_ = 18;
   nu_ = (int)handler_.get_ee_names().size() * settings_.force_size;
   control_ref_ = settings_.u0;
 
@@ -31,6 +31,15 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
   cost_incr++;
   cost_map_.insert({"angular_acc_cost", cost_incr});
   cost_incr++;
+}
+
+void CentroidalProblem::create_problem(
+    const Eigen::VectorXd &x0,
+    const std::vector<ContactMap> &contact_sequence) {
+  std::vector<xyz::polymorphic<StageModel>> stage_models =
+      create_stages(contact_sequence);
+  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
+                                              create_terminal_cost());
 }
 
 StageModel CentroidalProblem::create_stage(
@@ -88,6 +97,30 @@ void CentroidalProblem::set_reference_forces(
     const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
   compute_control_from_forces(force_refs);
   set_reference_control(i, control_ref_);
+}
+
+void CentroidalProblem::set_reference_forces(const std::size_t i,
+                                             const std::string &ee_name,
+                                             Eigen::VectorXd &force_ref) {
+  std::vector<std::string> hname = handler_.get_ee_names();
+  std::vector<std::string>::iterator it =
+      std::find(hname.begin(), hname.end(), ee_name);
+  long id = it - hname.begin();
+  control_ref_.segment(id * settings_.force_size, settings_.force_size) =
+      force_ref;
+  set_reference_control(i, control_ref_);
+}
+
+Eigen::VectorXd
+CentroidalProblem::get_reference_force(const std::size_t i,
+                                       const std::string &ee_name) {
+  std::vector<std::string> hname = handler_.get_ee_names();
+  std::vector<std::string>::iterator it =
+      std::find(hname.begin(), hname.end(), ee_name);
+  long id = it - hname.begin();
+
+  return get_reference_control(i).segment(id * settings_.force_size,
+                                          settings_.force_size);
 }
 
 CostStack CentroidalProblem::create_terminal_cost() {

@@ -231,4 +231,85 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                     force_refs[1]);
 }
 
+BOOST_AUTO_TEST_CASE(centroidal) {
+  RobotHandler handler = getTalosHandler();
+  int nx = 18;
+  int nu = 6 * 2;
+
+  CentroidalSettings settings;
+  Eigen::VectorXd x0(nx);
+  x0 << 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+  settings.x0 = x0;
+  settings.u0 = Eigen::VectorXd::Zero(nu);
+  settings.DT = 0.01;
+  settings.w_x = Eigen::MatrixXd::Identity(nx, nx);
+  settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
+  settings.w_linear_mom = Eigen::MatrixXd::Identity(3, 3);
+  settings.w_angular_mom = Eigen::MatrixXd::Identity(3, 3);
+  settings.w_linear_acc = Eigen::MatrixXd::Identity(3, 3);
+  settings.w_angular_acc = Eigen::MatrixXd::Identity(3, 3);
+  settings.gravity << 0, 0, 9;
+  settings.force_size = 6;
+
+  CentroidalProblem cproblem(settings, handler);
+
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("control_cost"), 0);
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("linear_mom_cost"), 1);
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("angular_acc_cost"), 4);
+
+  std::vector<bool> contact_states = {true, false};
+  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+  Eigen::Vector3d p1 = {0, 0.1, 0};
+  Eigen::Vector3d p2 = {0, -0.1, 0};
+  contact_poses.push_back(p1);
+  contact_poses.push_back(p2);
+  ContactMap cm(contact_states, contact_poses);
+
+  std::vector<Eigen::VectorXd> force_refs;
+  Eigen::VectorXd f1(6);
+  f1 << 0, 0, 800, 0, 0, 0;
+  force_refs.push_back(f1);
+  force_refs.push_back(Eigen::VectorXd::Zero(6));
+  StageModel sm = cproblem.create_stage(cm, force_refs);
+  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+
+  BOOST_CHECK_EQUAL(cs->components_.size(), 5);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
+
+  std::vector<ContactMap> contact_sequence;
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+  }
+  for (std::size_t i = 0; i < 50; i++) {
+    std::vector<bool> contact_states = {true, false};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+  }
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true};
+    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
+                                                            {0.5, -0.1, 0}};
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+  }
+
+  cproblem.create_problem(settings.x0, contact_sequence);
+
+  BOOST_CHECK_EQUAL(cproblem.problem_->stages_.size(), 70);
+
+  force_refs[0][1] = 1;
+  force_refs[1][0] = 1;
+  cproblem.set_reference_forces(3, force_refs);
+  BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "left_sole_link"),
+                    force_refs[0]);
+  BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "right_sole_link"),
+                    force_refs[1]);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
