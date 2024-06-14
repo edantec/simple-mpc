@@ -7,9 +7,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#ifndef SIMPLE_MPC_CENTROIDAL_DYNAMICS_HPP_
-#define SIMPLE_MPC_CENTROIDAL_DYNAMICS_HPP_
-
 #include <aligator/modelling/centroidal/angular-acceleration.hpp>
 #include <aligator/modelling/centroidal/angular-momentum.hpp>
 #include <aligator/modelling/centroidal/centroidal-acceleration.hpp>
@@ -64,25 +61,30 @@ public:
 
   virtual ~CentroidalProblem(){};
 
-  StageModel create_stage(const ContactMap &contact_map,
-                          const std::vector<Eigen::VectorXd> &force_refs);
+  StageModel
+  create_stage(const ContactMap &contact_map,
+               const std::map<std::string, Eigen::VectorXd> &force_refs);
 
   void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence);
+                      const std::vector<ContactMap> &contact_sequence,
+                      const std::vector<std::map<std::string, Eigen::VectorXd>>
+                          &force_sequence);
 
-  void set_reference_poses(const std::size_t i,
-                           const std::vector<pinocchio::SE3> &pose_refs) {}
-  pinocchio::SE3 get_reference_pose(const std::size_t i,
+  void
+  set_reference_poses(const std::size_t t,
+                      const std::map<std::string, pinocchio::SE3> &pose_refs) {}
+  pinocchio::SE3 get_reference_pose(const std::size_t t,
                                     const std::string &ee_name) {
     return pinocchio::SE3::Identity();
   }
-  void
-  compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t i,
-                            const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t i, const std::string &ee_name,
+  void compute_control_from_forces(
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
+  void set_reference_forces(
+      const std::size_t t,
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t t, const std::string &ee_name,
                             Eigen::VectorXd &force_ref);
-  Eigen::VectorXd get_reference_force(const std::size_t i,
+  Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &ee_name);
   CostStack create_terminal_cost();
 
@@ -92,9 +94,3 @@ protected:
 };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_CENTROIDAL_DYNAMICS_HPP_

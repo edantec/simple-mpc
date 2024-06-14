@@ -7,12 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <aligator/core/cost-abstract.hpp>
-#ifndef SIMPLE_MPC_BASEDYNAMICS_HPP_
-#define SIMPLE_MPC_BASEDYNAMICS_HPP_
-
 #include "aligator/modelling/costs/quad-state-cost.hpp"
 #include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
+#include <aligator/core/cost-abstract.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/modelling/contact-map.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
@@ -44,63 +41,77 @@ class Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  /// Constructor
   Problem();
   Problem(const RobotHandler &handler);
   virtual ~Problem();
 
+  /// Virtual functions defined in child classes
+
+  // Create one instance of stage from desired contacts and forces
   virtual StageModel
   create_stage(const ContactMap &contact_map,
-               const std::vector<Eigen::VectorXd> &force_refs) = 0;
+               const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
   virtual CostStack create_terminal_cost() = 0;
+
+  // Create one TrajOptProblem from contact sequence
   virtual void
   create_problem(const Eigen::VectorXd &x0,
-                 const std::vector<ContactMap> &contact_sequence) = 0;
-  std::vector<xyz::polymorphic<StageModel>>
-  create_stages(const std::vector<ContactMap> &contact_sequence);
+                 const std::vector<ContactMap> &contact_sequence,
+                 const std::vector<std::map<std::string, Eigen::VectorXd>>
+                     &force_sequence) = 0;
 
-  virtual void
-  set_reference_poses(const std::size_t i,
-                      const std::vector<pinocchio::SE3> &pose_refs) = 0;
-  virtual pinocchio::SE3 get_reference_pose(const std::size_t i,
+  // Setter and getter for poses reference
+  virtual void set_reference_poses(
+      const std::size_t t,
+      const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;
+  virtual pinocchio::SE3 get_reference_pose(const std::size_t t,
                                             const std::string &ee_name) = 0;
 
-  virtual void
-  set_reference_forces(const std::size_t i,
-                       const std::vector<Eigen::VectorXd> &force_refs) = 0;
-  virtual void set_reference_forces(const std::size_t i,
+  // Setter and getter for forces reference
+  virtual void set_reference_forces(
+      const std::size_t t,
+      const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
+  virtual void set_reference_forces(const std::size_t t,
                                     const std::string &ee_name,
                                     Eigen::VectorXd &force_ref) = 0;
-  void set_reference_control(const std::size_t i, const Eigen::VectorXd &u_ref);
-  Eigen::VectorXd get_reference_control(const std::size_t i);
-  virtual Eigen::VectorXd get_reference_force(const std::size_t i,
+  virtual Eigen::VectorXd get_reference_force(const std::size_t t,
                                               const std::string &ee_name) = 0;
-  void insert_cost(CostStack &cost_stack,
-                   const xyz::polymorphic<CostAbstract> &cost,
-                   std::map<std::string, std::size_t> &cost_map,
-                   const std::string &name, int &cost_incr);
 
-  CostStack *get_cost_stack(std::size_t i);
+  /// Common functions to all types of problems
+
+  // Create the complete vector of stages from contact_sequence
+  std::vector<xyz::polymorphic<StageModel>>
+  create_stages(const std::vector<ContactMap> &contact_sequence,
+                const std::vector<std::map<std::string, Eigen::VectorXd>>
+                    &force_sequence);
+
+  // Setter and getter for control reference
+  void set_reference_control(const std::size_t t, const Eigen::VectorXd &u_ref);
+  Eigen::VectorXd get_reference_control(const std::size_t t);
+
+  // Getter for various objects and quantities
+  CostStack *get_cost_stack(std::size_t t);
   std::size_t get_cost_number();
-  /// @brief The reference shooting problem storing all shooting nodes
+  std::size_t get_size();
+
+  /// The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;
 
-  /// @brief The robot model
+  /// The robot model
   RobotHandler handler_;
 
-  /// @brief Dictionnary of cost name + cost id
+  /// Dictionnary of cost name + cost id in the CostStack object
   std::map<std::string, std::size_t> cost_map_;
 
 protected:
+  // Size of the problem
   int nq_;
   int nv_;
   int nu_;
+
+  // Vector reference for control cost
   Eigen::VectorXd control_ref_;
 };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_HPP_

@@ -1,5 +1,12 @@
-#ifndef SIMPLE_MPC_ROBOT_HANDLER
-#define SIMPLE_MPC_ROBOT_HANDLER
+///////////////////////////////////////////////////////////////////////////////
+// BSD 3-Clause License
+//
+// Copyright (C) 2024, INRIA
+// Copyright note valid unless otherwise stated in individual files.
+// All rights reserved.
+///////////////////////////////////////////////////////////////////////////////
+
+#pragma once
 
 #include <pinocchio/fwd.hpp>
 // Include pinocchio first
@@ -103,4 +110,3 @@ public:
 };
 
 } // namespace simple_mpc
-#endif // SIMPLE_MPC_ROBOT_HANDLER

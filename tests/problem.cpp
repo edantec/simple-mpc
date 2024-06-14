@@ -6,65 +6,16 @@
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/kinodynamics.hpp"
 #include "simple-mpc/robot-handler.hpp"
+#include "test_utils.cpp"
 
 BOOST_AUTO_TEST_SUITE(problem)
 
 using namespace simple_mpc;
-using T = double;
-using context::MatrixXs;
-using context::VectorXs;
-using QuadraticResidualCost = QuadraticResidualCostTpl<T>;
-
-RobotHandler getTalosHandler() {
-  RobotHandlerSettings settings;
-  settings.urdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
-  settings.srdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
-
-  settings.controlled_joints_names = {
-      "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
-      "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
-      "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
-      "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint",
-      "leg_right_6_joint", "torso_1_joint",     "torso_2_joint",
-      "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",
-      "arm_left_4_joint",  "arm_right_1_joint", "arm_right_2_joint",
-      "arm_right_3_joint", "arm_right_4_joint",
-  };
-  settings.end_effector_names = {"left_sole_link", "right_sole_link"};
-  settings.base_configuration = "half_sitting";
-  settings.root_name = "root_joint";
-  settings.loadRotor = true;
-
-  RobotHandler handler(settings);
-
-  return handler;
-}
 
 BOOST_AUTO_TEST_CASE(fulldynamics) {
   RobotHandler handler = getTalosHandler();
-  int nv = handler.get_rmodel().nv;
-  int nu = nv - 6;
 
-  FullDynamicsSettings settings;
-  settings.x0 = handler.get_x0();
-  settings.u0 = Eigen::VectorXd::Zero(nu);
-  settings.DT = 0.01;
-  settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
-  settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
-  settings.w_cent = Eigen::MatrixXd::Identity(6, 6);
-  settings.w_centder = Eigen::MatrixXd::Identity(6, 6);
-  settings.gravity << 0, 0, 9;
-  settings.force_size = 6;
-  settings.w_forces = Eigen::MatrixXd::Identity(6, 6);
-  settings.w_frame = Eigen::MatrixXd::Identity(6, 6);
-  settings.umin =
-      -handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
-  settings.umin =
-      handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
-  settings.qmin = -Eigen::VectorXd::Ones(handler.get_rmodel().nv);
-  settings.qmax = Eigen::VectorXd::Ones(handler.get_rmodel().nv);
+  FullDynamicsSettings settings = getFullDynamicsSettings(handler);
 
   FullDynamicsProblem fdproblem(settings, handler);
 
@@ -80,11 +31,11 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   contact_poses.push_back(p2);
   ContactMap cm(contact_states, contact_poses);
 
-  std::vector<Eigen::VectorXd> force_refs;
+  std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, 800, 0, 0, 0;
-  force_refs.push_back(f1);
-  force_refs.push_back(Eigen::VectorXd::Zero(6));
+  force_refs.insert({"left_sole_link", f1});
+  force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
   StageModel sm = fdproblem.create_stage(cm, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
@@ -92,12 +43,14 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(sm.numConstraints(), 2);
 
   std::vector<ContactMap> contact_sequence;
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::vector<bool> contact_states = {true, false};
@@ -105,6 +58,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
@@ -112,29 +66,32 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
                                                             {0.5, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
-  fdproblem.create_problem(settings.x0, contact_sequence);
+  fdproblem.create_problem(settings.x0, contact_sequence, force_sequence);
   BOOST_CHECK_EQUAL(fdproblem.problem_->stages_.size(), 70);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
   pinocchio::SE3 new_pose_right = pinocchio::SE3::Identity();
   new_pose_right.translation() << -1, 0, 2;
-  std::vector<pinocchio::SE3> new_poses = {new_pose_left, new_pose_right};
+  std::map<std::string, pinocchio::SE3> new_poses;
+  new_poses.insert({"left_sole_link", new_pose_left});
+  new_poses.insert({"right_sole_link", new_pose_right});
 
   fdproblem.set_reference_poses(3, new_poses);
   BOOST_CHECK_EQUAL(fdproblem.get_reference_pose(3, "left_sole_link"),
-                    new_poses[0]);
+                    new_poses.at("left_sole_link"));
   BOOST_CHECK_EQUAL(fdproblem.get_reference_pose(3, "right_sole_link"),
-                    new_poses[1]);
+                    new_poses.at("right_sole_link"));
 
-  force_refs[0][1] = 1;
-  force_refs[1][0] = 1;
+  force_refs.at("left_sole_link")[1] = 1;
+  force_refs.at("right_sole_link")[0] = 1;
   fdproblem.set_reference_forces(3, force_refs);
   BOOST_CHECK_EQUAL(fdproblem.get_reference_force(3, "left_sole_link"),
-                    force_refs[0]);
+                    force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(fdproblem.get_reference_force(3, "right_sole_link"),
-                    force_refs[1]);
+                    force_refs.at("right_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
@@ -170,11 +127,11 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   contact_poses.push_back(p2);
   ContactMap cm(contact_states, contact_poses);
 
-  std::vector<Eigen::VectorXd> force_refs;
+  std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, 800, 0, 0, 0;
-  force_refs.push_back(f1);
-  force_refs.push_back(Eigen::VectorXd::Zero(6));
+  force_refs.insert({"left_sole_link", f1});
+  force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
   StageModel sm = knproblem.create_stage(cm, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
@@ -182,12 +139,14 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
   std::vector<ContactMap> contact_sequence;
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::vector<bool> contact_states = {true, false};
@@ -195,6 +154,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
@@ -202,9 +162,10 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                                                             {0.5, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
 
-  knproblem.create_problem(settings.x0, contact_sequence);
+  knproblem.create_problem(settings.x0, contact_sequence, force_sequence);
 
   BOOST_CHECK_EQUAL(knproblem.problem_->stages_.size(), 70);
 
@@ -212,23 +173,24 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   new_pose_left.translation() << 1, 0, 2;
   pinocchio::SE3 new_pose_right = pinocchio::SE3::Identity();
   new_pose_right.translation() << -1, 0, 2;
-  std::vector<pinocchio::SE3> new_poses = {new_pose_left, new_pose_right};
+  std::map<std::string, pinocchio::SE3> new_poses;
+  new_poses.insert({"left_sole_link", new_pose_left});
+  new_poses.insert({"right_sole_link", new_pose_right});
 
   knproblem.set_reference_poses(3, new_poses);
 
   BOOST_CHECK_EQUAL(knproblem.get_reference_pose(3, "left_sole_link"),
-                    new_poses[0]);
-
+                    new_poses.at("left_sole_link"));
   BOOST_CHECK_EQUAL(knproblem.get_reference_pose(3, "right_sole_link"),
-                    new_poses[1]);
+                    new_poses.at("right_sole_link"));
 
-  force_refs[0][1] = 1;
-  force_refs[1][0] = 1;
+  force_refs.at("left_sole_link")[1] = 1;
+  force_refs.at("right_sole_link")[0] = 1;
   knproblem.set_reference_forces(3, force_refs);
   BOOST_CHECK_EQUAL(knproblem.get_reference_force(3, "left_sole_link"),
-                    force_refs[0]);
+                    force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(knproblem.get_reference_force(3, "right_sole_link"),
-                    force_refs[1]);
+                    force_refs.at("right_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(centroidal) {
@@ -265,11 +227,11 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   contact_poses.push_back(p2);
   ContactMap cm(contact_states, contact_poses);
 
-  std::vector<Eigen::VectorXd> force_refs;
+  std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, 800, 0, 0, 0;
-  force_refs.push_back(f1);
-  force_refs.push_back(Eigen::VectorXd::Zero(6));
+  force_refs.insert({"left_sole_link", f1});
+  force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
   StageModel sm = cproblem.create_stage(cm, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
@@ -277,12 +239,14 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
   std::vector<ContactMap> contact_sequence;
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::vector<bool> contact_states = {true, false};
@@ -290,6 +254,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                                                             {0, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true};
@@ -297,19 +262,20 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                                                             {0.5, -0.1, 0}};
     ContactMap cm1(contact_states, contact_poses);
     contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
   }
 
-  cproblem.create_problem(settings.x0, contact_sequence);
+  cproblem.create_problem(settings.x0, contact_sequence, force_sequence);
 
   BOOST_CHECK_EQUAL(cproblem.problem_->stages_.size(), 70);
 
-  force_refs[0][1] = 1;
-  force_refs[1][0] = 1;
+  force_refs.at("left_sole_link")[1] = 1;
+  force_refs.at("right_sole_link")[0] = 1;
   cproblem.set_reference_forces(3, force_refs);
   BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "left_sole_link"),
-                    force_refs[0]);
+                    force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "right_sole_link"),
-                    force_refs[1]);
+                    force_refs.at("right_sole_link"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

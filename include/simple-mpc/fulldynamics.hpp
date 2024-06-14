@@ -73,19 +73,24 @@ public:
   virtual ~FullDynamicsProblem() {}
 
   void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence);
+                      const std::vector<ContactMap> &contact_sequence,
+                      const std::vector<std::map<std::string, Eigen::VectorXd>>
+                          &force_sequence);
 
-  StageModel create_stage(const ContactMap &contact_map,
-                          const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_poses(const std::size_t i,
-                           const std::vector<pinocchio::SE3> &pose_refs);
-  void set_reference_forces(const std::size_t i,
-                            const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t i, const std::string &ee_name,
+  StageModel
+  create_stage(const ContactMap &contact_map,
+               const std::map<std::string, Eigen::VectorXd> &force_refs);
+  void
+  set_reference_poses(const std::size_t t,
+                      const std::map<std::string, pinocchio::SE3> &pose_refs);
+  void set_reference_forces(
+      const std::size_t t,
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
+  void set_reference_forces(const std::size_t t, const std::string &ee_name,
                             Eigen::VectorXd &force_ref);
-  pinocchio::SE3 get_reference_pose(const std::size_t i,
+  pinocchio::SE3 get_reference_pose(const std::size_t t,
                                     const std::string &cost_name);
-  Eigen::VectorXd get_reference_force(const std::size_t i,
+  Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &cost_name);
   CostStack create_terminal_cost();
 

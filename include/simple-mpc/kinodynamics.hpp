@@ -7,9 +7,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#ifndef SIMPLE_MPC_KINODYNAMICS_HPP_
-#define SIMPLE_MPC_KINODYNAMICS_HPP_
-
 #include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
@@ -66,22 +63,27 @@ public:
   virtual ~KinodynamicsProblem(){};
 
   void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence);
+                      const std::vector<ContactMap> &contact_sequence,
+                      const std::vector<std::map<std::string, Eigen::VectorXd>>
+                          &force_sequence);
 
-  StageModel create_stage(const ContactMap &contact_map,
-                          const std::vector<Eigen::VectorXd> &force_refs);
-  void set_reference_poses(const std::size_t i,
-                           const std::vector<pinocchio::SE3> &pose_refs);
-  void set_reference_forces(const std::size_t i,
-                            const std::vector<Eigen::VectorXd> &force_refs);
+  StageModel
+  create_stage(const ContactMap &contact_map,
+               const std::map<std::string, Eigen::VectorXd> &force_refs);
+  void
+  set_reference_poses(const std::size_t i,
+                      const std::map<std::string, pinocchio::SE3> &pose_refs);
+  void set_reference_forces(
+      const std::size_t i,
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
   void set_reference_forces(const std::size_t i, const std::string &ee_name,
                             Eigen::VectorXd &force_ref);
   Eigen::VectorXd get_reference_force(const std::size_t i,
                                       const std::string &cost_name);
   pinocchio::SE3 get_reference_pose(const std::size_t i,
                                     const std::string &cost_name);
-  void
-  compute_control_from_forces(const std::vector<Eigen::VectorXd> &force_refs);
+  void compute_control_from_forces(
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();
 
   /// @brief Parameters to tune the algorithm, given at init.
@@ -92,9 +94,3 @@ protected:
 };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_HPP_

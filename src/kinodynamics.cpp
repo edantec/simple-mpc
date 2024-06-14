@@ -36,7 +36,7 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
 
 StageModel KinodynamicsProblem::create_stage(
     const ContactMap &contact_map,
-    const std::vector<Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
   auto space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states = contact_map.getContactStates();
@@ -71,7 +71,7 @@ StageModel KinodynamicsProblem::create_stage(
 
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
       space, handler_.get_rmodel(), settings_.gravity, contact_states,
-      handler_.get_ee_ids(), (int)force_refs[0].size());
+      handler_.get_ee_ids(), settings_.force_size);
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
 
@@ -79,30 +79,27 @@ StageModel KinodynamicsProblem::create_stage(
 }
 
 void KinodynamicsProblem::set_reference_poses(
-    const std::size_t i, const std::vector<pinocchio::SE3> &pose_refs) {
-  if (i >= problem_->stages_.size()) {
-    throw std::runtime_error("Stage index exceeds stage vector size");
-  }
+    const std::size_t t,
+    const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (pose_refs.size() != handler_.get_ee_names().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
 
-  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
-  for (std::size_t i = 0; i < pose_refs.size(); i++) {
-    QuadraticResidualCost *qrc =
-        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
-            handler_.get_ee_names()[i] + "_pose_cost")]);
+  CostStack *cs = get_cost_stack(t);
+  for (auto ee_name : handler_.get_ee_names()) {
+    QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+        &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
     FramePlacementResidual *cfr =
         dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
-    cfr->setReference(pose_refs[i]);
+    cfr->setReference(pose_refs.at(ee_name));
   }
 }
 
 pinocchio::SE3
-KinodynamicsProblem::get_reference_pose(const std::size_t i,
+KinodynamicsProblem::get_reference_pose(const std::size_t t,
                                         const std::string &ee_name) {
-  CostStack *cs = get_cost_stack(i);
+  CostStack *cs = get_cost_stack(t);
   QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
   FramePlacementResidual *cfr =
@@ -111,19 +108,20 @@ KinodynamicsProblem::get_reference_pose(const std::size_t i,
 }
 
 void KinodynamicsProblem::compute_control_from_forces(
-    const std::vector<Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < force_refs.size(); i++) {
-    if (settings_.force_size != force_refs[i].size()) {
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+  for (std::size_t i = 0; i < handler_.get_ee_names().size(); i++) {
+    if (settings_.force_size != force_refs.at(handler_.get_ee_name(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs[i];
+        force_refs.at(handler_.get_ee_name(i));
   }
 }
 
 void KinodynamicsProblem::set_reference_forces(
-    const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
+    const std::size_t i,
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
   compute_control_from_forces(force_refs);
   set_reference_control(i, control_ref_);
 }
@@ -162,10 +160,10 @@ CostStack KinodynamicsProblem::create_terminal_cost() {
 }
 
 void KinodynamicsProblem::create_problem(
-    const Eigen::VectorXd &x0,
-    const std::vector<ContactMap> &contact_sequence) {
+    const Eigen::VectorXd &x0, const std::vector<ContactMap> &contact_sequence,
+    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
   std::vector<xyz::polymorphic<StageModel>> stage_models =
-      create_stages(contact_sequence);
+      create_stages(contact_sequence, force_sequence);
   problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
                                               create_terminal_cost());
 }

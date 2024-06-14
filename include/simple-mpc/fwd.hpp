@@ -5,9 +5,7 @@
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
-
-#ifndef SIMPLE_MPC_FWD_HPP_
-#define SIMPLE_MPC_FWD_HPP_
+#pragma once
 
 #include <Eigen/Core>
 #include <aligator/fwd.hpp>
@@ -44,5 +42,3 @@ class FullDynamicsProblem;
 class Problem;
 
 } // namespace simple_mpc
-
-#endif // SOBEC_FWD_HPP_

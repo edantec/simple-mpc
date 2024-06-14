@@ -53,14 +53,8 @@ public:
   int nv;
   int nu;
   int totalSteps = 4;
-  int T = 100;
-  int TdoubleSupport = 50;
-  int TsingleSupport = 100;
-  int Tstep = TdoubleSupport + TsingleSupport;
+  std::size_t T = 100;
   int ddpIteration = 1;
-
-  double Dt = 1e-2;
-  double simu_step = 1e-3;
 
   double min_force = 150;
   double support_force = 1000;
@@ -69,8 +63,6 @@ public:
   double mu_init = 1e-8;
 
   std::size_t num_threads = 2;
-
-  int Nc = (int)round(Dt / simu_step);
 };
 class MPC {
   /**
@@ -102,8 +94,7 @@ protected:
   void updateStepTrackerReferences();
 
   // References for costs:
-  std::vector<std::vector<pinocchio::SE3>> ref_frame_poses_;
-  std::vector<Eigen::VectorXd> torqueRef_;
+  std::vector<std::map<std::string, pinocchio::SE3>> ref_frame_poses_;
 
   // Memory preallocations:
   std::vector<unsigned long> controlled_joints_id_;
@@ -118,11 +109,10 @@ public:
   void initialize(const MPCSettings &settings, const RobotHandler &handler,
                   std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0);
 
-  void generateFullHorizon(
-      const std::vector<ContactMap> &contact_phases,
-      const std::vector<std::vector<Eigen::VectorXd>> &contact_forces);
-
-  bool timeToSolveDDP(int iteration);
+  void
+  generateFullHorizon(const std::vector<ContactMap> &contact_phases,
+                      const std::vector<std::map<std::string, Eigen::VectorXd>>
+                          &contact_forces);
 
   void iterate(const Eigen::VectorXd &q_current,
                const Eigen::VectorXd &v_current);
@@ -136,8 +126,13 @@ public:
 
   const Eigen::VectorXd &get_x0() const { return x0_; }
   void set_x0(const Eigen::VectorXd &x0) { x0_ = x0; }
+  const std::vector<Eigen::VectorXd> &get_xs() const { return xs_; }
+  const std::vector<Eigen::VectorXd> &get_us() const { return us_; }
 
   std::vector<StageModel> &get_fullHorizon() { return full_horizon_; }
+  std::vector<std::shared_ptr<StageData>> &get_fullHorizonData() {
+    return full_horizon_data_;
+  }
 
   std::shared_ptr<Problem> &get_problem() { return problem_; }
 

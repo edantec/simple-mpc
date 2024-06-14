@@ -64,7 +64,7 @@ FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
 
 StageModel FullDynamicsProblem::create_stage(
     const ContactMap &contact_map,
-    const std::vector<Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
   auto space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto rcost = CostStack(space, nu_);
 
@@ -79,7 +79,7 @@ StageModel FullDynamicsProblem::create_stage(
   std::vector<bool> contact_states = contact_map.getContactStates();
   auto contact_poses = contact_map.getContactPoses();
 
-  if (contact_states.size() != handler_.get_ee_ids().size()) {
+  if (contact_states.size() != handler_.get_ee_names().size()) {
     throw std::runtime_error(
         "contact states size does not match number of end effectors");
   }
@@ -107,13 +107,14 @@ StageModel FullDynamicsProblem::create_stage(
     if (contact_states[i]) {
       frame_force = std::make_shared<ContactForceResidual>(
           space.ndx(), handler_.get_rmodel(), actuation_matrix_, cms,
-          prox_settings_, force_refs[i], handler_.get_ee_name(i));
+          prox_settings_, force_refs.at(handler_.get_ee_name(i)),
+          handler_.get_ee_name(i));
       is_active = 1;
     } else {
       frame_force = std::make_shared<ContactForceResidual>(
           space.ndx(), handler_.get_rmodel(), actuation_matrix_,
-          constraint_models_, prox_settings_, force_refs[i],
-          handler_.get_ee_name(i));
+          constraint_models_, prox_settings_,
+          force_refs.at(handler_.get_ee_name(i)), handler_.get_ee_name(i));
     }
     rcost.addCost(QuadraticResidualCost(space, *frame_force,
                                         settings_.w_forces * is_active));
@@ -137,40 +138,37 @@ StageModel FullDynamicsProblem::create_stage(
 }
 
 void FullDynamicsProblem::set_reference_poses(
-    const std::size_t i, const std::vector<pinocchio::SE3> &pose_refs) {
-  if (i >= problem_->stages_.size()) {
-    throw std::runtime_error("Stage index exceeds stage vector size");
-  }
+    const std::size_t t,
+    const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (pose_refs.size() != handler_.get_ee_names().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
 
-  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[i]->cost_);
-  for (std::size_t i = 0; i < pose_refs.size(); i++) {
-    QuadraticResidualCost *qrc =
-        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
-            handler_.get_ee_names()[i] + "_pose_cost")]);
+  CostStack *cs = get_cost_stack(t);
+  for (auto ee_name : handler_.get_ee_names()) {
+    QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+        &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
     FramePlacementResidual *cfr =
         dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
-    cfr->setReference(pose_refs[i]);
+    cfr->setReference(pose_refs.at(ee_name));
   }
 }
 
 void FullDynamicsProblem::set_reference_forces(
-    const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
-  CostStack *cs = get_cost_stack(i);
+    const std::size_t t,
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+  CostStack *cs = get_cost_stack(t);
   if (force_refs.size() != handler_.get_ee_names().size()) {
     throw std::runtime_error(
         "force_refs size does not match number of end effectors");
   }
-  for (std::size_t i = 0; i < force_refs.size(); i++) {
-    QuadraticResidualCost *qrc =
-        dynamic_cast<QuadraticResidualCost *>(&*cs->components_[cost_map_.at(
-            handler_.get_ee_names()[i] + "_force_cost")]);
+  for (auto ee_name : handler_.get_ee_names()) {
+    QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+        &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);
     ContactForceResidual *cfr =
         dynamic_cast<ContactForceResidual *>(&*qrc->residual_);
-    cfr->setReference(force_refs[i]);
+    cfr->setReference(force_refs.at(ee_name));
   }
 }
 
@@ -186,9 +184,9 @@ void FullDynamicsProblem::set_reference_forces(const std::size_t i,
 }
 
 pinocchio::SE3
-FullDynamicsProblem::get_reference_pose(const std::size_t i,
+FullDynamicsProblem::get_reference_pose(const std::size_t t,
                                         const std::string &ee_name) {
-  CostStack *cs = get_cost_stack(i);
+  CostStack *cs = get_cost_stack(t);
   QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
   FramePlacementResidual *cfr =
@@ -197,9 +195,9 @@ FullDynamicsProblem::get_reference_pose(const std::size_t i,
 }
 
 Eigen::VectorXd
-FullDynamicsProblem::get_reference_force(const std::size_t i,
+FullDynamicsProblem::get_reference_force(const std::size_t t,
                                          const std::string &ee_name) {
-  CostStack *cs = get_cost_stack(i);
+  CostStack *cs = get_cost_stack(t);
   QuadraticResidualCost *qc = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);
   ContactForceResidual *cfr =
@@ -217,10 +215,10 @@ CostStack FullDynamicsProblem::create_terminal_cost() {
 }
 
 void FullDynamicsProblem::create_problem(
-    const Eigen::VectorXd &x0,
-    const std::vector<ContactMap> &contact_sequence) {
+    const Eigen::VectorXd &x0, const std::vector<ContactMap> &contact_sequence,
+    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
   std::vector<xyz::polymorphic<StageModel>> stage_models =
-      create_stages(contact_sequence);
+      create_stages(contact_sequence, force_sequence);
   problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
                                               create_terminal_cost());
 }

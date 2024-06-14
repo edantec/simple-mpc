@@ -41,10 +41,12 @@ void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
   x_internal_.resize(settings_.nq + settings_.nv);
   handler_.updateInternalData(x0);
 
-  ref_frame_poses_.reserve(handler_.get_ee_ids().size());
-  for (unsigned long i = 0; i < handler_.get_ee_ids().size(); i++) {
-    ref_frame_poses_[i].assign(problem_->problem_->numSteps() + 1,
-                               handler_.get_ee_pose(i));
+  for (std::size_t i = 0; i < problem->get_size(); i++) {
+    std::map<std::string, pinocchio::SE3> map_se3;
+    for (std::size_t j = 0; j < handler_.get_ee_names().size(); j++) {
+      map_se3.insert({handler_.get_ee_name(j), handler_.get_ee_pose(j)});
+    }
+    ref_frame_poses_.push_back(map_se3);
   }
 
   horizon_iteration_ = 0;
@@ -62,10 +64,13 @@ void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
                                             0., maxiters, aligator::QUIET);
 
   solver_->rollout_type_ = aligator::RolloutType::LINEAR;
-  solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
+  if (settings_.num_threads > 1) {
+    solver_->linear_solver_choice = aligator::LQSolverChoice::PARALLEL;
+    solver_->setNumThreads(settings_.num_threads);
+  } else
+    solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
   solver_->force_initial_condition_ = true;
   solver_->reg_min = 1e-6;
-  solver_->setNumThreads(settings_.num_threads);
   solver_->setup(*problem_->problem_);
 
   solver_->run(*problem_->problem_, xs_, us_);
@@ -77,18 +82,13 @@ void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
 
 void MPC::generateFullHorizon(
     const std::vector<ContactMap> &contact_phases,
-    const std::vector<std::vector<Eigen::VectorXd>> &contact_forces) {
+    const std::vector<std::map<std::string, Eigen::VectorXd>> &contact_forces) {
   for (std::size_t i = 0; i < contact_phases.size(); i++) {
     StageModel sm =
         problem_->create_stage(contact_phases[i], contact_forces[i]);
     full_horizon_.push_back(sm);
     full_horizon_data_.push_back(sm.createData());
   }
-}
-
-bool MPC::timeToSolveDDP(int iteration) {
-  time_to_solve_ddp_ = !(iteration % settings_.Nc);
-  return time_to_solve_ddp_;
 }
 
 void MPC::iterate(const Eigen::VectorXd &q_current,

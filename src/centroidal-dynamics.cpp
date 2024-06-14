@@ -34,17 +34,17 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
 }
 
 void CentroidalProblem::create_problem(
-    const Eigen::VectorXd &x0,
-    const std::vector<ContactMap> &contact_sequence) {
+    const Eigen::VectorXd &x0, const std::vector<ContactMap> &contact_sequence,
+    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
   std::vector<xyz::polymorphic<StageModel>> stage_models =
-      create_stages(contact_sequence);
+      create_stages(contact_sequence, force_sequence);
   problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
                                               create_terminal_cost());
 }
 
 StageModel CentroidalProblem::create_stage(
     const ContactMap &contact_map,
-    const std::vector<Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
   auto space = VectorSpace(nx_);
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states = contact_map.getContactStates();
@@ -57,10 +57,10 @@ StageModel CentroidalProblem::create_stage(
 
   auto linear_acc = CentroidalAccelerationResidual(
       space.ndx(), nu_, handler_.get_mass(), settings_.gravity, contact_map,
-      (int)force_refs[0].size());
+      settings_.force_size);
   auto angular_acc = AngularAccelerationResidual(
       space.ndx(), nu_, handler_.get_mass(), settings_.gravity, contact_map,
-      (int)force_refs[0].size());
+      settings_.force_size);
 
   rcost.addCost(QuadraticControlCost(space, control_ref_, settings_.w_u));
   rcost.addCost(
@@ -82,24 +82,25 @@ StageModel CentroidalProblem::create_stage(
 }
 
 void CentroidalProblem::compute_control_from_forces(
-    const std::vector<Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < force_refs.size(); i++) {
-    if (settings_.force_size != force_refs[i].size()) {
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+  for (std::size_t i = 0; i < handler_.get_ee_names().size(); i++) {
+    if (settings_.force_size != force_refs.at(handler_.get_ee_name(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs[i];
+        force_refs.at(handler_.get_ee_name(i));
   }
 }
 
 void CentroidalProblem::set_reference_forces(
-    const std::size_t i, const std::vector<Eigen::VectorXd> &force_refs) {
+    const std::size_t t,
+    const std::map<std::string, Eigen::VectorXd> &force_refs) {
   compute_control_from_forces(force_refs);
-  set_reference_control(i, control_ref_);
+  set_reference_control(t, control_ref_);
 }
 
-void CentroidalProblem::set_reference_forces(const std::size_t i,
+void CentroidalProblem::set_reference_forces(const std::size_t t,
                                              const std::string &ee_name,
                                              Eigen::VectorXd &force_ref) {
   std::vector<std::string> hname = handler_.get_ee_names();
@@ -108,18 +109,18 @@ void CentroidalProblem::set_reference_forces(const std::size_t i,
   long id = it - hname.begin();
   control_ref_.segment(id * settings_.force_size, settings_.force_size) =
       force_ref;
-  set_reference_control(i, control_ref_);
+  set_reference_control(t, control_ref_);
 }
 
 Eigen::VectorXd
-CentroidalProblem::get_reference_force(const std::size_t i,
+CentroidalProblem::get_reference_force(const std::size_t t,
                                        const std::string &ee_name) {
   std::vector<std::string> hname = handler_.get_ee_names();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
 
-  return get_reference_control(i).segment(id * settings_.force_size,
+  return get_reference_control(t).segment(id * settings_.force_size,
                                           settings_.force_size);
 }
 

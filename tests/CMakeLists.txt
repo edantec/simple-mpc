@@ -32,9 +32,6 @@ function(_add_test_prototype name prefix dependencies)
   # set_standard_output_directory(${test_name})
   target_include_directories(${test_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-  # define macros required by boost_test see:
-  # https://www.boost.org/doc/libs/1_78_0/libs/test/doc/html/boost_test/usage_variants.html
-  # define module name, replace '-' by '_'
   set(MODULE_NAME "${name}Test")
   string(REGEX REPLACE "-" "_" MODULE_NAME ${MODULE_NAME})
 
@@ -49,7 +46,7 @@ function(add_aligator_test name)
   _add_test_prototype(${name} "" ${PROJECT_NAME})
 endfunction()
 
-set(TEST_NAMES robot_handler problem)
+set(TEST_NAMES robot_handler problem mpc)
 
 foreach(test_name ${TEST_NAMES})
   add_aligator_test(${test_name})
