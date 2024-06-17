@@ -85,6 +85,7 @@ protected:
   Eigen::MatrixXd K0_;
 
   Eigen::VectorXd x0_;
+  Eigen::VectorXd u0_;
 
   // timings
   std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
@@ -104,10 +105,12 @@ protected:
 public:
   MPC();
   MPC(const MPCSettings &settings, const RobotHandler &handler,
-      std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0);
+      std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
+      const Eigen::VectorXd &u0);
 
   void initialize(const MPCSettings &settings, const RobotHandler &handler,
-                  std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0);
+                  std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
+                  const Eigen::VectorXd &u0);
 
   void
   generateFullHorizon(const std::vector<ContactMap> &contact_phases,

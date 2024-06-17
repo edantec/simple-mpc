@@ -10,8 +10,10 @@
 #define SIMPLE_MPC_FULLDYNAMICS_HPP_
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/modelling/function-xpr-slice.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
@@ -30,6 +32,9 @@ using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
+using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
+using MultibodyWrenchConeResidual = MultibodyWrenchConeResidualTpl<double>;
+using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -46,7 +51,6 @@ public:
   Eigen::MatrixXd w_x;
   Eigen::MatrixXd w_u;
   Eigen::MatrixXd w_cent;
-  Eigen::MatrixXd w_centder;
 
   Eigen::Vector3d gravity;
   int force_size;
@@ -59,6 +63,11 @@ public:
 
   Eigen::VectorXd qmin;
   Eigen::VectorXd qmax;
+
+  /// Foot parameters
+  double mu;
+  double Lfoot;
+  double Wfoot;
 };
 
 class FullDynamicsProblem : public Problem {

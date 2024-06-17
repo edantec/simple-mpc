@@ -18,28 +18,30 @@
 
 namespace simple_mpc {
 using namespace aligator;
-constexpr std::size_t maxiters = 100;
+constexpr std::size_t maxiters = 10;
 
 MPC::MPC() {}
 
 MPC::MPC(const MPCSettings &settings, const RobotHandler &handler,
-         std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0) {
-  initialize(settings, handler, problem, x0);
+         std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
+         const Eigen::VectorXd &u0) {
+  initialize(settings, handler, problem, x0, u0);
 }
 
 void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
                      std::shared_ptr<Problem> &problem,
-                     const Eigen::VectorXd &x0) {
+                     const Eigen::VectorXd &x0, const Eigen::VectorXd &u0) {
   /** The posture required here is the full robot posture in the order of
    * pinicchio*/
   settings_ = settings;
   problem_ = problem;
   handler_ = handler;
   x0_ = x0;
+  u0_ = u0;
 
   // designer settings
   x_internal_.resize(settings_.nq + settings_.nv);
-  handler_.updateInternalData(x0);
+  // handler_.updateInternalData(x0);
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
@@ -51,17 +53,14 @@ void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
 
   horizon_iteration_ = 0;
 
-  // horizon settings
-  Eigen::VectorXd zero_u = Eigen::VectorXd::Zero(settings_.nu);
-
   for (std::size_t i = 0; i < problem_->problem_->numSteps(); i++) {
     xs_.push_back(x0_);
-    us_.push_back(zero_u);
+    us_.push_back(u0_);
   }
   xs_.push_back(x0_);
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
-                                            0., maxiters, aligator::QUIET);
+                                            0., maxiters, aligator::VERBOSE);
 
   solver_->rollout_type_ = aligator::RolloutType::LINEAR;
   if (settings_.num_threads > 1) {
@@ -70,7 +69,7 @@ void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
   } else
     solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
   solver_->force_initial_condition_ = true;
-  solver_->reg_min = 1e-6;
+  // solver_->reg_min = 1e-6;
   solver_->setup(*problem_->problem_);
 
   solver_->run(*problem_->problem_, xs_, us_);
@@ -113,6 +112,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   // ~~SOLVER~~ //
   solver_->run(*problem_->problem_, xs_, us_);
+
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
   K0_ = solver_->results_.getCtrlFeedbacks()[0];

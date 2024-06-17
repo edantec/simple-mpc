@@ -132,7 +132,23 @@ StageModel FullDynamicsProblem::create_stage(
       ControlErrorResidual(space.ndx(), Eigen::VectorXd::Zero(nu_));
   stm.addConstraint(ctrl_fn, BoxConstraint(settings_.umin, settings_.umax));
   StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
-  stm.addConstraint(state_fn, BoxConstraint(-settings_.qmax, -settings_.qmin));
+  std::vector<int> state_id;
+  for (int i = 6; i < nv_; i++) {
+    state_id.push_back(i);
+  }
+  FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
+  stm.addConstraint(state_slice,
+                    BoxConstraint(-settings_.qmax, -settings_.qmin));
+
+  for (std::size_t i = 0; i < contact_states.size(); i++) {
+    if (contact_states[i]) {
+      MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
+          space.ndx(), handler_.get_rmodel(), actuation_matrix_, cms,
+          prox_settings_, handler_.get_ee_name(i), settings_.mu,
+          settings_.Lfoot, settings_.Wfoot);
+      stm.addConstraint(wrench_residual, NegativeOrthant());
+    }
+  }
 
   return stm;
 }

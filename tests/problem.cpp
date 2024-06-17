@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 7);
-  BOOST_CHECK_EQUAL(sm.numConstraints(), 2);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
   std::vector<ContactMap> contact_sequence;
   std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
@@ -96,22 +96,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
   RobotHandler handler = getTalosHandler();
-  int nv = handler.get_rmodel().nv;
-  int nu = nv + 6;
-
-  KinodynamicsSettings settings;
-  settings.x0 = handler.get_x0();
-  settings.u0 = Eigen::VectorXd::Zero(nu);
-  settings.DT = 0.01;
-  settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
-  settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
-  settings.w_cent = Eigen::MatrixXd::Identity(6, 6);
-  settings.w_centder = Eigen::MatrixXd::Identity(6, 6);
-  settings.gravity << 0, 0, 9;
-  settings.force_size = 6;
-  settings.w_frame = Eigen::MatrixXd::Identity(6, 6);
-  settings.qmin = -Eigen::VectorXd::Ones(handler.get_rmodel().nv);
-  settings.qmax = Eigen::VectorXd::Ones(handler.get_rmodel().nv);
+  KinodynamicsSettings settings = getKinodynamicsSettings(handler);
 
   KinodynamicsProblem knproblem(settings, handler);
 
@@ -195,23 +180,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 
 BOOST_AUTO_TEST_CASE(centroidal) {
   RobotHandler handler = getTalosHandler();
-  int nx = 18;
-  int nu = 6 * 2;
-
-  CentroidalSettings settings;
-  Eigen::VectorXd x0(nx);
-  x0 << 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
-  settings.x0 = x0;
-  settings.u0 = Eigen::VectorXd::Zero(nu);
-  settings.DT = 0.01;
-  settings.w_x = Eigen::MatrixXd::Identity(nx, nx);
-  settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
-  settings.w_linear_mom = Eigen::MatrixXd::Identity(3, 3);
-  settings.w_angular_mom = Eigen::MatrixXd::Identity(3, 3);
-  settings.w_linear_acc = Eigen::MatrixXd::Identity(3, 3);
-  settings.w_angular_acc = Eigen::MatrixXd::Identity(3, 3);
-  settings.gravity << 0, 0, 9;
-  settings.force_size = 6;
+  CentroidalSettings settings = getCentroidalSettings(handler);
 
   CentroidalProblem cproblem(settings, handler);
 
