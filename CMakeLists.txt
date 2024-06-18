@@ -5,6 +5,9 @@ set(PROJECT_NAME simple-mpc)
 set(PROJECT_DESCRIPTION "MPC schemes for locomotion")
 set(PROJECT_URL https://github.com/edantec/${PROJECT_NAME})
 
+# Project options
+option(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
+
 # Project configuration
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,6 +49,7 @@ endif()
 # JRL-cmakemodule setup
 include("${JRL_CMAKE_MODULES}/base.cmake")
 include("${JRL_CMAKE_MODULES}/boost.cmake")
+include("${JRL_CMAKE_MODULES}/python.cmake")
 
 # Project definition
 compute_project_args(PROJECT_ARGS LANGUAGES CXX)
@@ -61,6 +65,13 @@ add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
                        "proxsuite-nlp >= 0.6.1")
 add_project_dependency(aligator REQUIRED)
+
+# Project dependencies
+if(BUILD_PYTHON_INTERFACE)
+  add_project_dependency(eigenpy 2.7.10 REQUIRED)
+  string(REGEX REPLACE "-" "_" PY_NAME ${PROJECT_NAME})
+  set(${PY_NAME}_INSTALL_DIR ${PYTHON_SITELIB}/${PY_NAME})
+endif()
 
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
@@ -89,6 +100,11 @@ endif()
 # Benchmark
 if(BUILD_BENCHMARK)
   add_subdirectory(benchmark)
+endif()
+
+# Bindings
+if(BUILD_PYTHON_INTERFACE)
+  add_subdirectory(bindings)
 endif()
 
 # Installation

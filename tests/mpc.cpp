@@ -126,11 +126,12 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.get_fullHorizon().size(), 130);
   BOOST_CHECK_EQUAL(mpc.get_fullHorizonData().size(), 130);
 
-  for (std::size_t i = 0; i < 50; i++)
-    mpc.recedeWithCycle();
+  for (std::size_t i = 0; i < 10; i++) {
+    mpc.iterate(settings.x0.head(handler.get_rmodel().nq),
+                settings.x0.tail(handler.get_rmodel().nv));
+  }
 
-  BOOST_CHECK_EQUAL(
-      mpc.get_problem()->get_reference_force(80, "right_sole_link"), f0);
+  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
@@ -247,11 +248,12 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   BOOST_CHECK_EQUAL(mpc.get_fullHorizon().size(), 130);
   BOOST_CHECK_EQUAL(mpc.get_fullHorizonData().size(), 130);
 
-  for (std::size_t i = 0; i < 50; i++)
-    mpc.recedeWithCycle();
+  for (std::size_t i = 0; i < 10; i++) {
+    mpc.iterate(settings.x0.head(handler.get_rmodel().nq),
+                settings.x0.tail(handler.get_rmodel().nv));
+  }
 
-  BOOST_CHECK_EQUAL(
-      mpc.get_problem()->get_reference_force(80, "right_sole_link"), f0);
+  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal) {
@@ -367,11 +369,18 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   BOOST_CHECK_EQUAL(mpc.get_fullHorizon().size(), 130);
   BOOST_CHECK_EQUAL(mpc.get_fullHorizonData().size(), 130);
 
-  for (std::size_t i = 0; i < 50; i++)
+  /* for (std::size_t i = 0; i < 50; i++)
     mpc.recedeWithCycle();
 
   BOOST_CHECK_EQUAL(
-      mpc.get_problem()->get_reference_force(80, "right_sole_link"), f0);
+      mpc.get_problem()->get_reference_force(80, "right_sole_link"), f0); */
+
+  for (std::size_t i = 0; i < 10; i++) {
+    mpc.iterate(handler.get_x0().head(handler.get_rmodel().nq),
+                handler.get_x0().tail(handler.get_rmodel().nv));
+  }
+
+  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

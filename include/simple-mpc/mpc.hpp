@@ -58,6 +58,7 @@ public:
 
   double TOL = 1e-4;
   double mu_init = 1e-8;
+  std::size_t max_iters = 1;
 
   std::size_t num_threads = 2;
 };

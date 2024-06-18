@@ -247,4 +247,77 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                     force_refs.at("right_sole_link"));
 }
 
+BOOST_AUTO_TEST_CASE(centroidal_solo) {
+  RobotHandler handler = getSoloHandler();
+  CentroidalSettings settings = getCentroidalSettings(handler);
+  settings.force_size = 3;
+
+  CentroidalProblem cproblem(settings, handler);
+
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("control_cost"), 0);
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("linear_mom_cost"), 1);
+  BOOST_CHECK_EQUAL(cproblem.cost_map_.at("angular_acc_cost"), 4);
+
+  std::vector<bool> contact_states = {true, true, true, false};
+  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+  Eigen::Vector3d p1 = handler.get_ee_frame(0).translation();
+  Eigen::Vector3d p2 = handler.get_ee_frame(1).translation();
+  Eigen::Vector3d p3 = handler.get_ee_frame(2).translation();
+  Eigen::Vector3d p4 = handler.get_ee_frame(3).translation();
+  contact_poses.push_back(p1);
+  contact_poses.push_back(p2);
+  contact_poses.push_back(p3);
+  contact_poses.push_back(p4);
+  ContactMap cm(contact_states, contact_poses);
+
+  std::map<std::string, Eigen::VectorXd> force_refs;
+  Eigen::VectorXd f1(3);
+  f1 << 0, 0, handler.get_mass() / 3;
+  force_refs.insert({"FR_FOOT", f1});
+  force_refs.insert({"FL_FOOT", f1});
+  force_refs.insert({"HR_FOOT", f1});
+  force_refs.insert({"HL_FOOT", Eigen::VectorXd::Zero(3)});
+  StageModel sm = cproblem.create_stage(cm, force_refs);
+  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+
+  BOOST_CHECK_EQUAL(cs->components_.size(), 5);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
+
+  std::vector<ContactMap> contact_sequence;
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true, true, true};
+
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
+  }
+  for (std::size_t i = 0; i < 50; i++) {
+    std::vector<bool> contact_states = {true, true, false, true};
+
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
+  }
+  for (std::size_t i = 0; i < 10; i++) {
+    std::vector<bool> contact_states = {true, true, true, false};
+
+    ContactMap cm1(contact_states, contact_poses);
+    contact_sequence.push_back(cm1);
+    force_sequence.push_back(force_refs);
+  }
+
+  cproblem.create_problem(settings.x0, contact_sequence, force_sequence);
+
+  BOOST_CHECK_EQUAL(cproblem.problem_->stages_.size(), 70);
+
+  force_refs.at("FR_FOOT")[1] = 1;
+  force_refs.at("FL_FOOT")[0] = 1;
+  cproblem.set_reference_forces(3, force_refs);
+  BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "FR_FOOT"),
+                    force_refs.at("FR_FOOT"));
+  BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "FL_FOOT"),
+                    force_refs.at("FL_FOOT"));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

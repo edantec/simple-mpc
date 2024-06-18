@@ -28,21 +28,7 @@ BOOST_AUTO_TEST_CASE(build_talos) {
 }
 
 BOOST_AUTO_TEST_CASE(build_solo) {
-  RobotHandlerSettings settings;
-  settings.urdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
-  settings.srdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/srdf/solo.srdf";
-
-  settings.controlled_joints_names = {
-      "root_joint", "FL_HAA", "FL_HFE", "FL_KFE", "FR_HAA", "FR_HFE", "FR_KFE",
-      "HL_HAA",     "HL_HFE", "HL_KFE", "HR_HAA", "HR_HFE", "HR_KFE",
-  };
-  settings.end_effector_names = {"FR_FOOT", "FL_FOOT", "HL_FOOT", "HR_FOOT"};
-  settings.base_configuration = "straight_standing";
-  settings.root_name = "root_joint";
-
-  RobotHandler handler(settings);
+  RobotHandler handler = getSoloHandler();
 
   BOOST_CHECK_EQUAL(handler.get_rmodel().nq, 19);
   BOOST_CHECK_EQUAL(handler.get_rmodel().nv, 18);

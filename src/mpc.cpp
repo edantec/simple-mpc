@@ -79,6 +79,8 @@ void MPC::initialize(const MPCSettings &settings,
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
   K0_ = solver_->results_.getCtrlFeedbacks()[0];
+
+  solver_->max_iters = settings_.max_iters;
 }
 
 void MPC::generateFullHorizon(

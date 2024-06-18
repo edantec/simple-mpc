@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// BSD 2-Clause License
 //
 // Copyright (C) 2024, INRIA
 // Copyright note valid unless otherwise stated in individual files.
