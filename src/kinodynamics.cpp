@@ -16,6 +16,9 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
     : Base(handler), settings_(settings) {
 
   nu_ = nv_ - 6 + settings_.force_size * (int)handler_.get_ee_names().size();
+  if (nu_ != settings_.u0.size()) {
+    throw std::runtime_error("settings.u0 does not have the correct size nu");
+  }
   control_ref_ = settings_.u0;
 
   // Set up cost names used in kinodynamics problem
@@ -72,8 +75,7 @@ StageModel KinodynamicsProblem::create_stage(
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
       space, handler_.get_rmodel(), settings_.gravity, contact_states,
       handler_.get_ee_ids(), settings_.force_size);
-  IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
 }
@@ -148,6 +150,15 @@ KinodynamicsProblem::get_reference_force(const std::size_t i,
 
   return get_reference_control(i).segment(id * settings_.force_size,
                                           settings_.force_size);
+}
+
+Eigen::VectorXd
+KinodynamicsProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
+  if (x_multibody.size() != handler_.get_x0().size()) {
+    throw std::runtime_error("x_multibody is of incorrect size");
+  }
+  handler_.updateInternalData(x_multibody);
+  return x_multibody;
 }
 
 CostStack KinodynamicsProblem::create_terminal_cost() {

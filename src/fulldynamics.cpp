@@ -122,8 +122,7 @@ StageModel FullDynamicsProblem::create_stage(
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
       space, actuation_matrix_, cms, prox_settings_);
-  IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
   StageModel stm = StageModel(rcost, dyn_model);
 
@@ -219,6 +218,15 @@ FullDynamicsProblem::get_reference_force(const std::size_t t,
   ContactForceResidual *cfr =
       dynamic_cast<ContactForceResidual *>(&*qc->residual_);
   return cfr->getReference();
+}
+
+Eigen::VectorXd
+FullDynamicsProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
+  if (x_multibody.size() != handler_.get_x0().size()) {
+    throw std::runtime_error("x_multibody is of incorrect size");
+  }
+  handler_.updateInternalData(x_multibody);
+  return x_multibody;
 }
 
 CostStack FullDynamicsProblem::create_terminal_cost() {

@@ -1,5 +1,6 @@
 #include "simple-mpc/robot-handler.hpp"
 
+#include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/compute-all-terms.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/parsers/srdf.hpp>
@@ -124,6 +125,8 @@ void RobotHandler::updateInternalData(const Eigen::VectorXd &x) {
   pinocchio::updateFramePlacements(rmodel_, rdata_);
   com_position_ =
       pinocchio::centerOfMass(rmodel_, rdata_, x.head(rmodel_.nq), false);
+  pinocchio::computeCentroidalMomentum(rmodel_, rdata_, x.head(rmodel_.nq),
+                                       x.tail(rmodel_.nv));
 }
 
 const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,

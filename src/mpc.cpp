@@ -22,31 +22,33 @@ constexpr std::size_t maxiters = 10;
 
 MPC::MPC() {}
 
-MPC::MPC(const MPCSettings &settings, const RobotHandler &handler,
-         std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
-         const Eigen::VectorXd &u0) {
-  initialize(settings, handler, problem, x0, u0);
+MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
+         const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
+  initialize(settings, problem, x_multibody, u0);
 }
 
-void MPC::initialize(const MPCSettings &settings, const RobotHandler &handler,
+void MPC::initialize(const MPCSettings &settings,
                      std::shared_ptr<Problem> &problem,
-                     const Eigen::VectorXd &x0, const Eigen::VectorXd &u0) {
-  /** The posture required here is the full robot posture in the order of
-   * pinicchio*/
+                     const Eigen::VectorXd &x_multibody,
+                     const Eigen::VectorXd &u0) {
+
   settings_ = settings;
   problem_ = problem;
-  handler_ = handler;
-  x0_ = x0;
-  u0_ = u0;
 
-  // designer settings
-  x_internal_.resize(settings_.nq + settings_.nv);
-  // handler_.updateInternalData(x0);
+  x0_ = problem_->get_x0_from_multibody((x_multibody));
+  x_multibody_ = x_multibody;
+
+  if (u0.size() != problem_->get_nu()) {
+    throw std::runtime_error(
+        "Provided u0 does not have the correct size problem.nu");
+  }
+  u0_ = u0;
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
-    for (std::size_t j = 0; j < handler_.get_ee_names().size(); j++) {
-      map_se3.insert({handler_.get_ee_name(j), handler_.get_ee_pose(j)});
+    for (std::size_t j = 0; j < problem_->handler_.get_ee_names().size(); j++) {
+      map_se3.insert({problem_->handler_.get_ee_name(j),
+                      problem_->handler_.get_ee_pose(j)});
     }
     ref_frame_poses_.push_back(map_se3);
   }
@@ -92,14 +94,14 @@ void MPC::generateFullHorizon(
 
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
-  x0_ = handler_.shapeState(q_current, v_current);
+  x_multibody_ = problem_->handler_.shapeState(q_current, v_current);
 
   // ~~TIMING~~ //
   recedeWithCycle();
   // updateSupportTiming();
 
   // ~~REFERENCES~~ //
-  handler_.updateInternalData(x0_);
+  x0_ = problem_->get_x0_from_multibody(x_multibody_);
   // updateStepTrackerLastReference();
   updateStepTrackerReferences();
 

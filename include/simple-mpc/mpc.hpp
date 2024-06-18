@@ -49,9 +49,6 @@ struct MPCSettings {
   ///@todo: add the cost names as setting parameters.
 public:
   // timing
-  int nq;
-  int nv;
-  int nu;
   int totalSteps = 4;
   std::size_t T = 100;
   int ddpIteration = 1;
@@ -77,7 +74,6 @@ protected:
   std::shared_ptr<Problem> problem_;
   std::vector<StageModel> full_horizon_;
   std::vector<std::shared_ptr<StageData>> full_horizon_data_;
-  RobotHandler handler_;
   std::shared_ptr<SolverProxDDP> solver_;
 
   std::vector<Eigen::VectorXd> xs_;
@@ -85,6 +81,7 @@ protected:
   Eigen::MatrixXd K0_;
 
   Eigen::VectorXd x0_;
+  Eigen::VectorXd x_multibody_;
   Eigen::VectorXd u0_;
 
   // timings
@@ -104,12 +101,12 @@ protected:
 
 public:
   MPC();
-  MPC(const MPCSettings &settings, const RobotHandler &handler,
-      std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
-      const Eigen::VectorXd &u0);
+  MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
+      const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
 
-  void initialize(const MPCSettings &settings, const RobotHandler &handler,
-                  std::shared_ptr<Problem> &problem, const Eigen::VectorXd &x0,
+  void initialize(const MPCSettings &settings,
+                  std::shared_ptr<Problem> &problem,
+                  const Eigen::VectorXd &x_multibody,
                   const Eigen::VectorXd &u0);
 
   void
@@ -138,8 +135,6 @@ public:
   }
 
   std::shared_ptr<Problem> &get_problem() { return problem_; }
-
-  RobotHandler &get_handler() { return handler_; }
 
   const std::map<std::string, std::vector<int>> &get_land_times() {
     return foot_land_times_;

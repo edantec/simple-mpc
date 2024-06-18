@@ -101,6 +101,7 @@ public:
                                     const std::string &cost_name);
   Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &cost_name);
+  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
   CostStack create_terminal_cost();
 
 protected:

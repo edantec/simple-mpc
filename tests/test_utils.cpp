@@ -125,7 +125,7 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
 }
 
 CentroidalSettings getCentroidalSettings(RobotHandler handler) {
-  int nx = 18;
+  int nx = 9;
   int nu = 6 * 2;
 
   CentroidalSettings settings;

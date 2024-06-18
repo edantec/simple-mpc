@@ -45,9 +45,6 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
       std::make_shared<FullDynamicsProblem>(fdproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.nq = handler.get_rmodel().nq;
-  mpc_settings.nv = handler.get_rmodel().nv;
-  mpc_settings.nu = handler.get_rmodel().nv - 6;
   mpc_settings.totalSteps = 4;
   mpc_settings.T = T;
   mpc_settings.ddpIteration = 1;
@@ -62,7 +59,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   Eigen::VectorXd u0(handler.get_rmodel().nv - 6);
   u0.setZero();
 
-  MPC mpc = MPC(mpc_settings, handler, problem, settings.x0, u0);
+  MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
 
   BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.get_us().size(), T);
@@ -168,9 +165,6 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
       std::make_shared<KinodynamicsProblem>(kinoproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.nq = handler.get_rmodel().nq;
-  mpc_settings.nv = handler.get_rmodel().nv;
-  mpc_settings.nu = handler.get_rmodel().nv + 6;
   mpc_settings.totalSteps = 4;
   mpc_settings.T = T;
   mpc_settings.ddpIteration = 1;
@@ -186,7 +180,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   u0.setZero();
   u0.head(12) << f1, f1;
 
-  MPC mpc = MPC(mpc_settings, handler, problem, settings.x0, u0);
+  MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
 
   BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.get_us().size(), T);
@@ -287,14 +281,10 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
 
   centproblem.create_problem(settings.x0, initial_contact_sequence,
                              initial_force_sequence);
-
   std::shared_ptr<Problem> problem =
       std::make_shared<CentroidalProblem>(centproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.nq = 9;
-  mpc_settings.nv = 9;
-  mpc_settings.nu = 12;
   mpc_settings.totalSteps = 4;
   mpc_settings.T = T;
   mpc_settings.ddpIteration = 1;
@@ -310,7 +300,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   u0.setZero();
   u0.head(12) << f1, f1;
 
-  MPC mpc = MPC(mpc_settings, handler, problem, settings.x0, u0);
+  MPC mpc = MPC(mpc_settings, problem, handler.get_x0(), u0);
 
   BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.get_us().size(), T);

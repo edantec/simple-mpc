@@ -82,6 +82,7 @@ public:
                                       const std::string &cost_name);
   pinocchio::SE3 get_reference_pose(const std::size_t i,
                                     const std::string &cost_name);
+  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
   void compute_control_from_forces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
   CostStack create_terminal_cost();

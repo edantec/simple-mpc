@@ -8,7 +8,7 @@
 #pragma once
 
 #include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/dynamics/integrator-semi-euler.hpp"
+#include "aligator/modelling/dynamics/integrator-euler.hpp"
 #include <aligator/core/cost-abstract.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/modelling/contact-map.hpp>
@@ -29,7 +29,7 @@ using CostAbstract = CostAbstractTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;
 using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
-using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
+using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
 using ContactForceResidual = ContactForceResidualTpl<double>;
@@ -77,7 +77,8 @@ public:
                                     Eigen::VectorXd &force_ref) = 0;
   virtual Eigen::VectorXd get_reference_force(const std::size_t t,
                                               const std::string &ee_name) = 0;
-
+  virtual Eigen::VectorXd
+  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) = 0;
   /// Common functions to all types of problems
 
   // Create the complete vector of stages from contact_sequence
@@ -94,6 +95,7 @@ public:
   CostStack *get_cost_stack(std::size_t t);
   std::size_t get_cost_number();
   std::size_t get_size();
+  int get_nu() { return nu_; }
 
   /// The reference shooting problem storing all shooting nodes
   std::shared_ptr<aligator::context::TrajOptProblem> problem_;

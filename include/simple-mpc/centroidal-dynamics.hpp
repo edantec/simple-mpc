@@ -77,6 +77,8 @@ public:
                                     const std::string &ee_name) {
     return pinocchio::SE3::Identity();
   }
+  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
+
   void compute_control_from_forces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
   void set_reference_forces(

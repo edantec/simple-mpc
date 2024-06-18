@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "simple-mpc/centroidal-dynamics.hpp"
+#include <stdexcept>
 
 namespace simple_mpc {
 using namespace aligator;
@@ -15,8 +16,11 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
                                      const RobotHandler &handler)
     : Base(handler), settings_(settings) {
 
-  nx_ = 18;
+  nx_ = 9;
   nu_ = (int)handler_.get_ee_names().size() * settings_.force_size;
+  if (nu_ != settings_.u0.size()) {
+    throw std::runtime_error("settings.u0 does not have the correct size nu");
+  }
   control_ref_ = settings_.u0;
 
   // Set up cost names used in kinodynamics problem
@@ -75,8 +79,7 @@ StageModel CentroidalProblem::create_stage(
   CentroidalFwdDynamics ode =
       CentroidalFwdDynamics(space, handler_.get_mass(), settings_.gravity,
                             contact_map, settings_.force_size);
-  IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
 }
@@ -122,6 +125,21 @@ CentroidalProblem::get_reference_force(const std::size_t t,
 
   return get_reference_control(t).segment(id * settings_.force_size,
                                           settings_.force_size);
+}
+
+Eigen::VectorXd
+CentroidalProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
+  if (x_multibody.size() != handler_.get_x0().size()) {
+    throw std::runtime_error("x_multibody is of incorrect size");
+  }
+  handler_.updateInternalData(x_multibody);
+  Eigen::VectorXd x0(9);
+  x0.setZero();
+  x0.head(3) = handler_.get_com_position();
+  x0.segment(3, 3) = handler_.get_rdata().hg.linear();
+  x0.tail(3) = handler_.get_rdata().hg.angular();
+
+  return x0;
 }
 
 CostStack CentroidalProblem::create_terminal_cost() {
