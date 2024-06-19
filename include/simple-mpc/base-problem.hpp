@@ -72,9 +72,9 @@ public:
   virtual void set_reference_forces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
-  virtual void set_reference_forces(const std::size_t t,
-                                    const std::string &ee_name,
-                                    Eigen::VectorXd &force_ref) = 0;
+  virtual void set_reference_force(const std::size_t t,
+                                   const std::string &ee_name,
+                                   const Eigen::VectorXd &force_ref) = 0;
   virtual Eigen::VectorXd get_reference_force(const std::size_t t,
                                               const std::string &ee_name) = 0;
   virtual Eigen::VectorXd

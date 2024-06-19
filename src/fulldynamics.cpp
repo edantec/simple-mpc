@@ -20,9 +20,17 @@
 namespace simple_mpc {
 using namespace aligator;
 
-FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings settings,
+FullDynamicsProblem::FullDynamicsProblem(const RobotHandler &handler)
+    : Base(handler) {}
+
+FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings &settings,
                                          const RobotHandler &handler)
-    : Base(handler), settings_(settings) {
+    : Base(handler) {
+  initialize(settings);
+}
+
+void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
+  settings_ = settings;
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
@@ -187,9 +195,9 @@ void FullDynamicsProblem::set_reference_forces(
   }
 }
 
-void FullDynamicsProblem::set_reference_forces(const std::size_t i,
-                                               const std::string &ee_name,
-                                               Eigen::VectorXd &force_ref) {
+void FullDynamicsProblem::set_reference_force(
+    const std::size_t i, const std::string &ee_name,
+    const Eigen::VectorXd &force_ref) {
   CostStack *cs = get_cost_stack(i);
   QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at(ee_name + "_force_cost")]);

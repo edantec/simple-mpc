@@ -84,8 +84,8 @@ public:
   void set_reference_forces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t t, const std::string &ee_name,
-                            Eigen::VectorXd &force_ref);
+  void set_reference_force(const std::size_t t, const std::string &ee_name,
+                           const Eigen::VectorXd &force_ref);
   Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &ee_name);
   CostStack create_terminal_cost();

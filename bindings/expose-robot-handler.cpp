@@ -58,6 +58,7 @@ bp::dict get_settings(RobotHandler &self) {
 void exposeHandler() {
   bp::class_<RobotHandler>("RobotHandler", bp::init<>())
       .def("initialize", &initialize)
+      .def("get_settings", &get_settings)
       .def("updateInternalData", &RobotHandler::updateInternalData)
       .def("shapeState",
            bp::make_function(
@@ -99,6 +100,10 @@ void exposeHandler() {
       .def("get_ee_names",
            bp::make_function(
                &RobotHandler::get_ee_names,
+               bp::return_value_policy<bp::copy_const_reference>()))
+      .def("get_ee_pose",
+           bp::make_function(
+               &RobotHandler::get_ee_pose,
                bp::return_value_policy<bp::copy_const_reference>()));
 
   return;

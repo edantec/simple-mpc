@@ -92,6 +92,12 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
                     force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(fdproblem.get_reference_force(3, "right_sole_link"),
                     force_refs.at("right_sole_link"));
+
+  force_refs.at("left_sole_link")[2] = 250;
+  fdproblem.set_reference_force(5, "left_sole_link",
+                                force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.get_reference_force(5, "left_sole_link"),
+                    force_refs.at("left_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
@@ -176,6 +182,12 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                     force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(knproblem.get_reference_force(3, "right_sole_link"),
                     force_refs.at("right_sole_link"));
+
+  force_refs.at("left_sole_link")[2] = 250;
+  knproblem.set_reference_force(5, "left_sole_link",
+                                force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.get_reference_force(5, "left_sole_link"),
+                    force_refs.at("left_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(centroidal) {
@@ -245,6 +257,12 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                     force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(cproblem.get_reference_force(3, "right_sole_link"),
                     force_refs.at("right_sole_link"));
+
+  force_refs.at("left_sole_link")[2] = 250;
+  cproblem.set_reference_force(5, "left_sole_link",
+                               force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.get_reference_force(5, "left_sole_link"),
+                    force_refs.at("left_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {

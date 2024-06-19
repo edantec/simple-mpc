@@ -128,9 +128,9 @@ void KinodynamicsProblem::set_reference_forces(
   set_reference_control(i, control_ref_);
 }
 
-void KinodynamicsProblem::set_reference_forces(const std::size_t i,
-                                               const std::string &ee_name,
-                                               Eigen::VectorXd &force_ref) {
+void KinodynamicsProblem::set_reference_force(
+    const std::size_t i, const std::string &ee_name,
+    const Eigen::VectorXd &force_ref) {
   std::vector<std::string> hname = handler_.get_ee_names();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);

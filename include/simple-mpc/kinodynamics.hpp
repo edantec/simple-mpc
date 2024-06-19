@@ -76,8 +76,8 @@ public:
   void set_reference_forces(
       const std::size_t i,
       const std::map<std::string, Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t i, const std::string &ee_name,
-                            Eigen::VectorXd &force_ref);
+  void set_reference_force(const std::size_t i, const std::string &ee_name,
+                           const Eigen::VectorXd &force_ref);
   Eigen::VectorXd get_reference_force(const std::size_t i,
                                       const std::string &cost_name);
   pinocchio::SE3 get_reference_pose(const std::size_t i,

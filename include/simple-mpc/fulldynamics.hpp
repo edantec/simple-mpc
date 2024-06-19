@@ -75,10 +75,10 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   FullDynamicsProblem();
-  FullDynamicsProblem(const FullDynamicsSettings settings,
+  FullDynamicsProblem(const RobotHandler &handler);
+  FullDynamicsProblem(const FullDynamicsSettings &settings,
                       const RobotHandler &handler);
-  void initialize(const FullDynamicsSettings settings,
-                  const RobotHandler &handler);
+  void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 
   void create_problem(const Eigen::VectorXd &x0,
@@ -95,13 +95,14 @@ public:
   void set_reference_forces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs);
-  void set_reference_forces(const std::size_t t, const std::string &ee_name,
-                            Eigen::VectorXd &force_ref);
+  void set_reference_force(const std::size_t t, const std::string &ee_name,
+                           const Eigen::VectorXd &force_ref);
   pinocchio::SE3 get_reference_pose(const std::size_t t,
                                     const std::string &cost_name);
   Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &cost_name);
   Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
+  FullDynamicsSettings get_settings() { return settings_; }
   CostStack create_terminal_cost();
 
 protected:
