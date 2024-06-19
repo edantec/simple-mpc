@@ -1,13 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// BSD 2-Clause License
 //
 // Copyright (C) 2024, INRIA
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
-
-#ifndef SIMPLE_MPC_FULLDYNAMICS_HPP_
-#define SIMPLE_MPC_FULLDYNAMICS_HPP_
+#pragma once
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/function-xpr-slice.hpp>
@@ -42,38 +40,41 @@ using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 struct FullDynamicsSettings {
 public:
-  /// @brief reference 0 state and control
+  // reference 0 state and control
   Eigen::VectorXd x0;
   Eigen::VectorXd u0;
-  /// @brief timestep in problem shooting nodes
+
+  // timestep in problem shooting nodes
   double DT;
 
-  Eigen::MatrixXd w_x;
-  Eigen::MatrixXd w_u;
-  Eigen::MatrixXd w_cent;
+  // Cost function weights
+  Eigen::MatrixXd w_x;      // State
+  Eigen::MatrixXd w_u;      // Control
+  Eigen::MatrixXd w_cent;   // Centroidal momentum
+  Eigen::MatrixXd w_forces; // Contact forces
+  Eigen::MatrixXd w_frame;  // End effector placement
 
+  // Physics parameters
   Eigen::Vector3d gravity;
   int force_size;
+  double mu;
+  double Lfoot; // Half-length of foot (if contact 6D)
+  double Wfoot; // Half-width of foot (if contact 6D)
 
-  Eigen::MatrixXd w_forces;
-  Eigen::MatrixXd w_frame;
-
+  // Control limits
   Eigen::VectorXd umin;
   Eigen::VectorXd umax;
 
+  // Kinematics limits
   Eigen::VectorXd qmin;
   Eigen::VectorXd qmax;
-
-  /// Foot parameters
-  double mu;
-  double Lfoot;
-  double Wfoot;
 };
 
 class FullDynamicsProblem : public Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  // Constructors
   FullDynamicsProblem();
   FullDynamicsProblem(const RobotHandler &handler);
   FullDynamicsProblem(const FullDynamicsSettings &settings,
@@ -81,14 +82,21 @@ public:
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 
+  // Create one FullDynamics problem
   void create_problem(const Eigen::VectorXd &x0,
                       const std::vector<ContactMap> &contact_sequence,
                       const std::vector<std::map<std::string, Eigen::VectorXd>>
                           &force_sequence);
 
+  // Create one FullDynamics stage
   StageModel
   create_stage(const ContactMap &contact_map,
                const std::map<std::string, Eigen::VectorXd> &force_refs);
+
+  // Create one FullDynamics terminal cost
+  CostStack create_terminal_cost();
+
+  // Getters and setters
   void
   set_reference_poses(const std::size_t t,
                       const std::map<std::string, pinocchio::SE3> &pose_refs);
@@ -103,19 +111,17 @@ public:
                                       const std::string &cost_name);
   Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
   FullDynamicsSettings get_settings() { return settings_; }
-  CostStack create_terminal_cost();
 
 protected:
+  // Problem settings
   FullDynamicsSettings settings_;
-  Eigen::MatrixXd actuation_matrix_;
   ProximalSettings prox_settings_;
+
+  // Actuation matrix
+  Eigen::MatrixXd actuation_matrix_;
+
+  // Complete list of contact models
   pinocchio::context::RigidConstraintModelVector constraint_models_;
 };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_HPP_

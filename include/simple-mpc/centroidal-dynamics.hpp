@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// BSD 2-Clause License
 //
 // Copyright (C) 2024, INRIA
 // Copyright note valid unless otherwise stated in individual files.
@@ -31,22 +31,23 @@ using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
  */
 
 struct CentroidalSettings {
-  /// @brief reference 0 state and control
+  // reference state and control
   Eigen::VectorXd x0;
   Eigen::VectorXd u0;
-  /// @brief timestep in problem shooting nodes
+  // timestep in problem shooting nodes
   double DT;
 
-  Eigen::MatrixXd w_x;
-  Eigen::MatrixXd w_u;
+  // Cost function weights
+  Eigen::MatrixXd w_x;           // State
+  Eigen::MatrixXd w_u;           // Control
+  Eigen::Matrix3d w_linear_mom;  // Linear momentum
+  Eigen::Matrix3d w_angular_mom; // Angular momentum
+  Eigen::Matrix3d w_linear_acc;  // Linear acceleration
+  Eigen::Matrix3d w_angular_acc; // Angular acceleration
 
+  // Physics parameters
   Eigen::Vector3d gravity;
   int force_size;
-
-  Eigen::Matrix3d w_linear_mom;
-  Eigen::Matrix3d w_angular_mom;
-  Eigen::Matrix3d w_linear_acc;
-  Eigen::Matrix3d w_angular_acc;
 };
 
 class CentroidalProblem : public Problem {
@@ -55,21 +56,27 @@ class CentroidalProblem : public Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  // Constructor
   CentroidalProblem();
   CentroidalProblem(const CentroidalSettings &settings,
                     const RobotHandler &handler);
-
   virtual ~CentroidalProblem(){};
 
-  StageModel
-  create_stage(const ContactMap &contact_map,
-               const std::map<std::string, Eigen::VectorXd> &force_refs);
-
+  // Create one Centroidal problem
   void create_problem(const Eigen::VectorXd &x0,
                       const std::vector<ContactMap> &contact_sequence,
                       const std::vector<std::map<std::string, Eigen::VectorXd>>
                           &force_sequence);
 
+  // Create one Centroidal stage
+  StageModel
+  create_stage(const ContactMap &contact_map,
+               const std::map<std::string, Eigen::VectorXd> &force_refs);
+
+  // Create one Centroidal terminal cost
+  CostStack create_terminal_cost();
+
+  // Getters and setters for pose not implemented
   void
   set_reference_poses(const std::size_t t,
                       const std::map<std::string, pinocchio::SE3> &pose_refs) {}
@@ -77,10 +84,8 @@ public:
                                     const std::string &ee_name) {
     return pinocchio::SE3::Identity();
   }
-  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
 
-  void compute_control_from_forces(
-      const std::map<std::string, Eigen::VectorXd> &force_refs);
+  // Getters and setters for contact forces
   void set_reference_forces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs);
@@ -88,7 +93,10 @@ public:
                            const Eigen::VectorXd &force_ref);
   Eigen::VectorXd get_reference_force(const std::size_t t,
                                       const std::string &ee_name);
-  CostStack create_terminal_cost();
+  void compute_control_from_forces(
+      const std::map<std::string, Eigen::VectorXd> &force_refs);
+
+  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
 
 protected:
   CentroidalSettings settings_;

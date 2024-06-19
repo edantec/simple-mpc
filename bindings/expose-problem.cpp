@@ -1,3 +1,11 @@
+///////////////////////////////////////////////////////////////////////////////
+// BSD 2-Clause License
+//
+// Copyright (C) 2024, INRIA
+// Copyright note valid unless otherwise stated in individual files.
+// All rights reserved.
+///////////////////////////////////////////////////////////////////////////////
+
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 #include <boost/python/return_internal_reference.hpp>

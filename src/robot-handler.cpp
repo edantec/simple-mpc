@@ -103,7 +103,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     if (std::find(settings_.controlled_joints_names.begin(),
                   settings_.controlled_joints_names.end(),
                   joint_name) != settings_.controlled_joints_names.end()) {
-      controlled_joints_id_.push_back(rmodel_complete_.getJointId(joint_name));
+      controlled_joints_ids_.push_back(rmodel_complete_.getJointId(joint_name));
     }
   }
 
@@ -136,7 +136,7 @@ const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,
     x_internal_.segment<6>(rmodel_.nq) = v.head<6>();
 
     int i = 0;
-    for (unsigned long jointID : controlled_joints_id_)
+    for (unsigned long jointID : controlled_joints_ids_)
       if (jointID > 1) {
         x_internal_(i + 7) = q((long)jointID + 5);
         x_internal_(rmodel_.nq + i + 6) = v((long)jointID + 4);

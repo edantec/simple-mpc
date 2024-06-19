@@ -1,11 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////
-// BSD 2-Clause License
-//
-// Copyright (C) 2024, INRIA
-// Copyright note valid unless otherwise stated in individual files.
-// All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
-
 #include <aligator/core/stage-model.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/core/workspace-base.hpp>

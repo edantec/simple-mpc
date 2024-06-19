@@ -1,4 +1,3 @@
-
 #include <boost/test/unit_test.hpp>
 
 #include "simple-mpc/centroidal-dynamics.hpp"

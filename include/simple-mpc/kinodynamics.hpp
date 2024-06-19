@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// BSD 2-Clause License
 //
 // Copyright (C) 2024, INRIA
 // Copyright note valid unless otherwise stated in individual files.
@@ -37,15 +37,18 @@ struct KinodynamicsSettings {
   /// @brief timestep in problem shooting nodes
   double DT;
 
-  Eigen::MatrixXd w_x;
-  Eigen::MatrixXd w_u;
-  Eigen::MatrixXd w_frame;
-  Eigen::MatrixXd w_cent;
-  Eigen::MatrixXd w_centder;
+  // Cost function weights
+  Eigen::MatrixXd w_x;       // State
+  Eigen::MatrixXd w_u;       // Control
+  Eigen::MatrixXd w_frame;   // End effector placement
+  Eigen::MatrixXd w_cent;    // Centroidal momentum
+  Eigen::MatrixXd w_centder; // Derivative of centroidal momentum
 
+  // Kinematics limits
   Eigen::VectorXd qmin;
   Eigen::VectorXd qmax;
 
+  // Physics parameters
   Eigen::Vector3d gravity;
   int force_size;
 };
@@ -56,20 +59,27 @@ class KinodynamicsProblem : public Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  // Constructor
   KinodynamicsProblem();
   KinodynamicsProblem(const KinodynamicsSettings &settings,
                       const RobotHandler &handler);
-
   virtual ~KinodynamicsProblem(){};
 
+  // Create one Kinodynamics problem
   void create_problem(const Eigen::VectorXd &x0,
                       const std::vector<ContactMap> &contact_sequence,
                       const std::vector<std::map<std::string, Eigen::VectorXd>>
                           &force_sequence);
 
+  // Create one Kinodynamics stage
   StageModel
   create_stage(const ContactMap &contact_map,
                const std::map<std::string, Eigen::VectorXd> &force_refs);
+
+  // Create one Kinodynamics terminal cost
+  CostStack create_terminal_cost();
+
+  // Getters and setters
   void
   set_reference_poses(const std::size_t i,
                       const std::map<std::string, pinocchio::SE3> &pose_refs);
@@ -85,10 +95,6 @@ public:
   Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
   void compute_control_from_forces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
-  CostStack create_terminal_cost();
-
-  /// @brief Parameters to tune the algorithm, given at init.
-  // KinodynamicsSettings settings_;
 
 protected:
   KinodynamicsSettings settings_;

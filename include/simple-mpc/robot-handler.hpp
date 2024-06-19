@@ -1,11 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// BSD 2-Clause License
 //
 // Copyright (C) 2024, INRIA
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 
 #include <pinocchio/fwd.hpp>
@@ -19,6 +18,10 @@
 #include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
+
+/**
+ * @brief Class managing every robot-related quantities
+ */
 
 struct RobotHandlerSettings {
 public:
@@ -37,23 +40,24 @@ class RobotHandler {
 private:
   RobotHandlerSettings settings_;
 
-  std::vector<unsigned long> controlled_joints_id_;
+  // Vectors of usefull index
+  std::vector<unsigned long> controlled_joints_ids_;
   std::vector<unsigned long> end_effector_ids_;
   unsigned long root_ids_;
 
+  // Pinocchio objects
   pinocchio::Model rmodel_complete_, rmodel_;
   pinocchio::Data rdata_;
-  // std::vector<pinocchio::JointIndex> pinocchioControlledJoints_;
 
+  // State vectors
   Eigen::VectorXd q0Complete_, q0_;
   Eigen::VectorXd v0Complete_, v0_;
   Eigen::VectorXd x0_;
   Eigen::VectorXd x_internal_;
 
-  Eigen::Vector3d com_position_;
-
-  // Memory allocations
+  // Robot total mass and CoM
   double mass_ = 0;
+  Eigen::Vector3d com_position_;
 
 public:
   RobotHandler();
@@ -61,11 +65,15 @@ public:
   void initialize(const RobotHandlerSettings &settings);
   bool initialized_ = false;
 
+  // Set new robot state
   void updateInternalData(const Eigen::VectorXd &x);
-  const Eigen::VectorXd &shapeState(const Eigen::VectorXd &q,
-                                    const Eigen::VectorXd &v);
   void set_q0(const Eigen::VectorXd &q0);
 
+  // Return reduced state from measures
+  const Eigen::VectorXd &shapeState(const Eigen::VectorXd &q,
+                                    const Eigen::VectorXd &v);
+
+  // Getters
   const pinocchio::FrameIndex &get_root_id() { return root_ids_; }
   const std::vector<pinocchio::FrameIndex> &get_ee_ids() {
     return end_effector_ids_;
@@ -79,8 +87,6 @@ public:
   };
 
   const pinocchio::SE3 &get_root_frame();
-
-  void compute_mass();
 
   const double &get_mass() { return mass_; }
   const pinocchio::Model &get_rmodel() { return rmodel_; }
@@ -100,13 +106,16 @@ public:
   }
   const RobotHandlerSettings &get_settings() { return settings_; }
   const std::vector<unsigned long> &get_controlledJointsIDs() {
-    return controlled_joints_id_;
+    return controlled_joints_ids_;
   }
 
   const pinocchio::SE3 &get_ee_pose(const unsigned long &i) {
     return rdata_.oMf[get_ee_id(i)];
   }
   const Eigen::Vector3d &get_com_position() { return com_position_; }
+
+  // Compute the total robot mass
+  void compute_mass();
 };
 
 } // namespace simple_mpc

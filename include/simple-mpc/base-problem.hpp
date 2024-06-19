@@ -34,7 +34,7 @@ using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
 using ContactForceResidual = ContactForceResidualTpl<double>;
 /**
- * @brief Build a full dynamics problem
+ * @brief Base problem abstract class
  */
 
 class Problem {
