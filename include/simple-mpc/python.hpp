@@ -8,7 +8,7 @@ namespace simple_mpc {
 namespace python {
 
 void exposeHandler();
-// void exposeBaseProblem();
+void exposeBaseProblem();
 void exposeFullDynamicsProblem();
 
 } // namespace python

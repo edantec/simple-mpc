@@ -1,4 +1,5 @@
-set(${PY_NAME}_SOURCES main.cpp expose-robot-handler.cpp expose-problem.cpp)
+set(${PY_NAME}_SOURCES main.cpp expose-robot-handler.cpp expose-problem.cpp
+                       problems.hpp)
 
 add_library(${PY_NAME}_pywrap SHARED ${${PY_NAME}_SOURCES})
 target_link_libraries(${PY_NAME}_pywrap PUBLIC ${PROJECT_NAME} eigenpy::eigenpy)

@@ -69,30 +69,31 @@ public:
   void create_problem(const Eigen::VectorXd &x0,
                       const std::vector<ContactMap> &contact_sequence,
                       const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence);
+                          &force_sequence) override;
 
   // Create one Kinodynamics stage
-  StageModel
-  create_stage(const ContactMap &contact_map,
-               const std::map<std::string, Eigen::VectorXd> &force_refs);
+  StageModel create_stage(
+      const ContactMap &contact_map,
+      const std::map<std::string, Eigen::VectorXd> &force_refs) override;
 
   // Create one Kinodynamics terminal cost
-  CostStack create_terminal_cost();
+  CostStack create_terminal_cost() override;
 
   // Getters and setters
-  void
-  set_reference_poses(const std::size_t i,
-                      const std::map<std::string, pinocchio::SE3> &pose_refs);
+  void set_reference_poses(
+      const std::size_t i,
+      const std::map<std::string, pinocchio::SE3> &pose_refs) override;
   void set_reference_forces(
       const std::size_t i,
-      const std::map<std::string, Eigen::VectorXd> &force_refs);
+      const std::map<std::string, Eigen::VectorXd> &force_refs) override;
   void set_reference_force(const std::size_t i, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref);
+                           const Eigen::VectorXd &force_ref) override;
   Eigen::VectorXd get_reference_force(const std::size_t i,
-                                      const std::string &cost_name);
+                                      const std::string &cost_name) override;
   pinocchio::SE3 get_reference_pose(const std::size_t i,
-                                    const std::string &cost_name);
-  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
+                                    const std::string &cost_name) override;
+  Eigen::VectorXd
+  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override;
   void compute_control_from_forces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
 

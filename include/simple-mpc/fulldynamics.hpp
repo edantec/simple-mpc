@@ -86,30 +86,31 @@ public:
   void create_problem(const Eigen::VectorXd &x0,
                       const std::vector<ContactMap> &contact_sequence,
                       const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence);
+                          &force_sequence) override;
 
   // Create one FullDynamics stage
-  StageModel
-  create_stage(const ContactMap &contact_map,
-               const std::map<std::string, Eigen::VectorXd> &force_refs);
+  StageModel create_stage(
+      const ContactMap &contact_map,
+      const std::map<std::string, Eigen::VectorXd> &force_refs) override;
 
   // Create one FullDynamics terminal cost
-  CostStack create_terminal_cost();
+  CostStack create_terminal_cost() override;
 
   // Getters and setters
-  void
-  set_reference_poses(const std::size_t t,
-                      const std::map<std::string, pinocchio::SE3> &pose_refs);
+  void set_reference_poses(
+      const std::size_t t,
+      const std::map<std::string, pinocchio::SE3> &pose_refs) override;
   void set_reference_forces(
       const std::size_t t,
-      const std::map<std::string, Eigen::VectorXd> &force_refs);
+      const std::map<std::string, Eigen::VectorXd> &force_refs) override;
   void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref);
+                           const Eigen::VectorXd &force_ref) override;
   pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &cost_name);
+                                    const std::string &cost_name) override;
   Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &cost_name);
-  Eigen::VectorXd get_x0_from_multibody(const Eigen::VectorXd &x_multibody);
+                                      const std::string &cost_name) override;
+  Eigen::VectorXd
+  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override;
   FullDynamicsSettings get_settings() { return settings_; }
 
 protected:

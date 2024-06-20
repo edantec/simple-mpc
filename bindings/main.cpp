@@ -9,6 +9,6 @@ BOOST_PYTHON_MODULE(simple_mpc_pywrap) {
   eigenpy::enableEigenPy();
   ENABLE_SPECIFIC_MATRIX_TYPE(Eigen::VectorXi);
   simple_mpc::python::exposeHandler();
-  // simple_mpc::python::exposeBaseProblem();
+  simple_mpc::python::exposeBaseProblem();
   simple_mpc::python::exposeFullDynamicsProblem();
 }

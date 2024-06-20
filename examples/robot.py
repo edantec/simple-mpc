@@ -4,10 +4,7 @@ import example_robot_data
 from aligator import (
     ContactMap,
 )
-from simple_mpc import (
-    RobotHandler,
-    FullDynamicsProblem,
-)
+from simple_mpc import RobotHandler, Problem, FullDynamicsProblem
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -157,7 +154,10 @@ problem_conf = dict(
     umax=handler.get_rmodel().effortLimit[6:],
     qmin=handler.get_rmodel().lowerPositionLimit[6:],
     qmax=handler.get_rmodel().upperPositionLimit[6:],
+    mu=0.8,
+    Lfoot=0.1,
+    Wfoot=0.075,
 )
 
-problem = FullDynamicsProblem()
-problem.initialize(problem_conf, handler)
+problem = FullDynamicsProblem(handler)
+problem.initialize(problem_conf)

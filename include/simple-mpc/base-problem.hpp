@@ -82,7 +82,7 @@ public:
   /// Common functions to all types of problems
 
   // Create the complete vector of stages from contact_sequence
-  std::vector<xyz::polymorphic<StageModel>>
+  virtual std::vector<xyz::polymorphic<StageModel>>
   create_stages(const std::vector<ContactMap> &contact_sequence,
                 const std::vector<std::map<std::string, Eigen::VectorXd>>
                     &force_sequence);
