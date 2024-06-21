@@ -46,16 +46,17 @@ void MPC::initialize(const MPCSettings &settings,
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
-    for (std::size_t j = 0; j < problem_->handler_.get_ee_names().size(); j++) {
-      map_se3.insert({problem_->handler_.get_ee_name(j),
-                      problem_->handler_.get_ee_pose(j)});
+    for (std::size_t j = 0; j < problem_->get_handler().get_ee_names().size();
+         j++) {
+      map_se3.insert({problem_->get_handler().get_ee_name(j),
+                      problem_->get_handler().get_ee_pose(j)});
     }
     ref_frame_poses_.push_back(map_se3);
   }
 
   horizon_iteration_ = 0;
 
-  for (std::size_t i = 0; i < problem_->problem_->numSteps(); i++) {
+  for (std::size_t i = 0; i < problem_->get_problem()->numSteps(); i++) {
     xs_.push_back(x0_);
     us_.push_back(u0_);
   }
@@ -72,9 +73,9 @@ void MPC::initialize(const MPCSettings &settings,
     solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
   solver_->force_initial_condition_ = true;
   // solver_->reg_min = 1e-6;
-  solver_->setup(*problem_->problem_);
+  solver_->setup(*problem_->get_problem());
 
-  solver_->run(*problem_->problem_, xs_, us_);
+  solver_->run(*problem_->get_problem(), xs_, us_);
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -96,7 +97,7 @@ void MPC::generateFullHorizon(
 
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
-  x_multibody_ = problem_->handler_.shapeState(q_current, v_current);
+  x_multibody_ = problem_->get_handler().shapeState(q_current, v_current);
 
   // ~~TIMING~~ //
   recedeWithCycle();
@@ -115,7 +116,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   us_.push_back(us_.back());
 
   // ~~SOLVER~~ //
-  solver_->run(*problem_->problem_, xs_, us_);
+  solver_->run(*problem_->get_problem(), xs_, us_);
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -124,11 +125,13 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
 void MPC::recedeWithCycle() {
   if (horizon_iteration_ < full_horizon_.size()) {
-    problem_->problem_->replaceStageCircular(full_horizon_[horizon_iteration_]);
+    problem_->get_problem()->replaceStageCircular(
+        full_horizon_[horizon_iteration_]);
     solver_->workspace_.cycleAppend(full_horizon_data_[horizon_iteration_]);
     horizon_iteration_++;
   } else {
-    problem_->problem_->replaceStageCircular(problem_->problem_->stages_[0]);
+    problem_->get_problem()->replaceStageCircular(
+        problem_->get_problem()->stages_[0]);
     solver_->workspace_.cycleLeft();
   }
 }
@@ -150,7 +153,7 @@ foot_takeoff_times_.at(name)[0] < 0)
 } */
 
 void MPC::updateStepTrackerReferences() {
-  for (unsigned long time = 0; time < problem_->problem_->stages_.size();
+  for (unsigned long time = 0; time < problem_->get_problem()->stages_.size();
        time++) {
     problem_->set_reference_poses(time, ref_frame_poses_[time]);
   }

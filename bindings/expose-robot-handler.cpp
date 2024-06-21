@@ -104,6 +104,10 @@ void exposeHandler() {
       .def("get_ee_pose",
            bp::make_function(
                &RobotHandler::get_ee_pose,
+               bp::return_value_policy<bp::copy_const_reference>()))
+      .def("get_mass",
+           bp::make_function(
+               &RobotHandler::get_mass,
                bp::return_value_policy<bp::copy_const_reference>()));
 
   return;

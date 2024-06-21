@@ -95,22 +95,25 @@ public:
   CostStack *get_cost_stack(std::size_t t);
   std::size_t get_cost_number();
   std::size_t get_size();
+  std::shared_ptr<context::TrajOptProblem> get_problem() { return problem_; }
+  std::map<std::string, std::size_t> get_cost_map() { return cost_map_; }
+  RobotHandler get_handler() { return handler_; }
   int get_nu() { return nu_; }
-
-  /// The reference shooting problem storing all shooting nodes
-  std::shared_ptr<aligator::context::TrajOptProblem> problem_;
-
-  /// The robot model
-  RobotHandler handler_;
-
-  /// Dictionnary of cost name + cost id in the CostStack object
-  std::map<std::string, std::size_t> cost_map_;
 
 protected:
   // Size of the problem
   int nq_;
   int nv_;
   int nu_;
+
+  /// Dictionnary of cost name + cost id in the CostStack object
+  std::map<std::string, std::size_t> cost_map_;
+
+  /// The robot model
+  RobotHandler handler_;
+
+  /// The reference shooting problem storing all shooting nodes
+  std::shared_ptr<context::TrajOptProblem> problem_;
 
   // Vector reference for control cost
   Eigen::VectorXd control_ref_;

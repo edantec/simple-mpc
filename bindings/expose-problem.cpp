@@ -11,6 +11,7 @@
 #include <boost/python/return_internal_reference.hpp>
 #include <crocoddyl/core/activation-base.hpp>
 #include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
 #include <pinocchio/fwd.hpp>
 
@@ -23,6 +24,7 @@
 namespace simple_mpc {
 namespace python {
 namespace bp = boost::python;
+using eigenpy::StdVectorPythonVisitor;
 
 void exposeBaseProblem() {
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
@@ -53,7 +55,9 @@ void exposeBaseProblem() {
       .def("set_reference_control", &Problem::set_reference_control,
            bp::args("self", "t", "u_ref"))
       .def("get_reference_control", &Problem::get_reference_control,
-           bp::args("self", "t"));
+           bp::args("self", "t"))
+      .def("get_problem", &Problem::get_problem, bp::args("self"))
+      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }
 
 void initialize(FullDynamicsProblem &self, const bp::dict &settings) {
@@ -110,7 +114,54 @@ bp::dict get_settings(FullDynamicsProblem &self) {
   return settings;
 }
 
+StageModel create_stage(FullDynamicsProblem &self,
+                        const ContactMap &contact_map,
+                        const bp::dict &force_dict) {
+  boost::python::list keys = boost::python::list(force_dict.keys());
+  std::map<std::string, Eigen::VectorXd> force_refs;
+  for (int i = 0; i < len(keys); ++i) {
+    boost::python::extract<std::string> extractor(keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
+      force_refs.insert({key, ff});
+    }
+  }
+
+  return self.create_stage(contact_map, force_refs);
+}
+
+void create_problem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
+                    const std::vector<ContactMap> &contact_sequence,
+                    const std::vector<bp::dict> &vector_dict) {
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
+  for (std::size_t i = 0; i < contact_sequence.size(); ++i) {
+    std::map<std::string, Eigen::VectorXd> force_refs;
+    boost::python::list keys = boost::python::list(vector_dict[i].keys());
+    for (int j = 0; j < len(keys); ++j) {
+      boost::python::extract<std::string> extractor(keys[j]);
+      if (extractor.check()) {
+        std::string key = extractor();
+        Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(vector_dict[i][key]);
+        force_refs.insert({key, ff});
+      }
+    }
+    force_sequence.push_back(force_refs);
+  }
+
+  self.create_problem(x0, contact_sequence, force_sequence);
+}
+
+TrajOptProblem get_problem(FullDynamicsProblem &self) {
+  return *self.get_problem();
+}
+
 void exposeFullDynamicsProblem() {
+  StdVectorPythonVisitor<std::vector<ContactMap>, true>::expose(
+      "StdVec_ContactMap_double");
+  StdVectorPythonVisitor<std::vector<bp::dict>, true>::expose(
+      "StdVec_Force_double");
+
   bp::class_<PyFullDynamicsProblem, boost::noncopyable>(
       "FullDynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
@@ -120,10 +171,8 @@ void exposeFullDynamicsProblem() {
            bp::make_function(
                &FullDynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("create_problem", &FullDynamicsProblem::create_problem,
-           bp::args("self", "x0", "contact_sequence", "force_sequence"))
-      .def("create_stage", &FullDynamicsProblem::create_stage,
-           bp::args("self", "contact_map", "force_refs"))
+      .def("create_stage", &create_stage)
+      .def("create_problem", &create_problem)
       .def("set_reference_poses", &FullDynamicsProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
       .def("set_reference_forces", &FullDynamicsProblem::set_reference_forces,
@@ -137,7 +186,9 @@ void exposeFullDynamicsProblem() {
       .def("get_x0_from_multibody", &FullDynamicsProblem::get_x0_from_multibody,
            bp::args("self", "x_multibody"))
       .def("create_terminal_cost", &FullDynamicsProblem::create_terminal_cost,
-           bp::args("self"));
+           bp::args("self"))
+      .def("get_problem", &get_problem)
+      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }
 } // namespace python
 } // namespace simple_mpc

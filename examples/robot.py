@@ -161,3 +161,18 @@ problem_conf = dict(
 
 problem = FullDynamicsProblem(handler)
 problem.initialize(problem_conf)
+
+contact_sequence = []
+force_sequence = []
+fref = np.array([0, 0, handler.get_mass() * 9.81 / 2.0, 0, 0, 0])
+for i in range(100):
+    contact_phase = [True, True]
+    contact_pose = [
+        handler.get_ee_pose(0).translation,
+        handler.get_ee_pose(1).translation,
+    ]
+    contact_sequence.append(ContactMap(contact_phase, contact_pose))
+    force_sequence.append({"left_sole_link": fref, "right_sole_link": fref})
+
+problem.create_stage(contact_sequence[0], force_sequence[0])
+problem.create_problem(handler.get_x0(), contact_sequence, force_sequence)
