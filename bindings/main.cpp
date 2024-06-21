@@ -11,4 +11,7 @@ BOOST_PYTHON_MODULE(simple_mpc_pywrap) {
   simple_mpc::python::exposeHandler();
   simple_mpc::python::exposeBaseProblem();
   simple_mpc::python::exposeFullDynamicsProblem();
+  simple_mpc::python::exposeCentroidalProblem();
+  simple_mpc::python::exposeKinodynamicsProblem();
+  simple_mpc::python::exposeMPC();
 }

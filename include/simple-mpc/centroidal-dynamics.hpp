@@ -58,8 +58,10 @@ public:
 
   // Constructor
   CentroidalProblem();
+  CentroidalProblem(const RobotHandler &handler);
   CentroidalProblem(const CentroidalSettings &settings,
                     const RobotHandler &handler);
+  void initialize(const CentroidalSettings &settings);
   virtual ~CentroidalProblem(){};
 
   // Create one Centroidal problem

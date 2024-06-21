@@ -77,18 +77,6 @@ protected:
   std::vector<std::shared_ptr<StageData>> full_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
 
-  std::vector<Eigen::VectorXd> xs_;
-  std::vector<Eigen::VectorXd> us_;
-  Eigen::MatrixXd K0_;
-
-  Eigen::VectorXd x0_;
-  Eigen::VectorXd x_multibody_;
-  Eigen::VectorXd u0_;
-
-  // timings
-  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
-  std::size_t horizon_iteration_;
-
   // INTERNAL UPDATING functions
   void updateStepTrackerReferences();
 
@@ -104,11 +92,9 @@ public:
   MPC();
   MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
       const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
-
+  MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
   void initialize(const MPCSettings &settings,
-                  std::shared_ptr<Problem> &problem,
-                  const Eigen::VectorXd &x_multibody,
-                  const Eigen::VectorXd &u0);
+                  std::shared_ptr<Problem> &problem);
 
   void
   generateFullHorizon(const std::vector<ContactMap> &contact_phases,
@@ -145,6 +131,18 @@ public:
   }
 
   const std::size_t &get_horizon_iteration() { return horizon_iteration_; }
+
+  std::vector<Eigen::VectorXd> xs_;
+  std::vector<Eigen::VectorXd> us_;
+  Eigen::MatrixXd K0_;
+
+  Eigen::VectorXd x0_;
+  Eigen::VectorXd x_multibody_;
+  Eigen::VectorXd u0_;
+
+  // timings
+  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
+  std::size_t horizon_iteration_;
 };
 
 } // namespace simple_mpc

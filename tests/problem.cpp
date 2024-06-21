@@ -22,13 +22,15 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(fdproblem.get_cost_map().at("centroidal_cost"), 2);
   BOOST_CHECK_EQUAL(fdproblem.get_cost_map().at("left_sole_link_pose_cost"), 3);
 
+  std::vector<std::string> contact_names = {"left_sole_link",
+                                            "right_sole_link"};
   std::vector<bool> contact_states = {true, false};
   StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
   Eigen::Vector3d p1 = {0, 0.1, 0};
   Eigen::Vector3d p2 = {0, -0.1, 0};
   contact_poses.push_back(p1);
   contact_poses.push_back(p2);
-  ContactMap cm(contact_states, contact_poses);
+  ContactMap cm(contact_names, contact_states, contact_poses);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -47,7 +49,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -55,7 +57,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
     std::vector<bool> contact_states = {true, false};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -63,7 +65,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0.5, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -109,13 +111,15 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(knproblem.get_cost_map().at("centroidal_cost"), 2);
   BOOST_CHECK_EQUAL(knproblem.get_cost_map().at("left_sole_link_pose_cost"), 4);
 
+  std::vector<std::string> contact_names = {"left_sole_link",
+                                            "right_sole_link"};
   std::vector<bool> contact_states = {true, false};
   StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
   Eigen::Vector3d p1 = {0, 0.1, 0};
   Eigen::Vector3d p2 = {0, -0.1, 0};
   contact_poses.push_back(p1);
   contact_poses.push_back(p2);
-  ContactMap cm(contact_states, contact_poses);
+  ContactMap cm(contact_names, contact_states, contact_poses);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -134,7 +138,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -142,7 +146,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
     std::vector<bool> contact_states = {true, false};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -150,7 +154,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0.5, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -200,12 +204,14 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cproblem.get_cost_map().at("angular_acc_cost"), 4);
 
   std::vector<bool> contact_states = {true, false};
+  std::vector<std::string> contact_names = {"left_sole_link",
+                                            "right_sole_link"};
   StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
   Eigen::Vector3d p1 = {0, 0.1, 0};
   Eigen::Vector3d p2 = {0, -0.1, 0};
   contact_poses.push_back(p1);
   contact_poses.push_back(p2);
-  ContactMap cm(contact_states, contact_poses);
+  ContactMap cm(contact_names, contact_states, contact_poses);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -224,7 +230,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -232,7 +238,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
     std::vector<bool> contact_states = {true, false};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -240,7 +246,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
     std::vector<bool> contact_states = {true, true};
     StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
                                                             {0.5, -0.1, 0}};
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
@@ -275,6 +281,8 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   BOOST_CHECK_EQUAL(cproblem.get_cost_map().at("linear_mom_cost"), 1);
   BOOST_CHECK_EQUAL(cproblem.get_cost_map().at("angular_acc_cost"), 4);
 
+  std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
+                                            "HL_FOOT"};
   std::vector<bool> contact_states = {true, true, true, false};
   StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
   Eigen::Vector3d p1 = handler.get_ee_frame(0).translation();
@@ -285,7 +293,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   contact_poses.push_back(p2);
   contact_poses.push_back(p3);
   contact_poses.push_back(p4);
-  ContactMap cm(contact_states, contact_poses);
+  ContactMap cm(contact_names, contact_states, contact_poses);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(3);
@@ -305,21 +313,21 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true, true, true};
 
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::vector<bool> contact_states = {true, true, false, true};
 
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::vector<bool> contact_states = {true, true, true, false};
 
-    ContactMap cm1(contact_states, contact_poses);
+    ContactMap cm1(contact_names, contact_states, contact_poses);
     contact_sequence.push_back(cm1);
     force_sequence.push_back(force_refs);
   }

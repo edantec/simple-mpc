@@ -11,6 +11,7 @@
 #include <boost/python/return_internal_reference.hpp>
 #include <crocoddyl/core/activation-base.hpp>
 #include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
 #include <pinocchio/fwd.hpp>
@@ -186,6 +187,66 @@ void exposeFullDynamicsProblem() {
       .def("get_x0_from_multibody", &FullDynamicsProblem::get_x0_from_multibody,
            bp::args("self", "x_multibody"))
       .def("create_terminal_cost", &FullDynamicsProblem::create_terminal_cost,
+           bp::args("self"))
+      .def("get_problem", &get_problem)
+      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+}
+
+void exposeCentroidalProblem() {
+  bp::class_<PyCentroidalProblem, boost::noncopyable>(
+      "CentroidalProblem",
+      bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      .def("initialize", &initialize, bp::args("self", "settings"))
+      .def("get_settings", &get_settings)
+      .def("initialize",
+           bp::make_function(
+               &CentroidalProblem::initialize,
+               bp::return_value_policy<bp::reference_existing_object>()))
+      .def("create_stage", &create_stage)
+      .def("create_problem", &create_problem)
+      .def("set_reference_poses", &CentroidalProblem::set_reference_poses,
+           bp::args("self", "t", "pose_refs"))
+      .def("set_reference_forces", &CentroidalProblem::set_reference_forces,
+           bp::args("self", "t", "force_refs"))
+      .def("set_reference_force", &CentroidalProblem::set_reference_force,
+           bp::args("self", "t", "ee_name", "force_ref"))
+      .def("get_reference_pose", &CentroidalProblem::get_reference_pose,
+           bp::args("self", "t", "cost_name"))
+      .def("get_reference_force", &CentroidalProblem::get_reference_force,
+           bp::args("self", "t", "cost_name"))
+      .def("get_x0_from_multibody", &CentroidalProblem::get_x0_from_multibody,
+           bp::args("self", "x_multibody"))
+      .def("create_terminal_cost", &CentroidalProblem::create_terminal_cost,
+           bp::args("self"))
+      .def("get_problem", &get_problem)
+      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+}
+
+void exposeKinodynamicsProblem() {
+  bp::class_<PyKinodynamicsProblem, boost::noncopyable>(
+      "KinodynamicsProblem",
+      bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      .def("initialize", &initialize, bp::args("self", "settings"))
+      .def("get_settings", &get_settings)
+      .def("initialize",
+           bp::make_function(
+               &KinodynamicsProblem::initialize,
+               bp::return_value_policy<bp::reference_existing_object>()))
+      .def("create_stage", &create_stage)
+      .def("create_problem", &create_problem)
+      .def("set_reference_poses", &KinodynamicsProblem::set_reference_poses,
+           bp::args("self", "t", "pose_refs"))
+      .def("set_reference_forces", &KinodynamicsProblem::set_reference_forces,
+           bp::args("self", "t", "force_refs"))
+      .def("set_reference_force", &KinodynamicsProblem::set_reference_force,
+           bp::args("self", "t", "ee_name", "force_ref"))
+      .def("get_reference_pose", &KinodynamicsProblem::get_reference_pose,
+           bp::args("self", "t", "cost_name"))
+      .def("get_reference_force", &KinodynamicsProblem::get_reference_force,
+           bp::args("self", "t", "cost_name"))
+      .def("get_x0_from_multibody", &KinodynamicsProblem::get_x0_from_multibody,
+           bp::args("self", "x_multibody"))
+      .def("create_terminal_cost", &KinodynamicsProblem::create_terminal_cost,
            bp::args("self"))
       .def("get_problem", &get_problem)
       .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));

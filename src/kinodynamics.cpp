@@ -3,10 +3,17 @@
 namespace simple_mpc {
 using namespace aligator;
 
+KinodynamicsProblem::KinodynamicsProblem(const RobotHandler &handler)
+    : Base(handler) {}
+
 KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
                                          const RobotHandler &handler)
-    : Base(handler), settings_(settings) {
+    : Base(handler) {
+  initialize(settings);
+}
 
+void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
+  settings_ = settings;
   nu_ = nv_ - 6 + settings_.force_size * (int)handler_.get_ee_names().size();
   if (nu_ != settings_.u0.size()) {
     throw std::runtime_error("settings.u0 does not have the correct size nu");

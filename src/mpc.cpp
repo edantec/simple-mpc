@@ -24,25 +24,41 @@ MPC::MPC() {}
 
 MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
          const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
-  initialize(settings, problem, x_multibody, u0);
+  x_multibody_ = x_multibody;
+  u0_ = u0;
+  horizon_iteration_ = 0;
+
+  initialize(settings, problem);
+}
+
+MPC::MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
+  x_multibody_ = x_multibody;
+  u0_ = u0;
+  horizon_iteration_ = 0;
 }
 
 void MPC::initialize(const MPCSettings &settings,
-                     std::shared_ptr<Problem> &problem,
-                     const Eigen::VectorXd &x_multibody,
-                     const Eigen::VectorXd &u0) {
-
+                     std::shared_ptr<Problem> &problem) {
   settings_ = settings;
   problem_ = problem;
 
-  x0_ = problem_->get_x0_from_multibody((x_multibody));
-  x_multibody_ = x_multibody;
+  x0_ = problem_->get_x0_from_multibody((x_multibody_));
 
-  if (u0.size() != problem_->get_nu()) {
+  solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
+                                            0., maxiters, aligator::VERBOSE);
+  solver_->rollout_type_ = aligator::RolloutType::LINEAR;
+  if (settings_.num_threads > 1) {
+    solver_->linear_solver_choice = aligator::LQSolverChoice::PARALLEL;
+    solver_->setNumThreads(settings_.num_threads);
+  } else
+    solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
+  solver_->force_initial_condition_ = true;
+  // solver_->reg_min = 1e-6;
+
+  if (u0_.size() != problem_->get_nu()) {
     throw std::runtime_error(
         "Provided u0 does not have the correct size problem.nu");
   }
-  u0_ = u0;
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
@@ -54,27 +70,13 @@ void MPC::initialize(const MPCSettings &settings,
     ref_frame_poses_.push_back(map_se3);
   }
 
-  horizon_iteration_ = 0;
-
   for (std::size_t i = 0; i < problem_->get_problem()->numSteps(); i++) {
     xs_.push_back(x0_);
     us_.push_back(u0_);
   }
   xs_.push_back(x0_);
 
-  solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
-                                            0., maxiters, aligator::VERBOSE);
-
-  solver_->rollout_type_ = aligator::RolloutType::LINEAR;
-  if (settings_.num_threads > 1) {
-    solver_->linear_solver_choice = aligator::LQSolverChoice::PARALLEL;
-    solver_->setNumThreads(settings_.num_threads);
-  } else
-    solver_->linear_solver_choice = aligator::LQSolverChoice::SERIAL;
-  solver_->force_initial_condition_ = true;
-  // solver_->reg_min = 1e-6;
   solver_->setup(*problem_->get_problem());
-
   solver_->run(*problem_->get_problem(), xs_, us_);
 
   xs_ = solver_->results_.xs;

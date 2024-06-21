@@ -4,10 +4,17 @@
 namespace simple_mpc {
 using namespace aligator;
 
+CentroidalProblem::CentroidalProblem(const RobotHandler &handler)
+    : Base(handler) {}
+
 CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
                                      const RobotHandler &handler)
-    : Base(handler), settings_(settings) {
+    : Base(handler) {
+  initialize(settings);
+}
 
+void CentroidalProblem::initialize(const CentroidalSettings &settings) {
+  settings_ = settings;
   nx_ = 9;
   nu_ = (int)handler_.get_ee_names().size() * settings_.force_size;
   if (nu_ != settings_.u0.size()) {

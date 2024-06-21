@@ -10,6 +10,9 @@ namespace python {
 void exposeHandler();
 void exposeBaseProblem();
 void exposeFullDynamicsProblem();
+void exposeCentroidalProblem();
+void exposeKinodynamicsProblem();
+void exposeMPC();
 
 } // namespace python
 } // namespace simple_mpc

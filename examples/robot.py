@@ -4,7 +4,7 @@ import example_robot_data
 from aligator import (
     ContactMap,
 )
-from simple_mpc import RobotHandler, Problem, FullDynamicsProblem
+from simple_mpc import RobotHandler, Problem, FullDynamicsProblem, MPC
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -68,7 +68,8 @@ for t in range(T):
         "left_sole_link": [0, 0, 400, 0, 0, 0],
         "right_sole_link": [0, 0, 400, 0, 0, 0],
     }
-    contact_sequence.append(ContactMap(contact_state, contact_pose))
+    contact_names = ["left_sole_link", "right_sole_link"]
+    contact_sequence.append(ContactMap(contact_names, contact_state, contact_pose))
     force_sequence.append(force_ref)
 
 x0 = handler.get_x0()
@@ -166,13 +167,30 @@ contact_sequence = []
 force_sequence = []
 fref = np.array([0, 0, handler.get_mass() * 9.81 / 2.0, 0, 0, 0])
 for i in range(100):
+    contact_names = ["left_sole_link", "right_sole_link"]
     contact_phase = [True, True]
     contact_pose = [
         handler.get_ee_pose(0).translation,
         handler.get_ee_pose(1).translation,
     ]
-    contact_sequence.append(ContactMap(contact_phase, contact_pose))
+    contact_sequence.append(ContactMap(contact_names, contact_phase, contact_pose))
     force_sequence.append({"left_sole_link": fref, "right_sole_link": fref})
 
 problem.create_stage(contact_sequence[0], force_sequence[0])
 problem.create_problem(handler.get_x0(), contact_sequence, force_sequence)
+
+mpc_conf = dict(
+    totalSteps=4,
+    T=100,
+    ddpIteration=1,
+    min_force=150,
+    support_force=1000,
+    TOL=1e-4,
+    mu_init=1e-8,
+    max_iters=1,
+    num_threads=2,
+)
+
+u0 = np.zeros(handler.get_rmodel().nv - 6)
+mpc = MPC(handler.get_x0(), u0)
+mpc.initialize(mpc_conf, problem)
