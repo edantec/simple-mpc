@@ -9,7 +9,6 @@
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 #include <boost/python/return_internal_reference.hpp>
-#include <crocoddyl/core/activation-base.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
@@ -163,7 +162,7 @@ void exposeFullDynamicsProblem() {
   StdVectorPythonVisitor<std::vector<bp::dict>, true>::expose(
       "StdVec_Force_double");
 
-  bp::class_<PyFullDynamicsProblem, boost::noncopyable>(
+  bp::class_<PyFullDynamicsProblem, bp::bases<PyProblem>, boost::noncopyable>(
       "FullDynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initialize, bp::args("self", "settings"))
@@ -193,7 +192,7 @@ void exposeFullDynamicsProblem() {
 }
 
 void exposeCentroidalProblem() {
-  bp::class_<PyCentroidalProblem, boost::noncopyable>(
+  bp::class_<PyCentroidalProblem, bp::bases<PyProblem>, boost::noncopyable>(
       "CentroidalProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initialize, bp::args("self", "settings"))
@@ -223,7 +222,7 @@ void exposeCentroidalProblem() {
 }
 
 void exposeKinodynamicsProblem() {
-  bp::class_<PyKinodynamicsProblem, boost::noncopyable>(
+  bp::class_<PyKinodynamicsProblem, bp::bases<PyProblem>, boost::noncopyable>(
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initialize, bp::args("self", "settings"))

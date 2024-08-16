@@ -60,6 +60,13 @@ add_compile_options(-Wno-error)
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_core REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(Tracy REQUIRED)
+set_target_properties(Tracy::TracyClient PROPERTIES POSITION_INDEPENDENT_CODE
+                                                    True)
 add_project_dependency(OpenMP REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
@@ -113,3 +120,14 @@ install(
   EXPORT ${TARGETS_EXPORT_NAME}
   DESTINATION lib)
 install(FILES package.xml DESTINATION share/${PROJECT_NAME})
+
+# Ros2 components
+add_executable(talker ros/publisher.cpp)
+ament_target_dependencies(talker rclcpp std_msgs)
+
+add_executable(listener ros/subscriber.cpp)
+ament_target_dependencies(listener rclcpp std_msgs)
+
+install(TARGETS talker listener DESTINATION lib/${PROJECT_NAME})
+
+# ament_package()

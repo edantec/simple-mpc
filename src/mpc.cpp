@@ -18,7 +18,7 @@
 
 namespace simple_mpc {
 using namespace aligator;
-constexpr std::size_t maxiters = 10;
+constexpr std::size_t maxiters = 100;
 
 MPC::MPC() {}
 

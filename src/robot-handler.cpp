@@ -63,6 +63,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
                 << std::endl;
     }
   }
+  std::cout << "ok0 " << std::endl;
 
   // making list of blocked joints
   std::vector<unsigned long> locked_joints_id;
@@ -76,20 +77,24 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
       locked_joints_id.push_back(rmodel_complete_.getJointId(joint_name));
     }
   }
+  std::cout << "ok1 " << std::endl;
 
   rmodel_ = pinocchio::buildReducedModel(rmodel_complete_, locked_joints_id,
                                          q0Complete_);
+  std::cout << "ok3 " << std::endl;
   for (auto &name : settings_.end_effector_names) {
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
   }
   root_ids_ = rmodel_.getFrameId(settings_.root_name);
   rdata_ = pinocchio::Data(rmodel_);
+  std::cout << "ok2 " << std::endl;
 
   pinocchio::srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path,
                                                false);
   if (settings.loadRotor) {
     pinocchio::srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
   }
+  std::cout << "ok " << std::endl;
   q0_ = rmodel_.referenceConfigurations[settings_.base_configuration];
   v0_ = Eigen::VectorXd::Zero(rmodel_.nv);
   x0_.resize(rmodel_.nq + rmodel_.nv);
@@ -106,6 +111,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
       controlled_joints_ids_.push_back(rmodel_complete_.getJointId(joint_name));
     }
   }
+  std::cout << "ok1 " << std::endl;
 
   updateInternalData(q0_);
   compute_mass();

@@ -15,6 +15,8 @@
   <depend>pinocchio</depend>
   <depend>proxsuite-nlp</depend>
   <depend>aligator</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
 
   <buildtool_depend>cmake</buildtool_depend>
   <export>

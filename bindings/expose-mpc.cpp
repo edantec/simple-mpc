@@ -9,7 +9,6 @@
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 #include <boost/python/return_internal_reference.hpp>
-#include <crocoddyl/core/activation-base.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
