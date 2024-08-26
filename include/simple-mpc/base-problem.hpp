@@ -7,8 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/dynamics/integrator-euler.hpp"
+#include <aligator/modelling/costs/quad-state-cost.hpp>
+#include <aligator/modelling/dynamics/integrator-euler.hpp>
 #include <aligator/core/cost-abstract.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/modelling/contact-map.hpp>
@@ -32,7 +32,7 @@ using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
 using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
-using ContactForceResidual = ContactForceResidualTpl<double>;
+using ContactForceResidual = aligator::ContactForceResidualTpl<double>;
 /**
  * @brief Base problem abstract class
  */
@@ -95,7 +95,7 @@ public:
   CostStack *get_cost_stack(std::size_t t);
   std::size_t get_cost_number();
   std::size_t get_size();
-  std::shared_ptr<context::TrajOptProblem> get_problem() { return problem_; }
+  std::shared_ptr<TrajOptProblem> get_problem() { return problem_; }
   std::map<std::string, std::size_t> get_cost_map() { return cost_map_; }
   RobotHandler get_handler() { return handler_; }
   int get_nu() { return nu_; }
@@ -113,7 +113,7 @@ protected:
   RobotHandler handler_;
 
   /// The reference shooting problem storing all shooting nodes
-  std::shared_ptr<context::TrajOptProblem> problem_;
+  std::shared_ptr<TrajOptProblem> problem_;
 
   // Vector reference for control cost
   Eigen::VectorXd control_ref_;

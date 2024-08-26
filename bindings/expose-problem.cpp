@@ -65,28 +65,25 @@ void initialize(FullDynamicsProblem &self, const bp::dict &settings) {
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
-
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
+  conf.w_forces = bp::extract<Eigen::MatrixXd>(settings["w_forces"]);
+  conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
 
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
-
-  conf.w_forces = bp::extract<Eigen::MatrixXd>(settings["w_forces"]);
-  conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
+  /// Foot parameters
+  conf.mu = bp::extract<double>(settings["mu"]);
+  conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
+  conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
 
   conf.umin = bp::extract<Eigen::VectorXd>(settings["umin"]);
   conf.umax = bp::extract<Eigen::VectorXd>(settings["umax"]);
 
   conf.qmin = bp::extract<Eigen::VectorXd>(settings["qmin"]);
   conf.qmax = bp::extract<Eigen::VectorXd>(settings["qmax"]);
-
-  /// Foot parameters
-  conf.mu = bp::extract<double>(settings["mu"]);
-  conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
-  conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
-
+  
   self.initialize(conf);
 }
 

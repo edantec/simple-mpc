@@ -31,7 +31,7 @@ using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
-using MultibodyWrenchConeResidual = MultibodyWrenchConeResidualTpl<double>;
+using MultibodyWrenchConeResidual = aligator::MultibodyWrenchConeResidualTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 /**

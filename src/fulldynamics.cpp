@@ -18,10 +18,12 @@ FullDynamicsProblem::FullDynamicsProblem(const RobotHandler &handler)
 FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings &settings,
                                          const RobotHandler &handler)
     : Base(handler) {
+
   initialize(settings);
 }
 
 void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
+
   settings_ = settings;
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
@@ -43,7 +45,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
     constraint_model.name = handler_.get_ee_name(i);
     constraint_models_.push_back(constraint_model);
   }
-
+  
   // Set up cost names used in full dynamics problem
   std::size_t cost_incr = 0;
   cost_map_.insert({"state_cost", cost_incr});

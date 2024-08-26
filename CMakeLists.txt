@@ -60,10 +60,6 @@ add_compile_options(-Wno-error)
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
-find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_core REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(Tracy REQUIRED)
 set_target_properties(Tracy::TracyClient PROPERTIES POSITION_INDEPENDENT_CODE
                                                     True)
@@ -91,6 +87,10 @@ target_link_libraries(
   PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp aligator::aligator
          example-robot-data::example-robot-data)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    PUBLIC_HEADER "${mpc_HEADER}"
+)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX
                                                  INSTALL_RPATH "\$ORIGIN")
 
@@ -117,17 +117,8 @@ endif()
 # Installation
 install(
   TARGETS ${PROJECT_NAME}
-  EXPORT ${TARGETS_EXPORT_NAME}
-  DESTINATION lib)
+  EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}
+  PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
+)
 install(FILES package.xml DESTINATION share/${PROJECT_NAME})
-
-# Ros2 components
-add_executable(talker ros/publisher.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
-
-add_executable(listener ros/subscriber.cpp)
-ament_target_dependencies(listener rclcpp std_msgs)
-
-install(TARGETS talker listener DESTINATION lib/${PROJECT_NAME})
-
-# ament_package()

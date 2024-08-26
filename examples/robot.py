@@ -162,7 +162,7 @@ problem_conf = dict(
 
 problem = FullDynamicsProblem(handler)
 problem.initialize(problem_conf)
-
+"""
 contact_sequence = []
 force_sequence = []
 fref = np.array([0, 0, handler.get_mass() * 9.81 / 2.0, 0, 0, 0])
@@ -193,4 +193,4 @@ mpc_conf = dict(
 
 u0 = np.zeros(handler.get_rmodel().nv - 6)
 mpc = MPC(handler.get_x0(), u0)
-mpc.initialize(mpc_conf, problem)
+mpc.initialize(mpc_conf, problem) """
