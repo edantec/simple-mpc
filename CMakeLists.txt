@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 set(PROJECT_NAME simple-mpc)
 set(PROJECT_DESCRIPTION "MPC schemes for locomotion")
 set(PROJECT_URL https://github.com/edantec/${PROJECT_NAME})
+set(PROJECT_CUSTOM_HEADER_DIR "simple-mpc")
 
 # Project options
 option(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
@@ -117,7 +118,7 @@ endif()
 # Installation
 install(
   TARGETS ${PROJECT_NAME}
-  EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}
+  EXPORT ${TARGETS_EXPORT_NAME}
   PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
   LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
 )
