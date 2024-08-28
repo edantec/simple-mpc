@@ -65,13 +65,7 @@ public:
   KinodynamicsProblem(const KinodynamicsSettings &settings,
                       const RobotHandler &handler);
   void initialize(const KinodynamicsSettings &settings);
-  virtual ~KinodynamicsProblem(){};
-
-  // Create one Kinodynamics problem
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override;
+  virtual ~KinodynamicsProblem() {};
 
   // Create one Kinodynamics stage
   StageModel create_stage(
@@ -98,6 +92,8 @@ public:
   get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override;
   void compute_control_from_forces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
+
+  KinodynamicsSettings get_settings() { return settings_; }
 
 protected:
   KinodynamicsSettings settings_;

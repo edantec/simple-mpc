@@ -7,10 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <Eigen/Core>
 #include <aligator/fwd.hpp>
-#include <pinocchio/fwd.hpp>
-#include <proxsuite-nlp/fwd.hpp>
 
 #include <aligator/core/stage-model.hpp>
 #include <aligator/core/traj-opt-problem.hpp>

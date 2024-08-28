@@ -81,7 +81,7 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
   settings.w_cent = Eigen::MatrixXd::Identity(6, 6);
   settings.w_cent.diagonal() << 0, 0, 0, 0.1, 0.1, 100;
 
-  settings.gravity << 0, 0, 9.81;
+  settings.gravity << 0, 0, -9.81;
   settings.force_size = 6;
   settings.w_forces = Eigen::MatrixXd::Identity(6, 6);
   settings.w_forces.diagonal() << 0.01, 0.01, 0.01, 0.0001, 0.0001, 0.0001;
@@ -132,7 +132,7 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
   settings.w_cent.diagonal() << 0, 0, 0, 0.1, 0.1, 0.1;
   settings.w_centder = Eigen::MatrixXd::Identity(6, 6);
   settings.w_centder.diagonal() << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1;
-  settings.gravity << 0, 0, 9.81;
+  settings.gravity << 0, 0, -9.81;
   settings.force_size = 6;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 50000;
   settings.qmin =
@@ -164,7 +164,7 @@ CentroidalSettings getCentroidalSettings(RobotHandler handler) {
   settings.w_linear_acc.diagonal() << 0.01, 0.01, 0.01;
   settings.w_angular_acc = Eigen::MatrixXd::Identity(3, 3);
   settings.w_angular_acc.diagonal() << 0.01, 0.01, 0.01;
-  settings.gravity << 0, 0, 9;
+  settings.gravity << 0, 0, -9.81;
   settings.force_size = 6;
 
   return settings;

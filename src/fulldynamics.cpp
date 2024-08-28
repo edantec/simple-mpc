@@ -45,7 +45,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
     constraint_model.name = handler_.get_ee_name(i);
     constraint_models_.push_back(constraint_model);
   }
-  
+
   // Set up cost names used in full dynamics problem
   std::size_t cost_incr = 0;
   cost_map_.insert({"state_cost", cost_incr});
@@ -238,15 +238,6 @@ CostStack FullDynamicsProblem::create_terminal_cost() {
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
 
   return term_cost;
-}
-
-void FullDynamicsProblem::create_problem(
-    const Eigen::VectorXd &x0, const std::vector<ContactMap> &contact_sequence,
-    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
-  std::vector<xyz::polymorphic<StageModel>> stage_models =
-      create_stages(contact_sequence, force_sequence);
-  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
-                                              create_terminal_cost());
 }
 
 } // namespace simple_mpc

@@ -87,11 +87,39 @@ void MPC::initialize(const MPCSettings &settings,
 }
 
 void MPC::generateFullHorizon(
-    const std::vector<ContactMap> &contact_phases,
-    const std::vector<std::map<std::string, Eigen::VectorXd>> &contact_forces) {
-  for (std::size_t i = 0; i < contact_phases.size(); i++) {
-    StageModel sm =
-        problem_->create_stage(contact_phases[i], contact_forces[i]);
+    const std::vector<std::map<std::string, bool>> &contact_states) {
+  for (auto const &state : contact_states) {
+    int active_contacts = 0;
+    for (auto &contact : state) {
+      if (contact.second)
+        active_contacts += 1;
+    }
+
+    Eigen::VectorXd force_ref(problem_->get_reference_force(
+        0, problem_->get_handler().get_ee_name(0)));
+    Eigen::VectorXd force_zero(problem_->get_reference_force(
+        0, problem_->get_handler().get_ee_name(0)));
+    force_ref.setZero();
+    force_zero.setZero();
+    force_ref[2] = settings_.support_force / active_contacts;
+
+    aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+    std::map<std::string, Eigen::VectorXd> force_map;
+    std::vector<bool> contact_bools;
+    for (size_t i = 0; i < problem_->get_handler().get_ee_names().size(); i++) {
+      contact_poses.push_back(
+          problem_->get_handler().get_ee_pose(i).translation());
+      contact_bools.push_back(state.at(problem_->get_handler().get_ee_name(i)));
+      if (state.at(problem_->get_handler().get_ee_name(i))) {
+        force_map.insert({problem_->get_handler().get_ee_name(i), force_ref});
+      } else
+        force_map.insert({problem_->get_handler().get_ee_name(i), force_zero});
+    }
+
+    ContactMap contact_map(problem_->get_handler().get_ee_names(),
+                           contact_bools, contact_poses);
+
+    StageModel sm = problem_->create_stage(contact_map, force_map);
     full_horizon_.push_back(sm);
     full_horizon_data_.push_back(sm.createData());
   }

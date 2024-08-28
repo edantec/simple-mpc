@@ -50,7 +50,6 @@ struct MPCSettings {
 public:
   // timing
   int totalSteps = 4;
-  std::size_t T = 100;
   int ddpIteration = 1;
 
   double min_force = 150;
@@ -96,10 +95,8 @@ public:
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<Problem> &problem);
 
-  void
-  generateFullHorizon(const std::vector<ContactMap> &contact_phases,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &contact_forces);
+  void generateFullHorizon(
+      const std::vector<std::map<std::string, bool>> &contact_states);
 
   void iterate(const Eigen::VectorXd &q_current,
                const Eigen::VectorXd &v_current);

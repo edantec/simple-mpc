@@ -169,13 +169,4 @@ CostStack KinodynamicsProblem::create_terminal_cost() {
   return term_cost;
 }
 
-void KinodynamicsProblem::create_problem(
-    const Eigen::VectorXd &x0, const std::vector<ContactMap> &contact_sequence,
-    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
-  std::vector<xyz::polymorphic<StageModel>> stage_models =
-      create_stages(contact_sequence, force_sequence);
-  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
-                                              create_terminal_cost());
-}
-
 } // namespace simple_mpc

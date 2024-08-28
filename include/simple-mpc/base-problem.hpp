@@ -7,24 +7,27 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <aligator/modelling/costs/quad-state-cost.hpp>
-#include <aligator/modelling/dynamics/integrator-euler.hpp>
-#include <aligator/core/cost-abstract.hpp>
-#include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/modelling/contact-map.hpp>
-#include <aligator/modelling/costs/sum-of-costs.hpp>
-#include <aligator/modelling/dynamics/centroidal-fwd.hpp>
-#include <aligator/modelling/multibody/contact-force.hpp>
-
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
+#include <aligator/core/cost-abstract.hpp>
+#include <aligator/core/traj-opt-problem.hpp>
+#include <aligator/modelling/contact-map.hpp>
+#include <aligator/modelling/costs/quad-state-cost.hpp>
+#include <aligator/modelling/costs/sum-of-costs.hpp>
+#include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+#include <aligator/modelling/dynamics/integrator-euler.hpp>
+#ifndef ALIGATOR_PINOCCHIO_V3
+#error "aligator no compile with pin v3"
+#endif
+#include <aligator/modelling/multibody/contact-force.hpp>
+
 namespace simple_mpc {
 using namespace aligator;
-using StageModel = aligator::StageModelTpl<double>;
-using CostStack = aligator::CostStackTpl<double>;
-using ContactMap = aligator::ContactMapTpl<double>;
-using TrajOptProblem = aligator::TrajOptProblemTpl<double>;
+using StageModel = StageModelTpl<double>;
+using CostStack = CostStackTpl<double>;
+using ContactMap = ContactMapTpl<double>;
+using TrajOptProblem = TrajOptProblemTpl<double>;
 using CostAbstract = CostAbstractTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;
@@ -32,7 +35,7 @@ using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
 using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
-using ContactForceResidual = aligator::ContactForceResidualTpl<double>;
+using ContactForceResidual = ContactForceResidualTpl<double>;
 /**
  * @brief Base problem abstract class
  */
@@ -53,13 +56,6 @@ public:
   create_stage(const ContactMap &contact_map,
                const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
   virtual CostStack create_terminal_cost() = 0;
-
-  // Create one TrajOptProblem from contact sequence
-  virtual void
-  create_problem(const Eigen::VectorXd &x0,
-                 const std::vector<ContactMap> &contact_sequence,
-                 const std::vector<std::map<std::string, Eigen::VectorXd>>
-                     &force_sequence) = 0;
 
   // Setter and getter for poses reference
   virtual void set_reference_poses(
@@ -86,6 +82,10 @@ public:
   create_stages(const std::vector<ContactMap> &contact_sequence,
                 const std::vector<std::map<std::string, Eigen::VectorXd>>
                     &force_sequence);
+
+  // Create one TrajOptProblem from contact sequence
+  void create_problem(const Eigen::VectorXd &x0, const size_t horizon,
+                      const int force_size, const double gravity);
 
   // Setter and getter for control reference
   void set_reference_control(const std::size_t t, const Eigen::VectorXd &u_ref);

@@ -58,6 +58,7 @@ project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 add_compile_options(-Wno-error)
 
+find_package(pinocchio REQUIRED)
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
@@ -88,10 +89,7 @@ target_link_libraries(
   PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp aligator::aligator
          example-robot-data::example-robot-data)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES
-    PUBLIC_HEADER "${mpc_HEADER}"
-)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${mpc_HEADER}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX
                                                  INSTALL_RPATH "\$ORIGIN")
 
@@ -120,6 +118,5 @@ install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${TARGETS_EXPORT_NAME}
   PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
-)
+  LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
 install(FILES package.xml DESTINATION share/${PROJECT_NAME})

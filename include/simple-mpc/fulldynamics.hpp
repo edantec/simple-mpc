@@ -31,7 +31,8 @@ using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
-using MultibodyWrenchConeResidual = aligator::MultibodyWrenchConeResidualTpl<double>;
+using MultibodyWrenchConeResidual =
+    aligator::MultibodyWrenchConeResidualTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 /**
@@ -81,12 +82,6 @@ public:
                       const RobotHandler &handler);
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
-
-  // Create one FullDynamics problem
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override;
 
   // Create one FullDynamics stage
   StageModel create_stage(

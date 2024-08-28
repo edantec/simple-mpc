@@ -140,6 +140,8 @@ w_cent_ang = np.ones(3) * 0
 w_forces_lin = np.ones(3) * 0.0001
 w_forces_ang = np.ones(3) * 0.01
 
+gravity = np.array([0, 0, -9.81])
+
 problem_conf = dict(
     x0=handler.get_x0(),
     u0=np.zeros(nu),
@@ -147,7 +149,7 @@ problem_conf = dict(
     w_x=np.diag(w_x_vec),
     w_u=np.eye(nu) * 1e-4,
     w_cent=np.diag(np.concatenate((w_cent_lin, w_cent_ang))),
-    gravity=np.array([0, 0, 9.81]),
+    gravity=gravity,
     force_size=6,
     w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
     w_frame=np.eye(6) * 2000,
@@ -162,29 +164,14 @@ problem_conf = dict(
 
 problem = FullDynamicsProblem(handler)
 problem.initialize(problem_conf)
-"""
-contact_sequence = []
-force_sequence = []
-fref = np.array([0, 0, handler.get_mass() * 9.81 / 2.0, 0, 0, 0])
-for i in range(100):
-    contact_names = ["left_sole_link", "right_sole_link"]
-    contact_phase = [True, True]
-    contact_pose = [
-        handler.get_ee_pose(0).translation,
-        handler.get_ee_pose(1).translation,
-    ]
-    contact_sequence.append(ContactMap(contact_names, contact_phase, contact_pose))
-    force_sequence.append({"left_sole_link": fref, "right_sole_link": fref})
+problem.create_problem(handler.get_x0(), T, 6, gravity[2])
 
-problem.create_stage(contact_sequence[0], force_sequence[0])
-problem.create_problem(handler.get_x0(), contact_sequence, force_sequence)
 
 mpc_conf = dict(
     totalSteps=4,
-    T=100,
     ddpIteration=1,
     min_force=150,
-    support_force=1000,
+    support_force=-handler.get_mass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
@@ -193,4 +180,4 @@ mpc_conf = dict(
 
 u0 = np.zeros(handler.get_rmodel().nv - 6)
 mpc = MPC(handler.get_x0(), u0)
-mpc.initialize(mpc_conf, problem) """
+mpc.initialize(mpc_conf, problem)

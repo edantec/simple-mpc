@@ -62,13 +62,7 @@ public:
   CentroidalProblem(const CentroidalSettings &settings,
                     const RobotHandler &handler);
   void initialize(const CentroidalSettings &settings);
-  virtual ~CentroidalProblem(){};
-
-  // Create one Centroidal problem
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override;
+  virtual ~CentroidalProblem() {};
 
   // Create one Centroidal stage
   StageModel create_stage(
@@ -100,6 +94,7 @@ public:
 
   Eigen::VectorXd
   get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override;
+  CentroidalSettings get_settings() { return settings_; }
 
 protected:
   CentroidalSettings settings_;

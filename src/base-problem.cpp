@@ -61,4 +61,35 @@ std::size_t Problem::get_cost_number() {
 
 std::size_t Problem::get_size() { return problem_->stages_.size(); }
 
+void Problem::create_problem(const Eigen::VectorXd &x0, const size_t horizon,
+                             const int force_size, const double gravity) {
+
+  std::vector<ContactMap> contact_sequence;
+  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
+
+  Eigen::VectorXd force_ref(force_size);
+  force_ref.setZero();
+  force_ref[2] =
+      -handler_.get_mass() * gravity / (double)handler_.get_ee_names().size();
+
+  std::vector<bool> contact_states;
+  aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+  std::map<std::string, Eigen::VectorXd> force_map;
+  for (size_t i = 0; i < handler_.get_ee_names().size(); i++) {
+    contact_states.push_back(true);
+    contact_poses.push_back(handler_.get_ee_pose(i).translation());
+    force_map.insert({handler_.get_ee_name(i), force_ref});
+  }
+
+  for (size_t i = 0; i < horizon; i++) {
+    ContactMap contact_map(handler_.get_ee_names(), contact_states,
+                           contact_poses);
+    contact_sequence.push_back(contact_map);
+    force_sequence.push_back(force_map);
+  }
+  std::vector<xyz::polymorphic<StageModel>> stage_models =
+      create_stages(contact_sequence, force_sequence);
+  problem_ = std::make_shared<TrajOptProblem>(x0, stage_models,
+                                              create_terminal_cost());
+}
 } // namespace simple_mpc

@@ -78,14 +78,6 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
                                     "create_terminal_cost");
   }
 
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "create_problem", x0,
-                                    contact_sequence, force_sequence);
-  }
-
   void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
@@ -151,14 +143,6 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                FullDynamicsProblem, create_terminal_cost);
   }
 
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, create_problem, x0,
-                               contact_sequence, force_sequence);
-  }
-
   void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
@@ -212,14 +196,6 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
   CostStack create_terminal_cost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
                                CentroidalProblem, create_terminal_cost);
-  }
-
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, create_problem, x0,
-                               contact_sequence, force_sequence);
   }
 
   void set_reference_poses(
@@ -276,14 +252,6 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
   CostStack create_terminal_cost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
                                KinodynamicsProblem, create_terminal_cost);
-  }
-
-  void create_problem(const Eigen::VectorXd &x0,
-                      const std::vector<ContactMap> &contact_sequence,
-                      const std::vector<std::map<std::string, Eigen::VectorXd>>
-                          &force_sequence) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, create_problem, x0,
-                               contact_sequence, force_sequence);
   }
 
   void set_reference_poses(

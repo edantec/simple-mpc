@@ -39,28 +39,7 @@ int main() {
   RobotHandler handler = RobotHandler();
   handler.initialize(settings);
 
-  int T = 100;
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
-
-  for (int i = 0; i < T; i++) {
-    std::vector<bool> contact_states = {true, true};
-    PoseVec contact_poses = {
-        handler.get_ee_pose(0).translation(),
-        handler.get_ee_pose(1).translation(),
-    };
-    ContactMap contact_map(settings.end_effector_names, contact_states,
-                           contact_poses);
-    contact_sequence.push_back(contact_map);
-
-    std::map<std::string, int> m{{"CPU", 10}, {"GPU", 15}, {"RAM", 20}};
-    Eigen::VectorXd force_ref(6);
-    force_ref << 0, 0, 400, 0, 0, 0;
-    std::map<std::string, Eigen::VectorXd> force_map{
-        {"left_sole_link", force_ref}, {"right_sole_link", force_ref}};
-
-    force_sequence.push_back(force_map);
-  }
+  size_t T = 100;
 
   FullDynamicsSettings problem_settings;
   int nu = handler.get_rmodel().nv - 6;
@@ -94,7 +73,7 @@ int main() {
   problem_settings.w_u = Eigen::MatrixXd::Identity(nu, nu) * 1e-4;
   problem_settings.w_cent = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_cent.diagonal() = w_cent;
-  problem_settings.gravity = {0, 0, 9.81};
+  problem_settings.gravity = {0, 0, -9.81};
   problem_settings.force_size = 6,
   problem_settings.w_forces = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_forces.diagonal() = w_forces;
@@ -109,17 +88,16 @@ int main() {
 
   FullDynamicsProblem problem = FullDynamicsProblem(handler);
   problem.initialize(problem_settings);
-  problem.create_stage(contact_sequence[0], force_sequence[0]);
-  problem.create_problem(handler.get_x0(), contact_sequence, force_sequence);
+  problem.create_problem(handler.get_x0(), T, 6, problem_settings.gravity[2]);
 
   std::shared_ptr<Problem> problemPtr =
       std::make_shared<FullDynamicsProblem>(problem);
 
   MPCSettings mpc_settings;
   mpc_settings.totalSteps = 4;
-  mpc_settings.T = 100;
   mpc_settings.min_force = 150;
-  mpc_settings.support_force = 1000;
+  mpc_settings.support_force =
+      -problem_settings.gravity[2] * handler.get_mass();
   mpc_settings.TOL = 1e-4;
   mpc_settings.mu_init = 1e-8;
   mpc_settings.max_iters = 1;
@@ -127,6 +105,40 @@ int main() {
 
   MPC mpc(handler.get_x0(), u0);
   mpc.initialize(mpc_settings, problemPtr);
+
+  std::vector<std::map<std::string, bool>> contact_states;
+  for (std::size_t i = 0; i < 10; i++) {
+    std::map<std::string, bool> contact_state;
+    contact_state.insert({handler.get_ee_name(0), true});
+    contact_state.insert({handler.get_ee_name(1), true});
+    contact_states.push_back(contact_state);
+  }
+  for (std::size_t i = 0; i < 50; i++) {
+    std::map<std::string, bool> contact_state;
+    contact_state.insert({handler.get_ee_name(0), true});
+    contact_state.insert({handler.get_ee_name(1), false});
+    contact_states.push_back(contact_state);
+  }
+  for (std::size_t i = 0; i < 10; i++) {
+    std::map<std::string, bool> contact_state;
+    contact_state.insert({handler.get_ee_name(0), true});
+    contact_state.insert({handler.get_ee_name(1), true});
+    contact_states.push_back(contact_state);
+  }
+  for (std::size_t i = 0; i < 50; i++) {
+    std::map<std::string, bool> contact_state;
+    contact_state.insert({handler.get_ee_name(0), false});
+    contact_state.insert({handler.get_ee_name(1), true});
+    contact_states.push_back(contact_state);
+  }
+  for (std::size_t i = 0; i < 10; i++) {
+    std::map<std::string, bool> contact_state;
+    contact_state.insert({handler.get_ee_name(0), true});
+    contact_state.insert({handler.get_ee_name(1), true});
+    contact_states.push_back(contact_state);
+  }
+
+  mpc.generateFullHorizon(contact_states);
 
   return 0;
 }

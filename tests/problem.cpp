@@ -43,34 +43,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 7);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 50; i++) {
-    std::vector<bool> contact_states = {true, false};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0.5, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  fdproblem.create_problem(settings.x0, contact_sequence, force_sequence);
-  BOOST_CHECK_EQUAL(fdproblem.get_problem()->stages_.size(), 70);
+  fdproblem.create_problem(settings.x0, 100, 6, settings.gravity[2]);
+  BOOST_CHECK_EQUAL(fdproblem.get_problem()->stages_.size(), 100);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -132,36 +106,9 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 50; i++) {
-    std::vector<bool> contact_states = {true, false};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0.5, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
+  knproblem.create_problem(settings.x0, 100, 6, settings.gravity[2]);
 
-  knproblem.create_problem(settings.x0, contact_sequence, force_sequence);
-
-  BOOST_CHECK_EQUAL(knproblem.get_problem()->stages_.size(), 70);
+  BOOST_CHECK_EQUAL(knproblem.get_problem()->stages_.size(), 100);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -224,36 +171,9 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 50; i++) {
-    std::vector<bool> contact_states = {true, false};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true};
-    StdVectorEigenAligned<Eigen::Vector3d> contact_poses = {{0, 0.1, 0},
-                                                            {0.5, -0.1, 0}};
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
+  cproblem.create_problem(settings.x0, 100, 6, settings.gravity[2]);
 
-  cproblem.create_problem(settings.x0, contact_sequence, force_sequence);
-
-  BOOST_CHECK_EQUAL(cproblem.get_problem()->stages_.size(), 70);
+  BOOST_CHECK_EQUAL(cproblem.get_problem()->stages_.size(), 100);
 
   force_refs.at("left_sole_link")[1] = 1;
   force_refs.at("right_sole_link")[0] = 1;
@@ -308,33 +228,9 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true, true, true};
+  cproblem.create_problem(settings.x0, 100, 3, settings.gravity[2]);
 
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 50; i++) {
-    std::vector<bool> contact_states = {true, true, false, true};
-
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-  for (std::size_t i = 0; i < 10; i++) {
-    std::vector<bool> contact_states = {true, true, true, false};
-
-    ContactMap cm1(contact_names, contact_states, contact_poses);
-    contact_sequence.push_back(cm1);
-    force_sequence.push_back(force_refs);
-  }
-
-  cproblem.create_problem(settings.x0, contact_sequence, force_sequence);
-
-  BOOST_CHECK_EQUAL(cproblem.get_problem()->stages_.size(), 70);
+  BOOST_CHECK_EQUAL(cproblem.get_problem()->stages_.size(), 100);
 
   force_refs.at("FR_FOOT")[1] = 1;
   force_refs.at("FL_FOOT")[0] = 1;

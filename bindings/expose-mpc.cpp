@@ -8,13 +8,13 @@
 
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
-#include <boost/python/return_internal_reference.hpp>
+#include <boost/python/register_ptr_to_python.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
 #include <pinocchio/fwd.hpp>
 
-#include "simple-mpc/fwd.hpp"
+#include "problems.hpp"
 #include "simple-mpc/mpc.hpp"
 
 namespace simple_mpc {
@@ -32,7 +32,6 @@ void initialize(MPC &self, const bp::dict &settings,
   MPCSettings conf;
 
   conf.totalSteps = bp::extract<int>(settings["totalSteps"]);
-  conf.T = bp::extract<std::size_t>(settings["T"]);
   conf.ddpIteration = bp::extract<int>(settings["ddpIteration"]);
 
   conf.min_force = bp::extract<double>(settings["min_force"]);
@@ -55,7 +54,7 @@ void exposeMPC() {
           bp::args("self", "x_multibody", "u0")))
       .def("initialize", &initialize)
       .def("generateFullHorizon", &MPC::generateFullHorizon,
-           bp::args("self", "contact_phases", "contact_forces"))
+           bp::args("self", "contact_states"))
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
