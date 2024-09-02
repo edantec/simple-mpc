@@ -107,6 +107,7 @@ int main() {
   mpc.initialize(mpc_settings, problemPtr);
 
   std::vector<std::map<std::string, bool>> contact_states;
+  // std::vector<std::vector<bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
     contact_state.insert({handler.get_ee_name(0), true});

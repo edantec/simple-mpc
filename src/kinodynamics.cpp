@@ -42,6 +42,7 @@ StageModel KinodynamicsProblem::create_stage(
   auto space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states = contact_map.getContactStates();
+  std::vector<std::string> contact_names = contact_map.getContactNames();
   auto contact_poses = contact_map.getContactPoses();
 
   compute_control_from_forces(force_refs);
@@ -60,9 +61,9 @@ StageModel KinodynamicsProblem::create_stage(
   for (std::size_t i = 0; i < contact_states.size(); i++) {
     pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
     frame_placement.translation() = contact_poses[i];
-    FramePlacementResidual frame_residual =
-        FramePlacementResidual(space.ndx(), nu_, handler_.get_rmodel(),
-                               frame_placement, handler_.get_ee_id(i));
+    FramePlacementResidual frame_residual = FramePlacementResidual(
+        space.ndx(), nu_, handler_.get_rmodel(), frame_placement,
+        handler_.get_ee_id(contact_names[i]));
     int is_active = 0;
     if (!contact_states[i])
       is_active = 1;
@@ -74,9 +75,21 @@ StageModel KinodynamicsProblem::create_stage(
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
       space, handler_.get_rmodel(), settings_.gravity, contact_states,
       handler_.get_ee_ids(), settings_.force_size);
-  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
+  IntegratorSemiImplEuler dyn_model =
+      IntegratorSemiImplEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
+}
+
+void KinodynamicsProblem::set_reference_pose(const std::size_t t,
+                                             const std::string &ee_name,
+                                             const pinocchio::SE3 &pose_ref) {
+  CostStack *cs = get_cost_stack(t);
+  QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
+  FramePlacementResidual *cfr =
+      dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
+  cfr->setReference(pose_ref);
 }
 
 void KinodynamicsProblem::set_reference_poses(

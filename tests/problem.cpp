@@ -205,10 +205,10 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
                                             "HL_FOOT"};
   std::vector<bool> contact_states = {true, true, true, false};
   StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  Eigen::Vector3d p1 = handler.get_ee_frame(0).translation();
-  Eigen::Vector3d p2 = handler.get_ee_frame(1).translation();
-  Eigen::Vector3d p3 = handler.get_ee_frame(2).translation();
-  Eigen::Vector3d p4 = handler.get_ee_frame(3).translation();
+  Eigen::Vector3d p1 = handler.get_ee_pose("FR_FOOT").translation();
+  Eigen::Vector3d p2 = handler.get_ee_pose("FL_FOOT").translation();
+  Eigen::Vector3d p3 = handler.get_ee_pose("HR_FOOT").translation();
+  Eigen::Vector3d p4 = handler.get_ee_pose("HL_FOOT").translation();
   contact_poses.push_back(p1);
   contact_poses.push_back(p2);
   contact_poses.push_back(p3);

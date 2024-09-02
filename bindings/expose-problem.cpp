@@ -13,6 +13,7 @@
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
+#include <pinocchio/bindings/python/utils/pickle-map.hpp>
 #include <pinocchio/fwd.hpp>
 
 #include "problems.hpp"
@@ -34,6 +35,8 @@ void exposeBaseProblem() {
            bp::args("self", "contact_map", "force_refs"))
       .def("create_terminal_cost",
            bp::pure_virtual(&Problem::create_terminal_cost), bp::args("self"))
+      .def("set_reference_pose", bp::pure_virtual(&Problem::set_reference_pose),
+           bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses",
            bp::pure_virtual(&Problem::set_reference_poses),
            bp::args("self", "t", "pose_refs"))
@@ -144,8 +147,11 @@ void exposeFullDynamicsProblem() {
   boost::python::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
   StdVectorPythonVisitor<std::vector<ContactMap>, true>::expose(
       "StdVec_ContactMap_double");
-  StdVectorPythonVisitor<std::vector<bp::dict>, true>::expose(
-      "StdVec_Force_double");
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, Eigen::VectorXd, std::less<std::string>,
+      std::allocator<std::pair<const std::string, Eigen::VectorXd>>,
+      true>::expose("StdMap_Force");
 
   bp::class_<PyFullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "FullDynamicsProblem",
@@ -158,6 +164,8 @@ void exposeFullDynamicsProblem() {
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("create_stage", &create_full_stage)
       .def("create_problem", &create_full_problem)
+      .def("set_reference_pose", &FullDynamicsProblem::set_reference_pose,
+           bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &FullDynamicsProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
       .def("set_reference_forces", &FullDynamicsProblem::set_reference_forces,
@@ -175,23 +183,6 @@ void exposeFullDynamicsProblem() {
       .def("get_problem", &get_full_problem)
       .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }
-
-Eigen::VectorXd x0;
-Eigen::VectorXd u0;
-// timestep in problem shooting nodes
-double DT;
-
-// Cost function weights
-Eigen::MatrixXd w_x;           // State
-Eigen::MatrixXd w_u;           // Control
-Eigen::Matrix3d w_linear_mom;  // Linear momentum
-Eigen::Matrix3d w_angular_mom; // Angular momentum
-Eigen::Matrix3d w_linear_acc;  // Linear acceleration
-Eigen::Matrix3d w_angular_acc; // Angular acceleration
-
-// Physics parameters
-Eigen::Vector3d gravity;
-int force_size;
 
 void initialize_cent(CentroidalProblem &self, const bp::dict &settings) {
   CentroidalSettings conf;
@@ -271,6 +262,8 @@ void exposeCentroidalProblem() {
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("create_stage", &create_cent_stage)
       .def("create_problem", &create_cent_problem)
+      .def("set_reference_pose", &CentroidalProblem::set_reference_pose,
+           bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &CentroidalProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
       .def("set_reference_forces", &CentroidalProblem::set_reference_forces,
@@ -373,6 +366,8 @@ void exposeKinodynamicsProblem() {
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("create_stage", &create_kino_stage)
       .def("create_problem", &create_kino_problem)
+      .def("set_reference_pose", &KinodynamicsProblem::set_reference_pose,
+           bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &KinodynamicsProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
       .def("set_reference_forces", &KinodynamicsProblem::set_reference_forces,

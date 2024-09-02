@@ -1,10 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import example_robot_data
-from aligator import (
-    ContactMap,
-)
-from simple_mpc import RobotHandler, Problem, FullDynamicsProblem, MPC
+
+from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -55,22 +53,6 @@ handler = RobotHandler()
 handler.initialize(design_conf)
 
 T = 100
-
-contact_sequence = []
-force_sequence = []
-for t in range(T):
-    contact_state = [True, True]
-    contact_pose = [
-        handler.get_ee_pose(0).translation,
-        handler.get_ee_pose(1).translation,
-    ]
-    force_ref = {
-        "left_sole_link": [0, 0, 400, 0, 0, 0],
-        "right_sole_link": [0, 0, 400, 0, 0, 0],
-    }
-    contact_names = ["left_sole_link", "right_sole_link"]
-    contact_sequence.append(ContactMap(contact_names, contact_state, contact_pose))
-    force_sequence.append(force_ref)
 
 x0 = handler.get_x0()
 nu = handler.get_rmodel().nv - 6
@@ -155,8 +137,8 @@ problem_conf = dict(
     w_frame=np.eye(6) * 2000,
     umin=-handler.get_rmodel().effortLimit[6:],
     umax=handler.get_rmodel().effortLimit[6:],
-    qmin=handler.get_rmodel().lowerPositionLimit[6:],
-    qmax=handler.get_rmodel().upperPositionLimit[6:],
+    qmin=handler.get_rmodel().lowerPositionLimit[7:],
+    qmax=handler.get_rmodel().upperPositionLimit[7:],
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
@@ -165,7 +147,6 @@ problem_conf = dict(
 problem = FullDynamicsProblem(handler)
 problem.initialize(problem_conf)
 problem.create_problem(handler.get_x0(), T, 6, gravity[2])
-
 
 mpc_conf = dict(
     totalSteps=4,
@@ -181,3 +162,31 @@ mpc_conf = dict(
 u0 = np.zeros(handler.get_rmodel().nv - 6)
 mpc = MPC(handler.get_x0(), u0)
 mpc.initialize(mpc_conf, problem)
+
+T_ds = 100
+T_ss = 80
+
+""" Define contact sequence throughout horizon"""
+total_steps = 3
+contact_phase_double = {
+    "left_sole_link": True,
+    "right_sole_link": True,
+}
+contact_phase_left = {
+    "left_sole_link": True,
+    "right_sole_link": False,
+}
+contact_phase_right = {
+    "left_sole_link": False,
+    "right_sole_link": True,
+}
+contact_phases = [contact_phase_double] * T_ds
+for s in range(total_steps):
+    contact_phases += (
+        [contact_phase_left] * T_ss
+        + [contact_phase_double] * T_ds
+        + [contact_phase_right] * T_ss
+        + [contact_phase_double] * T_ds
+    )
+
+# mpc.generateFullHorizon(contact_phases)

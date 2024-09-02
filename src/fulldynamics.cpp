@@ -29,20 +29,20 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
-  prox_settings_ = ProximalSettings(1e-9, 1e-10, 10);
+  prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
 
-  for (std::size_t i = 0; i < handler_.get_ee_ids().size(); i++) {
-    auto frame_ids = handler_.get_ee_id(i);
+  for (auto &name : handler_.get_ee_names()) {
+    auto frame_ids = handler_.get_ee_id(name);
     auto joint_ids = handler_.get_rmodel().frames[frame_ids].parentJoint;
     pinocchio::SE3 pl1 = handler_.get_rmodel().frames[frame_ids].placement;
-    pinocchio::SE3 pl2 = handler_.get_ee_frame(i);
+    pinocchio::SE3 pl2 = handler_.get_ee_pose(name);
     pinocchio::RigidConstraintModel constraint_model =
         pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
                                         handler_.get_rmodel(), joint_ids, pl1,
-                                        0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
-    constraint_model.corrector.Kp << 0, 0, 100, 0, 0, 0;
+                                        0, pl2, pinocchio::LOCAL);
+    constraint_model.corrector.Kp << 1, 1, 10, 1, 1, 1;
     constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
-    constraint_model.name = handler_.get_ee_name(i);
+    constraint_model.name = name;
     constraint_models_.push_back(constraint_model);
   }
 
@@ -54,11 +54,11 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   cost_incr++;
   cost_map_.insert({"centroidal_cost", cost_incr});
   cost_incr++;
-  for (auto cname : handler_.get_ee_names()) {
+  for (auto &cname : handler_.get_ee_names()) {
     cost_map_.insert({cname + "_pose_cost", cost_incr});
     cost_incr++;
   }
-  for (auto cname : handler_.get_ee_names()) {
+  for (auto &cname : handler_.get_ee_names()) {
     cost_map_.insert({cname + "_force_cost", cost_incr});
     cost_incr++;
   }
@@ -78,6 +78,7 @@ StageModel FullDynamicsProblem::create_stage(
   rcost.addCost(QuadraticResidualCost(space, cent_mom, settings_.w_cent));
 
   pinocchio::context::RigidConstraintModelVector cms;
+  std::vector<std::string> contact_names = contact_map.getContactNames();
   std::vector<bool> contact_states = contact_map.getContactStates();
   auto contact_poses = contact_map.getContactPoses();
 
@@ -89,9 +90,9 @@ StageModel FullDynamicsProblem::create_stage(
   for (std::size_t i = 0; i < contact_states.size(); i++) {
     pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
     frame_placement.translation() = contact_poses[i];
-    FramePlacementResidual frame_residual =
-        FramePlacementResidual(space.ndx(), nu_, handler_.get_rmodel(),
-                               frame_placement, handler_.get_ee_id(i));
+    FramePlacementResidual frame_residual = FramePlacementResidual(
+        space.ndx(), nu_, handler_.get_rmodel(), frame_placement,
+        handler_.get_ee_id(contact_names[i]));
 
     int is_active = 0;
     if (contact_states[i])
@@ -124,7 +125,8 @@ StageModel FullDynamicsProblem::create_stage(
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
       space, actuation_matrix_, cms, prox_settings_);
-  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
+  IntegratorSemiImplEuler dyn_model =
+      IntegratorSemiImplEuler(ode, settings_.DT);
 
   StageModel stm = StageModel(rcost, dyn_model);
 
@@ -170,6 +172,17 @@ void FullDynamicsProblem::set_reference_poses(
         dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
     cfr->setReference(pose_refs.at(ee_name));
   }
+}
+
+void FullDynamicsProblem::set_reference_pose(const std::size_t t,
+                                             const std::string &ee_name,
+                                             const pinocchio::SE3 &pose_ref) {
+  CostStack *cs = get_cost_stack(t);
+  QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at(ee_name + "_pose_cost")]);
+  FramePlacementResidual *cfr =
+      dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
+  cfr->setReference(pose_ref);
 }
 
 void FullDynamicsProblem::set_reference_forces(

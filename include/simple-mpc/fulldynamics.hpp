@@ -92,6 +92,8 @@ public:
   CostStack create_terminal_cost() override;
 
   // Getters and setters
+  void set_reference_pose(const std::size_t t, const std::string &ee_name,
+                          const pinocchio::SE3 &pose_ref) override;
   void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;

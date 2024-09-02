@@ -42,7 +42,8 @@ private:
 
   // Vectors of usefull index
   std::vector<unsigned long> controlled_joints_ids_;
-  std::vector<unsigned long> end_effector_ids_;
+  std::map<std::string, pinocchio::FrameIndex> end_effector_map_;
+  std::vector<pinocchio::FrameIndex> end_effector_ids_;
   unsigned long root_ids_;
 
   // Pinocchio objects
@@ -78,12 +79,12 @@ public:
   const std::vector<pinocchio::FrameIndex> &get_ee_ids() {
     return end_effector_ids_;
   }
-  const pinocchio::FrameIndex &get_ee_id(const unsigned long &i) {
-    return end_effector_ids_[i];
+  const pinocchio::FrameIndex &get_ee_id(const std::string &ee_name) {
+    return end_effector_map_.at(ee_name);
   }
 
-  const pinocchio::SE3 &get_ee_frame(const unsigned long &i) {
-    return rdata_.oMf[get_ee_id(i)];
+  const pinocchio::SE3 &get_ee_pose(const std::string &ee_name) {
+    return rdata_.oMf[get_ee_id(ee_name)];
   };
 
   const pinocchio::SE3 &get_root_frame();
@@ -109,9 +110,6 @@ public:
     return controlled_joints_ids_;
   }
 
-  const pinocchio::SE3 &get_ee_pose(const unsigned long &i) {
-    return rdata_.oMf[get_ee_id(i)];
-  }
   const Eigen::Vector3d &get_com_position() { return com_position_; }
 
   // Compute the total robot mass

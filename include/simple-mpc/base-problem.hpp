@@ -16,7 +16,7 @@
 #include <aligator/modelling/costs/quad-state-cost.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
 #include <aligator/modelling/dynamics/centroidal-fwd.hpp>
-#include <aligator/modelling/dynamics/integrator-euler.hpp>
+#include <aligator/modelling/dynamics/integrator-semi-euler.hpp>
 #ifndef ALIGATOR_PINOCCHIO_V3
 #error "aligator no compile with pin v3"
 #endif
@@ -32,7 +32,7 @@ using CostAbstract = CostAbstractTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;
 using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
-using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
 using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
 using ContactForceResidual = ContactForceResidualTpl<double>;
@@ -58,6 +58,9 @@ public:
   virtual CostStack create_terminal_cost() = 0;
 
   // Setter and getter for poses reference
+  virtual void set_reference_pose(const std::size_t t,
+                                  const std::string &ee_name,
+                                  const pinocchio::SE3 &pose_ref) = 0;
   virtual void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;

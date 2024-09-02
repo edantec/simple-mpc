@@ -80,6 +80,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   rmodel_ = pinocchio::buildReducedModel(rmodel_complete_, locked_joints_id,
                                          q0Complete_);
   for (auto &name : settings_.end_effector_names) {
+    end_effector_map_.insert({name, rmodel_.getFrameId(name)});
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
   }
   root_ids_ = rmodel_.getFrameId(settings_.root_name);

@@ -75,10 +75,10 @@ void Problem::create_problem(const Eigen::VectorXd &x0, const size_t horizon,
   std::vector<bool> contact_states;
   aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
   std::map<std::string, Eigen::VectorXd> force_map;
-  for (size_t i = 0; i < handler_.get_ee_names().size(); i++) {
+  for (auto &name : handler_.get_ee_names()) {
     contact_states.push_back(true);
-    contact_poses.push_back(handler_.get_ee_pose(i).translation());
-    force_map.insert({handler_.get_ee_name(i), force_ref});
+    contact_poses.push_back(handler_.get_ee_pose(name).translation());
+    force_map.insert({name, force_ref});
   }
 
   for (size_t i = 0; i < horizon; i++) {

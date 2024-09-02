@@ -18,11 +18,11 @@
 
 namespace simple_mpc {
 using namespace aligator;
-constexpr std::size_t maxiters = 100;
+constexpr std::size_t maxiters = 10;
 
 MPC::MPC() {}
 
-MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
+MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem,
          const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
   x_multibody_ = x_multibody;
   u0_ = u0;
@@ -38,14 +38,14 @@ MPC::MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
 }
 
 void MPC::initialize(const MPCSettings &settings,
-                     std::shared_ptr<Problem> &problem) {
+                     std::shared_ptr<Problem> problem) {
   settings_ = settings;
   problem_ = problem;
 
   x0_ = problem_->get_x0_from_multibody((x_multibody_));
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
-                                            0., maxiters, aligator::VERBOSE);
+                                            0., maxiters, aligator::QUIET);
   solver_->rollout_type_ = aligator::RolloutType::LINEAR;
   if (settings_.num_threads > 1) {
     solver_->linear_solver_choice = aligator::LQSolverChoice::PARALLEL;
@@ -59,13 +59,13 @@ void MPC::initialize(const MPCSettings &settings,
     throw std::runtime_error(
         "Provided u0 does not have the correct size problem.nu");
   }
+  std::vector<std::string> ee_names = problem_->get_handler().get_ee_names();
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
-    for (std::size_t j = 0; j < problem_->get_handler().get_ee_names().size();
-         j++) {
-      map_se3.insert({problem_->get_handler().get_ee_name(j),
-                      problem_->get_handler().get_ee_pose(j)});
+
+    for (std::string name : ee_names) {
+      map_se3.insert({name, problem_->get_handler().get_ee_pose(name)});
     }
     ref_frame_poses_.push_back(map_se3);
   }
@@ -88,9 +88,10 @@ void MPC::initialize(const MPCSettings &settings,
 
 void MPC::generateFullHorizon(
     const std::vector<std::map<std::string, bool>> &contact_states) {
+  std::vector<std::string> ee_names = problem_->get_handler().get_ee_names();
   for (auto const &state : contact_states) {
     int active_contacts = 0;
-    for (auto &contact : state) {
+    for (auto const &contact : state) {
       if (contact.second)
         active_contacts += 1;
     }
@@ -106,18 +107,18 @@ void MPC::generateFullHorizon(
     aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
     std::map<std::string, Eigen::VectorXd> force_map;
     std::vector<bool> contact_bools;
-    for (size_t i = 0; i < problem_->get_handler().get_ee_names().size(); i++) {
+
+    for (auto &name : ee_names) {
       contact_poses.push_back(
-          problem_->get_handler().get_ee_pose(i).translation());
-      contact_bools.push_back(state.at(problem_->get_handler().get_ee_name(i)));
-      if (state.at(problem_->get_handler().get_ee_name(i))) {
-        force_map.insert({problem_->get_handler().get_ee_name(i), force_ref});
-      } else
-        force_map.insert({problem_->get_handler().get_ee_name(i), force_zero});
+          problem_->get_handler().get_ee_pose(name).translation());
+      contact_bools.push_back(state.at(name));
+      if (state.at(name))
+        force_map.insert({name, force_ref});
+      else
+        force_map.insert({name, force_zero});
     }
 
-    ContactMap contact_map(problem_->get_handler().get_ee_names(),
-                           contact_bools, contact_poses);
+    ContactMap contact_map(ee_names, contact_bools, contact_poses);
 
     StageModel sm = problem_->create_stage(contact_map, force_map);
     full_horizon_.push_back(sm);
@@ -136,7 +137,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   // ~~REFERENCES~~ //
   x0_ = problem_->get_x0_from_multibody(x_multibody_);
   // updateStepTrackerLastReference();
-  updateStepTrackerReferences();
+  // updateStepTrackerReferences();
 
   xs_.erase(xs_.begin());
   xs_[0] = x0_;
@@ -187,6 +188,11 @@ void MPC::updateStepTrackerReferences() {
        time++) {
     problem_->set_reference_poses(time, ref_frame_poses_[time]);
   }
+}
+
+void MPC::updateReferenceFrame(const std::size_t t, const std::string &ee_name,
+                               const pinocchio::SE3 &pose_ref) {
+  problem_->set_reference_pose(t, ee_name, pose_ref);
 }
 
 } // namespace simple_mpc

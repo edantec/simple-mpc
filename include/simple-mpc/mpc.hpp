@@ -89,11 +89,11 @@ protected:
 
 public:
   MPC();
-  MPC(const MPCSettings &settings, std::shared_ptr<Problem> &problem,
+  MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem,
       const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
   MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
   void initialize(const MPCSettings &settings,
-                  std::shared_ptr<Problem> &problem);
+                  std::shared_ptr<Problem> problem);
 
   void generateFullHorizon(
       const std::vector<std::map<std::string, bool>> &contact_states);
@@ -102,6 +102,9 @@ public:
                const Eigen::VectorXd &v_current);
 
   void recedeWithCycle();
+
+  void updateReferenceFrame(const std::size_t t, const std::string &ee_name,
+                            const pinocchio::SE3 &pose_ref);
 
   // void updateSupportTiming();
 

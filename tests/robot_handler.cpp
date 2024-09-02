@@ -25,6 +25,7 @@ BOOST_AUTO_TEST_CASE(build_talos) {
   BOOST_CHECK_EQUAL(handler.get_ee_name(1), "right_sole_link");
 
   Eigen::Vector3d com = handler.get_com_position();
+  pinocchio::SE3 pose = handler.get_ee_pose("right_sole_link");
 }
 
 BOOST_AUTO_TEST_CASE(build_solo) {
@@ -43,6 +44,7 @@ BOOST_AUTO_TEST_CASE(build_solo) {
   BOOST_CHECK_EQUAL(handler.get_ee_name(1), "FL_FOOT");
 
   Eigen::Vector3d com = handler.get_com_position();
+  pinocchio::SE3 pose = handler.get_ee_pose("FL_FOOT");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

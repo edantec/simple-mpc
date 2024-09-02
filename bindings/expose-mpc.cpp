@@ -10,22 +10,18 @@
 #include <boost/python/enum.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
 #include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
+#include <pinocchio/bindings/python/utils/pickle-map.hpp>
 #include <pinocchio/fwd.hpp>
 
-#include "problems.hpp"
 #include "simple-mpc/mpc.hpp"
 
 namespace simple_mpc {
 namespace python {
 namespace bp = boost::python;
 using eigenpy::StdVectorPythonVisitor;
-
-/* void setup(MPC &self, FullDynamicsProblem &problem) {
-  std::shared_ptr<Problem> pb_ptr =
-std::make_shared<FullDynamicsProblem>(problem); self.setup(pb_ptr);
-} */
 
 void initialize(MPC &self, const bp::dict &settings,
                 std::shared_ptr<Problem> problem) {
@@ -46,8 +42,18 @@ void initialize(MPC &self, const bp::dict &settings,
 }
 
 void exposeMPC() {
-  StdVectorPythonVisitor<std::vector<StageModel>, true>::expose(
-      "StdVec_StageModel_double");
+  using StageVec = std::vector<StageModel>;
+  using MapBool = std::map<std::string, bool>;
+  StdVectorPythonVisitor<StageVec, true>::expose(
+      "StdVec_StageModel",
+      eigenpy::details::overload_base_get_item_for_std_vector<StageVec>());
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, bool, std::less<std::string>,
+      std::allocator<std::pair<const std::string, bool>>,
+      true>::expose("StdMap_Bool");
+
+  StdVectorPythonVisitor<std::vector<MapBool>, true>::expose("StdVec_MapBool");
 
   bp::class_<MPC>("MPC", bp::no_init)
       .def(bp::init<const Eigen::VectorXd &, const Eigen::VectorXd &>(
@@ -56,6 +62,10 @@ void exposeMPC() {
       .def("generateFullHorizon", &MPC::generateFullHorizon,
            bp::args("self", "contact_states"))
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
+      .def("updateReferenceFrame", &MPC::updateReferenceFrame,
+           bp::args("self", "t", "ee_name", "pose_ref"))
+      .def("get_fullHorizon", &MPC::get_fullHorizon, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the full horizon.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)

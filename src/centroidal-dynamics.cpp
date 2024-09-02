@@ -69,7 +69,8 @@ StageModel CentroidalProblem::create_stage(
   CentroidalFwdDynamics ode =
       CentroidalFwdDynamics(space, handler_.get_mass(), settings_.gravity,
                             contact_map, settings_.force_size);
-  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
+  IntegratorSemiImplEuler dyn_model =
+      IntegratorSemiImplEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
 }
