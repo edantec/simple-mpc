@@ -1,4 +1,5 @@
 #include "simple-mpc/centroidal-dynamics.hpp"
+#include <pinocchio/spatial/fwd.hpp>
 #include <stdexcept>
 
 namespace simple_mpc {
@@ -87,6 +88,85 @@ void CentroidalProblem::compute_control_from_forces(
   }
 }
 
+void CentroidalProblem::set_reference_poses(
+    const std::size_t t,
+    const std::map<std::string, pinocchio::SE3> &pose_refs) {
+  if (t >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  if (pose_refs.size() != handler_.get_ee_names().size()) {
+    throw std::runtime_error(
+        "pose_refs size does not match number of end effectors");
+  }
+  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
+      &*problem_->stages_[t]->dynamics_);
+  CentroidalFwdDynamics *cent_dyn =
+      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+
+  for (auto const &pose : pose_refs) {
+    cent_dyn->contact_map_.setContactPose(pose.first,
+                                          pose.second.translation());
+  }
+  CostStack *cs = get_cost_stack(t);
+
+  for (auto ee_name : handler_.get_ee_names()) {
+    QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
+        &*cs->components_[cost_map_.at("linear_acc_cost")]);
+    QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
+        &*cs->components_[cost_map_.at("angular_acc_cost")]);
+    CentroidalAccelerationResidual *car =
+        dynamic_cast<CentroidalAccelerationResidual *>(&*qrc1->residual_);
+    AngularAccelerationResidual *aar =
+        dynamic_cast<AngularAccelerationResidual *>(&*qrc2->residual_);
+    car->contact_map_.setContactPose(ee_name,
+                                     pose_refs.at(ee_name).translation());
+    aar->contact_map_.setContactPose(ee_name,
+                                     pose_refs.at(ee_name).translation());
+  }
+}
+
+void CentroidalProblem::set_reference_pose(const std::size_t t,
+                                           const std::string &ee_name,
+                                           const pinocchio::SE3 &pose_ref) {
+  if (t >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
+      &*problem_->stages_[t]->dynamics_);
+  CentroidalFwdDynamics *cent_dyn =
+      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+  cent_dyn->contact_map_.setContactPose(ee_name, pose_ref.translation());
+
+  CostStack *cs = get_cost_stack(t);
+  QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at("linear_acc_cost")]);
+  QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[cost_map_.at("angular_acc_cost")]);
+  CentroidalAccelerationResidual *car =
+      dynamic_cast<CentroidalAccelerationResidual *>(&*qrc1->residual_);
+  AngularAccelerationResidual *aar =
+      dynamic_cast<AngularAccelerationResidual *>(&*qrc2->residual_);
+  car->contact_map_.setContactPose(ee_name, pose_ref.translation());
+  aar->contact_map_.setContactPose(ee_name, pose_ref.translation());
+}
+
+pinocchio::SE3
+CentroidalProblem::get_reference_pose(const std::size_t t,
+                                      const std::string &ee_name) {
+  if (t >= problem_->stages_.size()) {
+    throw std::runtime_error("Stage index exceeds stage vector size");
+  }
+  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
+      &*problem_->stages_[t]->dynamics_);
+  CentroidalFwdDynamics *cent_dyn =
+      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+
+  pinocchio::SE3 pose = pinocchio::SE3::Identity();
+  pose.translation() = cent_dyn->contact_map_.getContactPose(ee_name);
+
+  return pose;
+}
+
 void CentroidalProblem::set_reference_forces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
@@ -136,10 +216,15 @@ CentroidalProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
 CostStack CentroidalProblem::create_terminal_cost() {
   auto ter_space = VectorSpace(nx_);
   auto term_cost = CostStack(ter_space, nu_);
+  auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
+  auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   term_cost.addCost(
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+      QuadraticResidualCost(ter_space, linear_mom, settings_.w_linear_mom));
+  term_cost.addCost(
+      QuadraticResidualCost(ter_space, angular_mom, settings_.w_angular_mom));
 
   return term_cost;
-}
+
+} // namespace simple_mpc
 
 } // namespace simple_mpc

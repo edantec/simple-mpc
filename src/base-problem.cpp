@@ -54,6 +54,12 @@ CostStack *Problem::get_cost_stack(std::size_t t) {
   return cs;
 }
 
+CostStack *Problem::get_terminal_cost_stack() {
+  CostStack *cs = dynamic_cast<CostStack *>(&*problem_->term_cost_);
+
+  return cs;
+}
+
 std::size_t Problem::get_cost_number() {
   CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[0]->cost_);
   return cs->components_.size();

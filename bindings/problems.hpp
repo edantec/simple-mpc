@@ -90,6 +90,12 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_poses", t, pose_refs);
   }
 
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_terminal_reference_pose",
+                                    ee_name, pose_ref);
+  }
+
   pinocchio::SE3 get_reference_pose(const std::size_t t,
                                     const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(pinocchio::SE3, "get_reference_pose", t,
@@ -162,6 +168,12 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                t, pose_refs);
   }
 
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
+                               set_terminal_reference_pose, ee_name, pose_refs);
+  }
+
   pinocchio::SE3 get_reference_pose(const std::size_t t,
                                     const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(pinocchio::SE3, FullDynamicsProblem,
@@ -221,6 +233,12 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, set_reference_poses, t,
                                pose_refs);
+  }
+
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
+                               set_terminal_reference_pose, ee_name, pose_refs);
   }
 
   pinocchio::SE3 get_reference_pose(const std::size_t t,
@@ -283,6 +301,12 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, set_reference_poses,
                                t, pose_refs);
+  }
+
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
+                               set_terminal_reference_pose, ee_name, pose_refs);
   }
 
   pinocchio::SE3 get_reference_pose(const std::size_t t,

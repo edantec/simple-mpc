@@ -46,6 +46,12 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   fdproblem.create_problem(settings.x0, 100, 6, settings.gravity[2]);
   BOOST_CHECK_EQUAL(fdproblem.get_problem()->stages_.size(), 100);
 
+  pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
+  fdproblem.set_reference_pose(4, "left_sole_link", pose_left_random);
+
+  BOOST_CHECK_EQUAL(fdproblem.get_reference_pose(4, "left_sole_link"),
+                    pose_left_random);
+
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
   pinocchio::SE3 new_pose_right = pinocchio::SE3::Identity();
@@ -109,6 +115,12 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   knproblem.create_problem(settings.x0, 100, 6, settings.gravity[2]);
 
   BOOST_CHECK_EQUAL(knproblem.get_problem()->stages_.size(), 100);
+
+  pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
+  knproblem.set_reference_pose(4, "left_sole_link", pose_left_random);
+
+  BOOST_CHECK_EQUAL(knproblem.get_reference_pose(4, "left_sole_link"),
+                    pose_left_random);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -188,6 +200,28 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                                force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(cproblem.get_reference_force(5, "left_sole_link"),
                     force_refs.at("left_sole_link"));
+
+  pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
+  cproblem.set_reference_pose(4, "left_sole_link", pose_left_random);
+
+  BOOST_CHECK_EQUAL(
+      cproblem.get_reference_pose(4, "left_sole_link").translation(),
+      pose_left_random.translation());
+
+  pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
+  new_pose_left.translation() << 1, 0, 2;
+  pinocchio::SE3 new_pose_right = pinocchio::SE3::Identity();
+  new_pose_right.translation() << -1, 0, 2;
+  std::map<std::string, pinocchio::SE3> new_poses;
+  new_poses.insert({"left_sole_link", new_pose_left});
+  new_poses.insert({"right_sole_link", new_pose_right});
+
+  cproblem.set_reference_poses(3, new_poses);
+
+  BOOST_CHECK_EQUAL(cproblem.get_reference_pose(3, "left_sole_link"),
+                    new_poses.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.get_reference_pose(3, "right_sole_link"),
+                    new_poses.at("right_sole_link"));
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {

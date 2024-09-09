@@ -13,6 +13,8 @@
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
+#include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
+#include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/base-problem.hpp"
@@ -97,6 +99,8 @@ public:
   void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_ref) override;
   void set_reference_forces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;

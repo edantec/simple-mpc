@@ -38,7 +38,7 @@ struct CentroidalSettings {
   double DT;
 
   // Cost function weights
-  Eigen::MatrixXd w_x;           // State
+  Eigen::MatrixXd w_x_ter;       // State at terminal node
   Eigen::MatrixXd w_u;           // Control
   Eigen::Matrix3d w_linear_mom;  // Linear momentum
   Eigen::Matrix3d w_angular_mom; // Angular momentum
@@ -74,14 +74,14 @@ public:
 
   // Getters and setters for pose not implemented
   void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_ref) override {}
+                          const pinocchio::SE3 &pose_ref) override;
   void set_reference_poses(
       const std::size_t t,
-      const std::map<std::string, pinocchio::SE3> &pose_refs) override {}
+      const std::map<std::string, pinocchio::SE3> &pose_refs) override;
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_ref) override {}
   pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &ee_name) override {
-    return pinocchio::SE3::Identity();
-  }
+                                    const std::string &ee_name) override;
 
   // Getters and setters for contact forces
   void set_reference_forces(

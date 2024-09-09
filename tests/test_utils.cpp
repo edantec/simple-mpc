@@ -153,7 +153,7 @@ CentroidalSettings getCentroidalSettings(RobotHandler handler) {
   settings.x0 = x0;
   settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
-  settings.w_x = Eigen::MatrixXd::Identity(nx, nx);
+  settings.w_x_ter = Eigen::MatrixXd::Identity(nx, nx);
   settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
 
   settings.w_linear_mom = Eigen::MatrixXd::Identity(3, 3);

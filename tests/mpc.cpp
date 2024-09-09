@@ -40,11 +40,10 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
 
-  BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
-  BOOST_CHECK_EQUAL(mpc.get_us().size(), T);
+  BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
+  BOOST_CHECK_EQUAL(mpc.us_.size(), T);
 
   std::vector<std::map<std::string, bool>> contact_states;
-  // std::vector<std::vector<bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
     contact_state.insert({handler.get_ee_name(0), true});
@@ -80,13 +79,29 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   BOOST_CHECK_EQUAL(mpc.get_fullHorizon().size(), 130);
   BOOST_CHECK_EQUAL(mpc.get_fullHorizonData().size(), 130);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 170);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 110);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 220);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
 
   for (std::size_t i = 0; i < 10; i++) {
     mpc.iterate(settings.x0.head(handler.get_rmodel().nq),
                 settings.x0.tail(handler.get_rmodel().nv));
   }
 
-  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 160);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 100);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 210);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
+
+  BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
+
+  for (std::size_t i = 0; i < 160; i++) {
+    mpc.iterate(settings.x0.head(handler.get_rmodel().nq),
+                settings.x0.tail(handler.get_rmodel().nv));
+  }
+
+  BOOST_CHECK(mpc.foot_land_times_.at("right_sole_link").empty());
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
@@ -121,8 +136,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
 
   MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
 
-  BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
-  BOOST_CHECK_EQUAL(mpc.get_us().size(), T);
+  BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
+  BOOST_CHECK_EQUAL(mpc.us_.size(), T);
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;
@@ -167,7 +182,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
                 settings.x0.tail(handler.get_rmodel().nv));
   }
 
-  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
+  BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal) {
@@ -204,8 +219,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
 
   MPC mpc = MPC(mpc_settings, problem, handler.get_x0(), u0);
 
-  BOOST_CHECK_EQUAL(mpc.get_xs().size(), T + 1);
-  BOOST_CHECK_EQUAL(mpc.get_us().size(), T);
+  BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
+  BOOST_CHECK_EQUAL(mpc.us_.size(), T);
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;
@@ -256,7 +271,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
                 handler.get_x0().tail(handler.get_rmodel().nv));
   }
 
-  BOOST_CHECK_EQUAL(mpc.get_horizon_iteration(), 10);
+  BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

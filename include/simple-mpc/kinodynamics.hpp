@@ -81,6 +81,8 @@ public:
   void set_reference_poses(
       const std::size_t i,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;
+  void set_terminal_reference_pose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_ref) override;
   void set_reference_forces(
       const std::size_t i,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;

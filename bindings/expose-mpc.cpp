@@ -66,6 +66,12 @@ void exposeMPC() {
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("get_fullHorizon", &MPC::get_fullHorizon, bp::args("self"),
            bp::return_internal_reference<>(), "Get the full horizon.")
+      .def("get_foot_takeoff_timings", &MPC::get_foot_takeoff_timings,
+           bp::args("self", "ee_name"), bp::return_internal_reference<>(),
+           "Get the takeoff timings.")
+      .def("get_foot_land_timings", &MPC::get_foot_land_timings,
+           bp::args("self", "ee_name"), bp::return_internal_reference<>(),
+           "Get the land timings.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)

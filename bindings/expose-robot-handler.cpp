@@ -97,6 +97,10 @@ void exposeHandler() {
            bp::make_function(
                &RobotHandler::get_controlledJointsIDs,
                bp::return_value_policy<bp::copy_const_reference>()))
+      .def("get_ee_id",
+           bp::make_function(
+               &RobotHandler::get_ee_id,
+               bp::return_value_policy<bp::copy_const_reference>()))
       .def("get_ee_names",
            bp::make_function(
                &RobotHandler::get_ee_names,

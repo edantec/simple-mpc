@@ -62,6 +62,15 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
     cost_map_.insert({cname + "_force_cost", cost_incr});
     cost_incr++;
   }
+  cost_incr = 0;
+  terminal_cost_map_.insert({"state_cost", cost_incr});
+  cost_incr++;
+  terminal_cost_map_.insert({"centroidal_cost", cost_incr});
+  cost_incr++;
+  for (auto &cname : handler_.get_ee_names()) {
+    terminal_cost_map_.insert({cname + "_pose_cost", cost_incr});
+    cost_incr++;
+  }
 }
 
 StageModel FullDynamicsProblem::create_stage(
@@ -185,6 +194,16 @@ void FullDynamicsProblem::set_reference_pose(const std::size_t t,
   cfr->setReference(pose_ref);
 }
 
+void FullDynamicsProblem::set_terminal_reference_pose(
+    const std::string &ee_name, const pinocchio::SE3 &pose_ref) {
+  CostStack *cs = get_terminal_cost_stack();
+  QuadraticResidualCost *qrc = dynamic_cast<QuadraticResidualCost *>(
+      &*cs->components_[terminal_cost_map_.at(ee_name + "_pose_cost")]);
+  FramePlacementResidual *cfr =
+      dynamic_cast<FramePlacementResidual *>(&*qrc->residual_);
+  cfr->setReference(pose_ref);
+}
+
 void FullDynamicsProblem::set_reference_forces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
@@ -247,8 +266,21 @@ FullDynamicsProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
 CostStack FullDynamicsProblem::create_terminal_cost() {
   auto ter_space = MultibodyPhaseSpace(handler_.get_rmodel());
   auto term_cost = CostStack(ter_space, nu_);
+  auto cent_mom = CentroidalMomentumResidual(
+      ter_space.ndx(), nu_, handler_.get_rmodel(), Eigen::VectorXd::Zero(6));
+
   term_cost.addCost(
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+  term_cost.addCost(
+      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent));
+  for (auto const &name : handler_.get_ee_names()) {
+    FramePlacementResidual frame_residual = FramePlacementResidual(
+        ter_space.ndx(), nu_, handler_.get_rmodel(), handler_.get_ee_pose(name),
+        handler_.get_ee_id(name));
+
+    term_cost.addCost(
+        QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
+  }
 
   return term_cost;
 }

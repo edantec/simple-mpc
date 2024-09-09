@@ -64,6 +64,8 @@ public:
   virtual void set_reference_poses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;
+  virtual void set_terminal_reference_pose(const std::string &ee_name,
+                                           const pinocchio::SE3 &pose_ref) = 0;
   virtual pinocchio::SE3 get_reference_pose(const std::size_t t,
                                             const std::string &ee_name) = 0;
 
@@ -96,6 +98,7 @@ public:
 
   // Getter for various objects and quantities
   CostStack *get_cost_stack(std::size_t t);
+  CostStack *get_terminal_cost_stack();
   std::size_t get_cost_number();
   std::size_t get_size();
   std::shared_ptr<TrajOptProblem> get_problem() { return problem_; }
@@ -109,8 +112,9 @@ protected:
   int nv_;
   int nu_;
 
-  /// Dictionnary of cost name + cost id in the CostStack object
+  /// Dictionnaries of cost name + cost id in the CostStack objects
   std::map<std::string, std::size_t> cost_map_;
+  std::map<std::string, std::size_t> terminal_cost_map_;
 
   /// The robot model
   RobotHandler handler_;

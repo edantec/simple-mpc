@@ -15,6 +15,7 @@
 #include <proxsuite-nlp/fwd.hpp>
 
 #include "simple-mpc/mpc.hpp"
+#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -59,12 +60,12 @@ void MPC::initialize(const MPCSettings &settings,
     throw std::runtime_error(
         "Provided u0 does not have the correct size problem.nu");
   }
-  std::vector<std::string> ee_names = problem_->get_handler().get_ee_names();
+  ee_names_ = problem_->get_handler().get_ee_names();
 
   for (std::size_t i = 0; i < problem->get_size(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
 
-    for (std::string name : ee_names) {
+    for (std::string name : ee_names_) {
       map_se3.insert({name, problem_->get_handler().get_ee_pose(name)});
     }
     ref_frame_poses_.push_back(map_se3);
@@ -88,7 +89,20 @@ void MPC::initialize(const MPCSettings &settings,
 
 void MPC::generateFullHorizon(
     const std::vector<std::map<std::string, bool>> &contact_states) {
-  std::vector<std::string> ee_names = problem_->get_handler().get_ee_names();
+  for (auto const &name : ee_names_) {
+    foot_takeoff_times_.insert({name, std::vector<int>()});
+    foot_land_times_.insert({name, std::vector<int>()});
+  }
+  for (size_t i = 1; i < contact_states.size(); i++) {
+    for (auto const &name : ee_names_) {
+      if (!contact_states[i].at(name) && contact_states[i - 1].at(name)) {
+        foot_takeoff_times_.at(name).push_back((int)(i + problem_->get_size()));
+      }
+      if (contact_states[i].at(name) && !contact_states[i - 1].at(name)) {
+        foot_land_times_.at(name).push_back((int)(i + problem_->get_size()));
+      }
+    }
+  }
   for (auto const &state : contact_states) {
     int active_contacts = 0;
     for (auto const &contact : state) {
@@ -108,7 +122,7 @@ void MPC::generateFullHorizon(
     std::map<std::string, Eigen::VectorXd> force_map;
     std::vector<bool> contact_bools;
 
-    for (auto &name : ee_names) {
+    for (auto const &name : ee_names_) {
       contact_poses.push_back(
           problem_->get_handler().get_ee_pose(name).translation());
       contact_bools.push_back(state.at(name));
@@ -118,7 +132,7 @@ void MPC::generateFullHorizon(
         force_map.insert({name, force_zero});
     }
 
-    ContactMap contact_map(ee_names, contact_bools, contact_poses);
+    ContactMap contact_map(ee_names_, contact_bools, contact_poses);
 
     StageModel sm = problem_->create_stage(contact_map, force_map);
     full_horizon_.push_back(sm);
@@ -132,7 +146,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   // ~~TIMING~~ //
   recedeWithCycle();
-  // updateSupportTiming();
+  updateSupportTiming();
 
   // ~~REFERENCES~~ //
   x0_ = problem_->get_x0_from_multibody(x_multibody_);
@@ -145,6 +159,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   us_.erase(us_.begin());
   us_.push_back(us_.back());
+  problem_->get_problem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
   solver_->run(*problem_->get_problem(), xs_, us_);
@@ -167,21 +182,22 @@ void MPC::recedeWithCycle() {
   }
 }
 
-/* void MPC::updateSupportTiming() {
-  for (auto name : handler_.get_ee_names()) {
-    for (std::size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
+void MPC::updateSupportTiming() {
+  RobotHandler handler = problem_->get_handler();
+  for (auto const &name : ee_names_) {
+    for (size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
       foot_land_times_.at(name)[i] -= 1;
+      if (foot_land_times_.at(name)[0] < 0)
+        foot_land_times_.at(name).erase(foot_land_times_.at(name).begin());
     }
-    if (foot_land_times_.at(name).size() > 0 && foot_land_times_.at(name)[0] <
-0) foot_land_times_.at(name).erase(foot_land_times_.at(name).begin()); for
-(std::size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++) {
+    for (size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++) {
       foot_takeoff_times_.at(name)[i] -= 1;
+      if (foot_takeoff_times_.at(name)[0] < 0)
+        foot_takeoff_times_.at(name).erase(
+            foot_takeoff_times_.at(name).begin());
     }
-    if (foot_takeoff_times_.at(name).size() > 0 &&
-foot_takeoff_times_.at(name)[0] < 0)
-      foot_takeoff_times_.at(name).erase(foot_takeoff_times_.at(name).begin());
-    }
-} */
+  }
+}
 
 void MPC::updateStepTrackerReferences() {
   for (unsigned long time = 0; time < problem_->get_problem()->stages_.size();
@@ -193,6 +209,11 @@ void MPC::updateStepTrackerReferences() {
 void MPC::updateReferenceFrame(const std::size_t t, const std::string &ee_name,
                                const pinocchio::SE3 &pose_ref) {
   problem_->set_reference_pose(t, ee_name, pose_ref);
+}
+
+void MPC::updateTerminalReferenceFrame(const std::string &ee_name,
+                                       const pinocchio::SE3 &pose_ref) {
+  problem_->set_terminal_reference_pose(ee_name, pose_ref);
 }
 
 } // namespace simple_mpc

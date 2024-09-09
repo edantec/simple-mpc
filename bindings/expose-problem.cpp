@@ -40,6 +40,9 @@ void exposeBaseProblem() {
       .def("set_reference_poses",
            bp::pure_virtual(&Problem::set_reference_poses),
            bp::args("self", "t", "pose_refs"))
+      .def("set_terminal_reference_pose",
+           bp::pure_virtual(&Problem::set_terminal_reference_pose),
+           bp::args("self", "ee_name", "pose_ref"))
       .def("get_reference_pose", bp::pure_virtual(&Problem::get_reference_pose),
            bp::args("self", "t", "ee_name"))
       .def("set_reference_forces",
@@ -168,6 +171,9 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &FullDynamicsProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
+      .def("set_terminal_reference_pose",
+           &FullDynamicsProblem::set_terminal_reference_pose,
+           bp::args("self", "ee_name", "pose_ref"))
       .def("set_reference_forces", &FullDynamicsProblem::set_reference_forces,
            bp::args("self", "t", "force_refs"))
       .def("set_reference_force", &FullDynamicsProblem::set_reference_force,
@@ -189,7 +195,7 @@ void initialize_cent(CentroidalProblem &self, const bp::dict &settings) {
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
-  conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
+  conf.w_x_ter = bp::extract<Eigen::MatrixXd>(settings["w_x_ter"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_linear_mom = bp::extract<Eigen::Matrix3d>(settings["w_linear_mom"]);
   conf.w_angular_mom = bp::extract<Eigen::Matrix3d>(settings["w_angular_mom"]);
@@ -208,7 +214,7 @@ bp::dict get_settings_cent(CentroidalProblem &self) {
   settings["x0"] = conf.x0;
   settings["u0"] = conf.u0;
   settings["DT"] = conf.DT;
-  settings["w_x"] = conf.w_x;
+  settings["w_x_ter"] = conf.w_x_ter;
   settings["w_u"] = conf.w_u;
   settings["w_linear_mom"] = conf.w_linear_mom;
   settings["w_angular_mom"] = conf.w_angular_mom;
@@ -266,6 +272,9 @@ void exposeCentroidalProblem() {
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &CentroidalProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
+      .def("set_terminal_reference_pose",
+           &CentroidalProblem::set_terminal_reference_pose,
+           bp::args("self", "ee_name", "pose_ref"))
       .def("set_reference_forces", &CentroidalProblem::set_reference_forces,
            bp::args("self", "t", "force_refs"))
       .def("set_reference_force", &CentroidalProblem::set_reference_force,
@@ -370,6 +379,9 @@ void exposeKinodynamicsProblem() {
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses", &KinodynamicsProblem::set_reference_poses,
            bp::args("self", "t", "pose_refs"))
+      .def("set_terminal_reference_pose",
+           &KinodynamicsProblem::set_terminal_reference_pose,
+           bp::args("self", "ee_name", "pose_ref"))
       .def("set_reference_forces", &KinodynamicsProblem::set_reference_forces,
            bp::args("self", "t", "force_refs"))
       .def("set_reference_force", &KinodynamicsProblem::set_reference_force,

@@ -19,7 +19,6 @@
 
 #include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
-#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -84,6 +83,7 @@ protected:
 
   // Memory preallocations:
   std::vector<unsigned long> controlled_joints_id_;
+  std::vector<std::string> ee_names_;
   Eigen::VectorXd x_internal_;
   bool time_to_solve_ddp_ = false;
 
@@ -106,15 +106,13 @@ public:
   void updateReferenceFrame(const std::size_t t, const std::string &ee_name,
                             const pinocchio::SE3 &pose_ref);
 
-  // void updateSupportTiming();
+  void updateTerminalReferenceFrame(const std::string &ee_name,
+                                    const pinocchio::SE3 &pose_ref);
+
+  void updateSupportTiming();
 
   // getters and setters
   MPCSettings &get_settings() { return settings_; }
-
-  const Eigen::VectorXd &get_x0() const { return x0_; }
-  void set_x0(const Eigen::VectorXd &x0) { x0_ = x0; }
-  const std::vector<Eigen::VectorXd> &get_xs() const { return xs_; }
-  const std::vector<Eigen::VectorXd> &get_us() const { return us_; }
 
   std::vector<StageModel> &get_fullHorizon() { return full_horizon_; }
   std::vector<std::shared_ptr<StageData>> &get_fullHorizonData() {
@@ -122,15 +120,16 @@ public:
   }
 
   std::shared_ptr<Problem> &get_problem() { return problem_; }
-
-  const std::map<std::string, std::vector<int>> &get_land_times() {
-    return foot_land_times_;
+  std::vector<int> &get_foot_takeoff_timings(const std::string &ee_name) {
+    return foot_takeoff_times_.at(ee_name);
   }
-  const std::map<std::string, std::vector<int>> &get_takeoff_time() {
-    return foot_takeoff_times_;
+  std::vector<int> &get_foot_land_timings(const std::string &ee_name) {
+    return foot_land_times_.at(ee_name);
   }
 
-  const std::size_t &get_horizon_iteration() { return horizon_iteration_; }
+  // timings
+  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
+  std::size_t horizon_iteration_;
 
   std::vector<Eigen::VectorXd> xs_;
   std::vector<Eigen::VectorXd> us_;
@@ -139,10 +138,6 @@ public:
   Eigen::VectorXd x0_;
   Eigen::VectorXd x_multibody_;
   Eigen::VectorXd u0_;
-
-  // timings
-  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
-  std::size_t horizon_iteration_;
 };
 
 } // namespace simple_mpc
