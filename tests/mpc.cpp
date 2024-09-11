@@ -33,8 +33,12 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   mpc_settings.TOL = 1e-6;
   mpc_settings.mu_init = 1e-8;
-
   mpc_settings.num_threads = 8;
+
+  mpc_settings.swing_apex = 0.1;
+  mpc_settings.T_fly = 80;
+  mpc_settings.T_contact = 20;
+  mpc_settings.T = T;
   Eigen::VectorXd u0(handler.get_rmodel().nv - 6);
   u0.setZero();
 
@@ -128,8 +132,12 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
 
   mpc_settings.TOL = 1e-6;
   mpc_settings.mu_init = 1e-8;
-
   mpc_settings.num_threads = 8;
+
+  mpc_settings.swing_apex = 0.1;
+  mpc_settings.T_fly = 80;
+  mpc_settings.T_contact = 20;
+  mpc_settings.T = T;
   Eigen::VectorXd u0(handler.get_rmodel().nv + 6);
   u0.setZero();
   u0.head(12) << f1, f1;
@@ -211,8 +219,13 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
 
   mpc_settings.TOL = 1e-6;
   mpc_settings.mu_init = 1e-8;
-
   mpc_settings.num_threads = 8;
+
+  mpc_settings.swing_apex = 0.1;
+  mpc_settings.T_fly = 80;
+  mpc_settings.T_contact = 20;
+  mpc_settings.T = T;
+
   Eigen::VectorXd u0(12);
   u0.setZero();
   u0.head(12) << f1, f1;

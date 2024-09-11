@@ -63,6 +63,7 @@ find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
 find_package(Tracy REQUIRED)
+find_package(ndcurves REQUIRED)
 set_target_properties(Tracy::TracyClient PROPERTIES POSITION_INDEPENDENT_CODE
                                                     True)
 add_project_dependency(OpenMP REQUIRED)
@@ -70,6 +71,7 @@ add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
                        "proxsuite-nlp >= 0.6.1")
 add_project_dependency(aligator REQUIRED)
+add_project_dependency(ndcurves REQUIRED)
 
 # Project dependencies
 if(BUILD_PYTHON_INTERFACE)
@@ -87,7 +89,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp aligator::aligator
-         example-robot-data::example-robot-data)
+         example-robot-data::example-robot-data ndcurves::ndcurves)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${mpc_HEADER}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX

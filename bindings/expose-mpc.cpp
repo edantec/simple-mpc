@@ -38,6 +38,11 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.max_iters = bp::extract<std::size_t>(settings["max_iters"]);
   conf.num_threads = bp::extract<std::size_t>(settings["max_iters"]);
 
+  conf.swing_apex = bp::extract<double>(settings["swing_apex"]);
+  conf.T_fly = bp::extract<int>(settings["T_fly"]);
+  conf.T_contact = bp::extract<int>(settings["T_contact"]);
+  conf.T = bp::extract<std::size_t>(settings["T"]);
+
   self.initialize(conf, problem);
 }
 
@@ -62,8 +67,10 @@ void exposeMPC() {
       .def("generateFullHorizon", &MPC::generateFullHorizon,
            bp::args("self", "contact_states"))
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
-      .def("updateReferenceFrame", &MPC::updateReferenceFrame,
+      .def("setReferencePose", &MPC::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
+      .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
+           bp::args("self", "ee_name", "pose_ref"))
       .def("get_fullHorizon", &MPC::get_fullHorizon, bp::args("self"),
            bp::return_internal_reference<>(), "Get the full horizon.")
       .def("get_foot_takeoff_timings", &MPC::get_foot_takeoff_timings,
@@ -72,6 +79,8 @@ void exposeMPC() {
       .def("get_foot_land_timings", &MPC::get_foot_land_timings,
            bp::args("self", "ee_name"), bp::return_internal_reference<>(),
            "Get the land timings.")
+      .def("get_handler", &MPC::get_handler, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the robot handler.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)

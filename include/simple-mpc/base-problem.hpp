@@ -94,6 +94,7 @@ public:
 
   // Setter and getter for control reference
   void set_reference_control(const std::size_t t, const Eigen::VectorXd &u_ref);
+
   Eigen::VectorXd get_reference_control(const std::size_t t);
 
   // Getter for various objects and quantities
@@ -103,7 +104,7 @@ public:
   std::size_t get_size();
   std::shared_ptr<TrajOptProblem> get_problem() { return problem_; }
   std::map<std::string, std::size_t> get_cost_map() { return cost_map_; }
-  RobotHandler get_handler() { return handler_; }
+  RobotHandler &get_handler() { return handler_; }
   int get_nu() { return nu_; }
 
 protected:

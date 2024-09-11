@@ -43,6 +43,15 @@ void MPC::initialize(const MPCSettings &settings,
   settings_ = settings;
   problem_ = problem;
 
+  std::map<std::string, Eigen::Vector3d> initial_poses;
+  for (auto const &name : problem_->get_handler().get_ee_names()) {
+    initial_poses.insert(
+        {name, problem_->get_handler().get_ee_pose(name).translation()});
+  }
+  foot_trajectories_ =
+      FootTrajectory(initial_poses, settings_.swing_apex, settings_.T_fly,
+                     settings_.T_contact, settings_.T);
+
   x0_ = problem_->get_x0_from_multibody((x_multibody_));
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
@@ -142,6 +151,8 @@ void MPC::generateFullHorizon(
 
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
+
+  problem_->get_handler().set_q0(q_current);
   x_multibody_ = problem_->get_handler().shapeState(q_current, v_current);
 
   // ~~TIMING~~ //
@@ -151,7 +162,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   // ~~REFERENCES~~ //
   x0_ = problem_->get_x0_from_multibody(x_multibody_);
   // updateStepTrackerLastReference();
-  // updateStepTrackerReferences();
+  updateStepTrackerReferences();
 
   xs_.erase(xs_.begin());
   xs_[0] = x0_;
@@ -200,19 +211,38 @@ void MPC::updateSupportTiming() {
 }
 
 void MPC::updateStepTrackerReferences() {
-  for (unsigned long time = 0; time < problem_->get_problem()->stages_.size();
-       time++) {
-    problem_->set_reference_poses(time, ref_frame_poses_[time]);
+  for (auto const &name : ee_names_) {
+    int foot_land_time = -1;
+    int foot_takeoff_time = -1;
+    if (!foot_land_times_.at(name).empty())
+      foot_land_time = foot_land_times_.at(name)[0];
+    if (!foot_takeoff_times_.at(name).empty())
+      foot_takeoff_time = foot_takeoff_times_.at(name)[0];
+
+    foot_trajectories_.updateTrajectory(
+        foot_takeoff_time, foot_land_time,
+        problem_->get_handler().get_ee_pose(name).translation(), name);
+
+    for (unsigned long time = 0; time < problem_->get_problem()->stages_.size();
+         time++) {
+      pinocchio::SE3 pose = pinocchio::SE3::Identity();
+      pose.translation() = foot_trajectories_.getReference(name)[time];
+      setReferencePose(time, name, pose);
+    }
+    pinocchio::SE3 pose = pinocchio::SE3::Identity();
+    pose.translation() = foot_trajectories_.getReference(
+        name)[problem_->get_problem()->stages_.size() - 1];
+    setTerminalReferencePose(name, pose);
   }
 }
 
-void MPC::updateReferenceFrame(const std::size_t t, const std::string &ee_name,
-                               const pinocchio::SE3 &pose_ref) {
+void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,
+                           const pinocchio::SE3 &pose_ref) {
   problem_->set_reference_pose(t, ee_name, pose_ref);
 }
 
-void MPC::updateTerminalReferenceFrame(const std::string &ee_name,
-                                       const pinocchio::SE3 &pose_ref) {
+void MPC::setTerminalReferencePose(const std::string &ee_name,
+                                   const pinocchio::SE3 &pose_ref) {
   problem_->set_terminal_reference_pose(ee_name, pose_ref);
 }
 

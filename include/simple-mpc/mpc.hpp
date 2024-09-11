@@ -18,7 +18,9 @@
 #include <pinocchio/algorithm/proximal.hpp>
 
 #include "simple-mpc/base-problem.hpp"
+#include "simple-mpc/foot-trajectory.hpp"
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -57,8 +59,14 @@ public:
   double TOL = 1e-4;
   double mu_init = 1e-8;
   std::size_t max_iters = 1;
-
   std::size_t num_threads = 2;
+
+  double swing_apex = 0.1;
+  double x_forward = 0.1;
+  double y_forward = 0.1;
+  int T_fly = 80;
+  int T_contact = 20;
+  size_t T = 100;
 };
 class MPC {
   /**
@@ -74,6 +82,7 @@ protected:
   std::vector<StageModel> full_horizon_;
   std::vector<std::shared_ptr<StageData>> full_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
+  FootTrajectory foot_trajectories_;
 
   // INTERNAL UPDATING functions
   void updateStepTrackerReferences();
@@ -103,11 +112,11 @@ public:
 
   void recedeWithCycle();
 
-  void updateReferenceFrame(const std::size_t t, const std::string &ee_name,
-                            const pinocchio::SE3 &pose_ref);
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_ref);
 
-  void updateTerminalReferenceFrame(const std::string &ee_name,
-                                    const pinocchio::SE3 &pose_ref);
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_ref);
 
   void updateSupportTiming();
 
@@ -119,7 +128,8 @@ public:
     return full_horizon_data_;
   }
 
-  std::shared_ptr<Problem> &get_problem() { return problem_; }
+  std::shared_ptr<Problem> get_problem() { return problem_; }
+  RobotHandler &get_handler() { return problem_->get_handler(); }
   std::vector<int> &get_foot_takeoff_timings(const std::string &ee_name) {
     return foot_takeoff_times_.at(ee_name);
   }
