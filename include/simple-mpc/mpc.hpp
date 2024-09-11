@@ -61,9 +61,9 @@ public:
   std::size_t max_iters = 1;
   std::size_t num_threads = 2;
 
-  double swing_apex = 0.1;
-  double x_forward = 0.1;
-  double y_forward = 0.1;
+  double swing_apex = 0.15;
+  double x_translation = 0.1;
+  double y_translation = 0.;
   int T_fly = 80;
   int T_contact = 20;
   size_t T = 100;
@@ -83,6 +83,7 @@ protected:
   std::vector<std::shared_ptr<StageData>> full_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
+  std::map<std::string, Eigen::Vector3d> relative_translations_;
 
   // INTERNAL UPDATING functions
   void updateStepTrackerReferences();
@@ -119,6 +120,10 @@ public:
                                 const pinocchio::SE3 &pose_ref);
 
   void updateSupportTiming();
+
+  void setRelativeTranslation(
+      const std::map<std::string, Eigen::Vector3d> &relative_translations,
+      const double swing_apex);
 
   // getters and setters
   MPCSettings &get_settings() { return settings_; }

@@ -39,6 +39,8 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.num_threads = bp::extract<std::size_t>(settings["max_iters"]);
 
   conf.swing_apex = bp::extract<double>(settings["swing_apex"]);
+  conf.x_translation = bp::extract<double>(settings["x_translation"]);
+  conf.y_translation = bp::extract<double>(settings["y_translation"]);
   conf.T_fly = bp::extract<int>(settings["T_fly"]);
   conf.T_contact = bp::extract<int>(settings["T_contact"]);
   conf.T = bp::extract<std::size_t>(settings["T"]);

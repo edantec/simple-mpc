@@ -10,8 +10,10 @@
 #include <aligator/modelling/centroidal/angular-acceleration.hpp>
 #include <aligator/modelling/centroidal/angular-momentum.hpp>
 #include <aligator/modelling/centroidal/centroidal-acceleration.hpp>
+#include <aligator/modelling/centroidal/centroidal-translation.hxx>
 #include <aligator/modelling/centroidal/linear-momentum.hpp>
 #include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+#include <proxsuite-nlp/modelling/constraints/equality-constraint.hpp>
 
 #include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
@@ -25,6 +27,9 @@ using CentroidalAccelerationResidual =
 using AngularAccelerationResidual = AngularAccelerationResidualTpl<double>;
 using LinearMomentumResidual = LinearMomentumResidualTpl<double>;
 using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
+using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
+using StageConstraint = StageConstraintTpl<double>;
+using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
 
 /**
  * @brief Build a full dynamics problem
@@ -71,6 +76,8 @@ public:
 
   // Create one Centroidal terminal cost
   CostStack create_terminal_cost() override;
+
+  void updateTerminalConstraint() override;
 
   // Getters and setters for pose not implemented
   void set_reference_pose(const std::size_t t, const std::string &ee_name,

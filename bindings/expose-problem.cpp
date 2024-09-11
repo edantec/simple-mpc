@@ -35,6 +35,9 @@ void exposeBaseProblem() {
            bp::args("self", "contact_map", "force_refs"))
       .def("create_terminal_cost",
            bp::pure_virtual(&Problem::create_terminal_cost), bp::args("self"))
+      .def("updateTerminalConstraint",
+           bp::pure_virtual(&Problem::updateTerminalConstraint),
+           bp::args("self"))
       .def("set_reference_pose", bp::pure_virtual(&Problem::set_reference_pose),
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("set_reference_poses",
@@ -186,6 +189,8 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "x_multibody"))
       .def("create_terminal_cost", &FullDynamicsProblem::create_terminal_cost,
            bp::args("self"))
+      .def("updateTerminalConstraint",
+           &FullDynamicsProblem::updateTerminalConstraint, bp::args("self"))
       .def("get_problem", &get_full_problem)
       .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }
@@ -287,6 +292,8 @@ void exposeCentroidalProblem() {
            bp::args("self", "x_multibody"))
       .def("create_terminal_cost", &CentroidalProblem::create_terminal_cost,
            bp::args("self"))
+      .def("updateTerminalConstraint",
+           &CentroidalProblem::updateTerminalConstraint, bp::args("self"))
       .def("get_problem", &get_cent_problem)
       .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }
@@ -394,6 +401,8 @@ void exposeKinodynamicsProblem() {
            bp::args("self", "x_multibody"))
       .def("create_terminal_cost", &KinodynamicsProblem::create_terminal_cost,
            bp::args("self"))
+      .def("updateTerminalConstraint",
+           &KinodynamicsProblem::updateTerminalConstraint, bp::args("self"))
       .def("get_problem", &get_kino_problem)
       .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
 }

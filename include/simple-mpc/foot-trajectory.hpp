@@ -39,6 +39,8 @@ protected:
   std::map<std::string, point3_t> final_poses_;
   std::map<std::string, std::vector<point3_t>> references_;
   double swing_apex_;
+  double x_translation_;
+  double y_translation_;
   int T_fly_;
   int T_contact_;
   size_t T_;

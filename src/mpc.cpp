@@ -44,14 +44,18 @@ void MPC::initialize(const MPCSettings &settings,
   problem_ = problem;
 
   std::map<std::string, Eigen::Vector3d> initial_poses;
+  Eigen::Vector3d rel_trans;
+  rel_trans << settings_.x_translation, settings_.y_translation, 0;
   for (auto const &name : problem_->get_handler().get_ee_names()) {
     initial_poses.insert(
         {name, problem_->get_handler().get_ee_pose(name).translation()});
+    relative_translations_.insert({name, rel_trans});
   }
   foot_trajectories_ =
       FootTrajectory(initial_poses, settings_.swing_apex, settings_.T_fly,
                      settings_.T_contact, settings_.T);
 
+  foot_trajectories_.updateForward(relative_translations_, settings.swing_apex);
   x0_ = problem_->get_x0_from_multibody((x_multibody_));
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
@@ -244,6 +248,13 @@ void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,
 void MPC::setTerminalReferencePose(const std::string &ee_name,
                                    const pinocchio::SE3 &pose_ref) {
   problem_->set_terminal_reference_pose(ee_name, pose_ref);
+}
+
+void MPC::setRelativeTranslation(
+    const std::map<std::string, Eigen::Vector3d> &relative_translations,
+    const double swing_apex) {
+  relative_translations_ = relative_translations;
+  foot_trajectories_.updateForward(relative_translations_, swing_apex);
 }
 
 } // namespace simple_mpc

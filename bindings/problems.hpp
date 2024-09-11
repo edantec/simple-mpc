@@ -78,6 +78,10 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
                                     "create_terminal_cost");
   }
 
+  void updateTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint");
+  }
+
   void set_reference_pose(const std::size_t t, const std::string &ee_name,
                           const pinocchio::SE3 &pose_ref) override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_pose", t, ee_name,
@@ -155,6 +159,11 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                FullDynamicsProblem, create_terminal_cost);
   }
 
+  void updateTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
+                               updateTerminalConstraint);
+  }
+
   void set_reference_pose(const std::size_t t, const std::string &ee_name,
                           const pinocchio::SE3 &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, set_reference_pose, t,
@@ -220,6 +229,11 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
   CostStack create_terminal_cost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
                                CentroidalProblem, create_terminal_cost);
+  }
+
+  void updateTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
+                               updateTerminalConstraint);
   }
 
   void set_reference_pose(const std::size_t t, const std::string &ee_name,
@@ -288,6 +302,11 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
   CostStack create_terminal_cost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
                                KinodynamicsProblem, create_terminal_cost);
+  }
+
+  void updateTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
+                               updateTerminalConstraint);
   }
 
   void set_reference_pose(const std::size_t t, const std::string &ee_name,

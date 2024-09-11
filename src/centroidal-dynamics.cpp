@@ -223,8 +223,22 @@ CostStack CentroidalProblem::create_terminal_cost() {
   term_cost.addCost(
       QuadraticResidualCost(ter_space, angular_mom, settings_.w_angular_mom));
 
-  return term_cost;
+  CentroidalCoMResidual com_cstr =
+      CentroidalCoMResidual(ter_space.ndx(), nu_, handler_.get_com_position());
 
-} // namespace simple_mpc
+  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
+  problem_->addTerminalConstraint(term_constraint_com);
+
+  return term_cost;
+}
+
+void CentroidalProblem::updateTerminalConstraint() {
+  CentroidalCoMResidual com_cstr =
+      CentroidalCoMResidual(ndx_, nu_, handler_.get_com_position());
+
+  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
+  problem_->removeTerminalConstraints();
+  problem_->addTerminalConstraint(term_constraint_com);
+}
 
 } // namespace simple_mpc

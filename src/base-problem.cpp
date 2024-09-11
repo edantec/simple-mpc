@@ -9,6 +9,7 @@ Problem::~Problem() {}
 Problem::Problem(const RobotHandler &handler) : handler_(handler) {
   nq_ = handler_.get_rmodel().nq;
   nv_ = handler_.get_rmodel().nv;
+  ndx_ = 2 * handler_.get_rmodel().nv;
   nu_ = nv_ - 6;
 }
 

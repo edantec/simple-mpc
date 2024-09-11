@@ -57,6 +57,8 @@ public:
                const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
   virtual CostStack create_terminal_cost() = 0;
 
+  virtual void updateTerminalConstraint() = 0;
+
   // Setter and getter for poses reference
   virtual void set_reference_pose(const std::size_t t,
                                   const std::string &ee_name,
@@ -111,6 +113,7 @@ protected:
   // Size of the problem
   int nq_;
   int nv_;
+  int ndx_;
   int nu_;
 
   /// Dictionnaries of cost name + cost id in the CostStack objects

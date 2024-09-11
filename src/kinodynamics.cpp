@@ -211,7 +211,22 @@ CostStack KinodynamicsProblem::create_terminal_cost() {
         QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
   }
 
+  CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
+      ter_space.ndx(), nu_, handler_.get_rmodel(), handler_.get_com_position());
+
+  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
+  problem_->addTerminalConstraint(term_constraint_com);
+
   return term_cost;
+}
+
+void KinodynamicsProblem::updateTerminalConstraint() {
+  CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
+      ndx_, nu_, handler_.get_rmodel(), handler_.get_com_position());
+
+  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
+  problem_->removeTerminalConstraints();
+  problem_->addTerminalConstraint(term_constraint_com);
 }
 
 } // namespace simple_mpc

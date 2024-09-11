@@ -8,10 +8,12 @@
 #pragma once
 
 #include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
+#include <aligator/modelling/multibody/center-of-mass-translation.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
+#include <proxsuite-nlp/modelling/constraints/equality-constraint.hpp>
 
 #include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
@@ -25,7 +27,10 @@ using FramePlacementResidual = FramePlacementResidualTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using CentroidalMomentumDerivativeResidual =
     CentroidalMomentumDerivativeResidualTpl<double>;
-
+using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
+using CenterOfMassTranslationResidual =
+    CenterOfMassTranslationResidualTpl<double>;
+using StageConstraint = StageConstraintTpl<double>;
 /**
  * @brief Build a full dynamics problem
  */
@@ -74,7 +79,7 @@ public:
 
   // Create one Kinodynamics terminal cost
   CostStack create_terminal_cost() override;
-
+  void updateTerminalConstraint() override;
   // Getters and setters
   void set_reference_pose(const std::size_t t, const std::string &ee_name,
                           const pinocchio::SE3 &pose_ref) override;
