@@ -103,14 +103,11 @@ StageModel FullDynamicsProblem::createStage(
         space.ndx(), nu_, handler_.getModel(), frame_placement,
         handler_.getFootId(contact_names[i]));
 
-    int is_active = 0;
     if (contact_states[i])
       cms.push_back(constraint_models_[i]);
-    else
-      is_active = 1;
 
-    rcost.addCost(QuadraticResidualCost(space, frame_residual,
-                                        settings_.w_frame * is_active));
+    rcost.addCost(
+        QuadraticResidualCost(space, frame_residual, settings_.w_frame));
   }
 
   for (std::size_t i = 0; i < contact_states.size(); i++) {

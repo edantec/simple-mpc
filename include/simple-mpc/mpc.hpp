@@ -134,6 +134,7 @@ public:
   }
 
   std::shared_ptr<Problem> getProblem() { return problem_; }
+  TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   RobotHandler &getHandler() { return problem_->getHandler(); }
   std::vector<int> &getFootTakeoffTimings(const std::string &ee_name) {
     return foot_takeoff_times_.at(ee_name);

@@ -83,6 +83,9 @@ void exposeMPC() {
            "Get the land timings.")
       .def("getHandler", &MPC::getHandler, bp::args("self"),
            bp::return_internal_reference<>(), "Get the robot handler.")
+      .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
+           bp::return_internal_reference<>(),
+           "Get the trajectory optimal problem.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)
