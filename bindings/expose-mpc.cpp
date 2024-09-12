@@ -73,15 +73,15 @@ void exposeMPC() {
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("get_fullHorizon", &MPC::get_fullHorizon, bp::args("self"),
+      .def("getFullHorizon", &MPC::getFullHorizon, bp::args("self"),
            bp::return_internal_reference<>(), "Get the full horizon.")
-      .def("get_foot_takeoff_timings", &MPC::get_foot_takeoff_timings,
+      .def("getFootTakeoffTimings", &MPC::getFootTakeoffTimings,
            bp::args("self", "ee_name"), bp::return_internal_reference<>(),
            "Get the takeoff timings.")
-      .def("get_foot_land_timings", &MPC::get_foot_land_timings,
+      .def("getFootLandTimings", &MPC::getFootLandTimings,
            bp::args("self", "ee_name"), bp::return_internal_reference<>(),
            "Get the land timings.")
-      .def("get_handler", &MPC::get_handler, bp::args("self"),
+      .def("getHandler", &MPC::getHandler, bp::args("self"),
            bp::return_internal_reference<>(), "Get the robot handler.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)

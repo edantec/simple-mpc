@@ -31,46 +31,44 @@ void exposeBaseProblem() {
   bp::register_ptr_to_python<std::shared_ptr<Problem>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
       .def(bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("create_stage", bp::pure_virtual(&Problem::create_stage),
+      .def("createStage", bp::pure_virtual(&Problem::createStage),
            bp::args("self", "contact_map", "force_refs"))
-      .def("create_terminal_cost",
-           bp::pure_virtual(&Problem::create_terminal_cost), bp::args("self"))
+      .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
+           bp::args("self"))
+      .def("createTerminalConstraint",
+           bp::pure_virtual(&Problem::createTerminalConstraint),
+           bp::args("self"))
       .def("updateTerminalConstraint",
            bp::pure_virtual(&Problem::updateTerminalConstraint),
            bp::args("self"))
-      .def("set_reference_pose", bp::pure_virtual(&Problem::set_reference_pose),
+      .def("setReferencePose", bp::pure_virtual(&Problem::setReferencePose),
            bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("set_reference_poses",
-           bp::pure_virtual(&Problem::set_reference_poses),
+      .def("setReferencePoses", bp::pure_virtual(&Problem::setReferencePoses),
            bp::args("self", "t", "pose_refs"))
-      .def("set_terminal_reference_pose",
-           bp::pure_virtual(&Problem::set_terminal_reference_pose),
+      .def("setTerminalReferencePose",
+           bp::pure_virtual(&Problem::setTerminalReferencePose),
            bp::args("self", "ee_name", "pose_ref"))
-      .def("get_reference_pose", bp::pure_virtual(&Problem::get_reference_pose),
+      .def("getReferencePose", bp::pure_virtual(&Problem::getReferencePose),
            bp::args("self", "t", "ee_name"))
-      .def("set_reference_forces",
-           bp::pure_virtual(&Problem::set_reference_forces),
+      .def("setReferenceForces", bp::pure_virtual(&Problem::setReferenceForces),
            bp::args("self", "t", "force_refs"))
-      .def("set_reference_force",
-           bp::pure_virtual(&Problem::set_reference_force),
+      .def("setReferenceForce", bp::pure_virtual(&Problem::setReferenceForce),
            bp::args("self", "t", "ee_name", "force_ref"))
-      .def("get_reference_force",
-           bp::pure_virtual(&Problem::get_reference_force),
+      .def("getReferenceForce", bp::pure_virtual(&Problem::getReferenceForce),
            bp::args("self", "t", "ee_name"))
-      .def("get_x0_from_multibody",
-           bp::pure_virtual(&Problem::get_x0_from_multibody),
+      .def("getMultibodyState", bp::pure_virtual(&Problem::getMultibodyState),
            bp::args("self", "x_multibody"))
-      .def("create_problem", &Problem::create_problem,
+      .def("createProblem", &Problem::createProblem,
            bp::args("self", "x0", "horizon", "force_size", "gravity"))
-      .def("set_reference_control", &Problem::set_reference_control,
+      .def("setReferenceControl", &Problem::setReferenceControl,
            bp::args("self", "t", "u_ref"))
-      .def("get_reference_control", &Problem::get_reference_control,
+      .def("getReferenceControl", &Problem::getReferenceControl,
            bp::args("self", "t"))
-      .def("get_problem", &Problem::get_problem, bp::args("self"))
-      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+      .def("getProblem", &Problem::getProblem, bp::args("self"))
+      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
 }
 
-void initialize_full(FullDynamicsProblem &self, const bp::dict &settings) {
+void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   FullDynamicsSettings conf;
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
@@ -97,8 +95,8 @@ void initialize_full(FullDynamicsProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-bp::dict get_settings_full(FullDynamicsProblem &self) {
-  FullDynamicsSettings conf = self.get_settings();
+bp::dict getSettingsFull(FullDynamicsProblem &self) {
+  FullDynamicsSettings conf = self.getSettings();
   bp::dict settings;
   settings["x0"] = conf.x0;
   settings["u0"] = conf.u0;
@@ -121,9 +119,9 @@ bp::dict get_settings_full(FullDynamicsProblem &self) {
   return settings;
 }
 
-StageModel create_full_stage(FullDynamicsProblem &self,
-                             const ContactMap &contact_map,
-                             const bp::dict &force_dict) {
+StageModel createFullStage(FullDynamicsProblem &self,
+                           const ContactMap &contact_map,
+                           const bp::dict &force_dict) {
   boost::python::list keys = boost::python::list(force_dict.keys());
   std::map<std::string, Eigen::VectorXd> force_refs;
   for (int i = 0; i < len(keys); ++i) {
@@ -135,18 +133,18 @@ StageModel create_full_stage(FullDynamicsProblem &self,
     }
   }
 
-  return self.create_stage(contact_map, force_refs);
+  return self.createStage(contact_map, force_refs);
 }
 
-void create_full_problem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
-                         const size_t horizon, const int force_size,
-                         const double gravity) {
+void createFullProblem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
+                       const size_t horizon, const int force_size,
+                       const double gravity) {
 
-  self.create_problem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity);
 }
 
-TrajOptProblem get_full_problem(FullDynamicsProblem &self) {
-  return *self.get_problem();
+TrajOptProblem getFullProblem(FullDynamicsProblem &self) {
+  return *self.getProblem();
 }
 
 void exposeFullDynamicsProblem() {
@@ -162,40 +160,42 @@ void exposeFullDynamicsProblem() {
   bp::class_<PyFullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "FullDynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("initialize", &initialize_full, bp::args("self", "settings"))
-      .def("get_settings", &get_settings_full)
+      .def("initialize", &initializeFull, bp::args("self", "settings"))
+      .def("getSettings", &getSettingsFull)
       .def("initialize",
            bp::make_function(
                &FullDynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("create_stage", &create_full_stage)
-      .def("create_problem", &create_full_problem)
-      .def("set_reference_pose", &FullDynamicsProblem::set_reference_pose,
+      .def("createStage", &createFullStage)
+      .def("createProblem", &createFullProblem)
+      .def("setReferencePose", &FullDynamicsProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("set_reference_poses", &FullDynamicsProblem::set_reference_poses,
+      .def("setReferencePoses", &FullDynamicsProblem::setReferencePoses,
            bp::args("self", "t", "pose_refs"))
-      .def("set_terminal_reference_pose",
-           &FullDynamicsProblem::set_terminal_reference_pose,
+      .def("setTerminalReferencePose",
+           &FullDynamicsProblem::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("set_reference_forces", &FullDynamicsProblem::set_reference_forces,
+      .def("setReferenceForces", &FullDynamicsProblem::setReferenceForces,
            bp::args("self", "t", "force_refs"))
-      .def("set_reference_force", &FullDynamicsProblem::set_reference_force,
+      .def("setReferenceForce", &FullDynamicsProblem::setReferenceForce,
            bp::args("self", "t", "ee_name", "force_ref"))
-      .def("get_reference_pose", &FullDynamicsProblem::get_reference_pose,
+      .def("getReferencePose", &FullDynamicsProblem::getReferencePose,
            bp::args("self", "t", "cost_name"))
-      .def("get_reference_force", &FullDynamicsProblem::get_reference_force,
+      .def("getReferenceForce", &FullDynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("get_x0_from_multibody", &FullDynamicsProblem::get_x0_from_multibody,
+      .def("getMultibodyState", &FullDynamicsProblem::getMultibodyState,
            bp::args("self", "x_multibody"))
-      .def("create_terminal_cost", &FullDynamicsProblem::create_terminal_cost,
+      .def("createTerminalCost", &FullDynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("updateTerminalConstraint",
            &FullDynamicsProblem::updateTerminalConstraint, bp::args("self"))
-      .def("get_problem", &get_full_problem)
-      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+      .def("createTerminalConstraint",
+           &FullDynamicsProblem::createTerminalConstraint, bp::args("self"))
+      .def("getProblem", &getFullProblem)
+      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
 }
 
-void initialize_cent(CentroidalProblem &self, const bp::dict &settings) {
+void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   CentroidalSettings conf;
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
@@ -213,8 +213,8 @@ void initialize_cent(CentroidalProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-bp::dict get_settings_cent(CentroidalProblem &self) {
-  CentroidalSettings conf = self.get_settings();
+bp::dict getSettingsCent(CentroidalProblem &self) {
+  CentroidalSettings conf = self.getSettings();
   bp::dict settings;
   settings["x0"] = conf.x0;
   settings["u0"] = conf.u0;
@@ -231,9 +231,9 @@ bp::dict get_settings_cent(CentroidalProblem &self) {
   return settings;
 }
 
-StageModel create_cent_stage(CentroidalProblem &self,
-                             const ContactMap &contact_map,
-                             const bp::dict &force_dict) {
+StageModel createCentStage(CentroidalProblem &self,
+                           const ContactMap &contact_map,
+                           const bp::dict &force_dict) {
   boost::python::list keys = boost::python::list(force_dict.keys());
   std::map<std::string, Eigen::VectorXd> force_refs;
   for (int i = 0; i < len(keys); ++i) {
@@ -245,18 +245,18 @@ StageModel create_cent_stage(CentroidalProblem &self,
     }
   }
 
-  return self.create_stage(contact_map, force_refs);
+  return self.createStage(contact_map, force_refs);
 }
 
-void create_cent_problem(CentroidalProblem &self, const Eigen::VectorXd &x0,
-                         const size_t horizon, const int force_size,
-                         const double gravity) {
+void createCentProblem(CentroidalProblem &self, const Eigen::VectorXd &x0,
+                       const size_t horizon, const int force_size,
+                       const double gravity) {
 
-  self.create_problem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity);
 }
 
-TrajOptProblem get_cent_problem(FullDynamicsProblem &self) {
-  return *self.get_problem();
+TrajOptProblem getCentProblem(FullDynamicsProblem &self) {
+  return *self.getProblem();
 }
 
 void exposeCentroidalProblem() {
@@ -265,40 +265,42 @@ void exposeCentroidalProblem() {
   bp::class_<PyCentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
       "CentroidalProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("initialize", &initialize_cent, bp::args("self", "settings"))
-      .def("get_settings", &get_settings_cent)
+      .def("initialize", &initializeCent, bp::args("self", "settings"))
+      .def("getSettings", &getSettingsCent)
       .def("initialize",
            bp::make_function(
                &CentroidalProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("create_stage", &create_cent_stage)
-      .def("create_problem", &create_cent_problem)
-      .def("set_reference_pose", &CentroidalProblem::set_reference_pose,
+      .def("createStage", &createCentStage)
+      .def("createProblem", &createCentProblem)
+      .def("setReferencePose", &CentroidalProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("set_reference_poses", &CentroidalProblem::set_reference_poses,
+      .def("setReferencePoses", &CentroidalProblem::setReferencePoses,
            bp::args("self", "t", "pose_refs"))
-      .def("set_terminal_reference_pose",
-           &CentroidalProblem::set_terminal_reference_pose,
+      .def("setTerminalReferencePose",
+           &CentroidalProblem::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("set_reference_forces", &CentroidalProblem::set_reference_forces,
+      .def("setReferenceForces", &CentroidalProblem::setReferenceForces,
            bp::args("self", "t", "force_refs"))
-      .def("set_reference_force", &CentroidalProblem::set_reference_force,
+      .def("setReferenceForce", &CentroidalProblem::setReferenceForce,
            bp::args("self", "t", "ee_name", "force_ref"))
-      .def("get_reference_pose", &CentroidalProblem::get_reference_pose,
+      .def("getReferencePose", &CentroidalProblem::getReferencePose,
            bp::args("self", "t", "cost_name"))
-      .def("get_reference_force", &CentroidalProblem::get_reference_force,
+      .def("getReferenceForce", &CentroidalProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("get_x0_from_multibody", &CentroidalProblem::get_x0_from_multibody,
+      .def("getMultibodyState", &CentroidalProblem::getMultibodyState,
            bp::args("self", "x_multibody"))
-      .def("create_terminal_cost", &CentroidalProblem::create_terminal_cost,
+      .def("createTerminalCost", &CentroidalProblem::createTerminalCost,
            bp::args("self"))
+      .def("createTerminalConstraint",
+           &CentroidalProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
            &CentroidalProblem::updateTerminalConstraint, bp::args("self"))
-      .def("get_problem", &get_cent_problem)
-      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+      .def("getProblem", &getCentProblem)
+      .def("getCosMap", &Problem::getCostMap, bp::args("self"));
 }
 
-void initialize_kino(KinodynamicsProblem &self, const bp::dict &settings) {
+void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   KinodynamicsSettings conf;
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
@@ -318,8 +320,8 @@ void initialize_kino(KinodynamicsProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-bp::dict get_settings_kino(KinodynamicsProblem &self) {
-  KinodynamicsSettings conf = self.get_settings();
+bp::dict getSettingsKino(KinodynamicsProblem &self) {
+  KinodynamicsSettings conf = self.getSettings();
   bp::dict settings;
   settings["x0"] = conf.x0;
   settings["u0"] = conf.u0;
@@ -337,9 +339,9 @@ bp::dict get_settings_kino(KinodynamicsProblem &self) {
   return settings;
 }
 
-StageModel create_kino_stage(KinodynamicsProblem &self,
-                             const ContactMap &contact_map,
-                             const bp::dict &force_dict) {
+StageModel createKinoStage(KinodynamicsProblem &self,
+                           const ContactMap &contact_map,
+                           const bp::dict &force_dict) {
   boost::python::list keys = boost::python::list(force_dict.keys());
   std::map<std::string, Eigen::VectorXd> force_refs;
   for (int i = 0; i < len(keys); ++i) {
@@ -351,18 +353,18 @@ StageModel create_kino_stage(KinodynamicsProblem &self,
     }
   }
 
-  return self.create_stage(contact_map, force_refs);
+  return self.createStage(contact_map, force_refs);
 }
 
-void create_kino_problem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
-                         const size_t horizon, const int force_size,
-                         const double gravity) {
+void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
+                       const size_t horizon, const int force_size,
+                       const double gravity) {
 
-  self.create_problem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity);
 }
 
-TrajOptProblem get_kino_problem(KinodynamicsProblem &self) {
-  return *self.get_problem();
+TrajOptProblem getKinoProblem(KinodynamicsProblem &self) {
+  return *self.getProblem();
 }
 
 void exposeKinodynamicsProblem() {
@@ -374,37 +376,39 @@ void exposeKinodynamicsProblem() {
   bp::class_<PyKinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("initialize", &initialize_kino, bp::args("self", "settings"))
-      .def("get_settings", &get_settings_kino)
+      .def("initialize", &initializeKino, bp::args("self", "settings"))
+      .def("get_settings", &getSettingsKino)
       .def("initialize",
            bp::make_function(
                &KinodynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("create_stage", &create_kino_stage)
-      .def("create_problem", &create_kino_problem)
-      .def("set_reference_pose", &KinodynamicsProblem::set_reference_pose,
+      .def("create_stage", &createKinoStage)
+      .def("create_problem", &createKinoProblem)
+      .def("setReferencePose", &KinodynamicsProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("set_reference_poses", &KinodynamicsProblem::set_reference_poses,
+      .def("setReferencePoses", &KinodynamicsProblem::setReferencePoses,
            bp::args("self", "t", "pose_refs"))
-      .def("set_terminal_reference_pose",
-           &KinodynamicsProblem::set_terminal_reference_pose,
+      .def("setTerminalReferencePose",
+           &KinodynamicsProblem::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("set_reference_forces", &KinodynamicsProblem::set_reference_forces,
+      .def("setReferenceForces", &KinodynamicsProblem::setReferenceForces,
            bp::args("self", "t", "force_refs"))
-      .def("set_reference_force", &KinodynamicsProblem::set_reference_force,
+      .def("setReferenceForce", &KinodynamicsProblem::setReferenceForce,
            bp::args("self", "t", "ee_name", "force_ref"))
-      .def("get_reference_pose", &KinodynamicsProblem::get_reference_pose,
+      .def("getReferencePose", &KinodynamicsProblem::getReferencePose,
            bp::args("self", "t", "cost_name"))
-      .def("get_reference_force", &KinodynamicsProblem::get_reference_force,
+      .def("getReferenceForce", &KinodynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("get_x0_from_multibody", &KinodynamicsProblem::get_x0_from_multibody,
+      .def("getMultibodyState", &KinodynamicsProblem::getMultibodyState,
            bp::args("self", "x_multibody"))
-      .def("create_terminal_cost", &KinodynamicsProblem::create_terminal_cost,
+      .def("createTerminalCost", &KinodynamicsProblem::createTerminalCost,
            bp::args("self"))
+      .def("createTerminalConstraint",
+           &KinodynamicsProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
            &KinodynamicsProblem::updateTerminalConstraint, bp::args("self"))
-      .def("get_problem", &get_kino_problem)
-      .def("get_cost_map", &Problem::get_cost_map, bp::args("self"));
+      .def("getProblem", &getKinoProblem)
+      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
 }
 } // namespace python
 } // namespace simple_mpc

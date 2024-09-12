@@ -46,9 +46,9 @@ void MPC::initialize(const MPCSettings &settings,
   std::map<std::string, Eigen::Vector3d> initial_poses;
   Eigen::Vector3d rel_trans;
   rel_trans << settings_.x_translation, settings_.y_translation, 0;
-  for (auto const &name : problem_->get_handler().get_ee_names()) {
+  for (auto const &name : problem_->getHandler().getFeetNames()) {
     initial_poses.insert(
-        {name, problem_->get_handler().get_ee_pose(name).translation()});
+        {name, problem_->getHandler().getFootPose(name).translation()});
     relative_translations_.insert({name, rel_trans});
   }
   foot_trajectories_ =
@@ -56,7 +56,7 @@ void MPC::initialize(const MPCSettings &settings,
                      settings_.T_contact, settings_.T);
 
   foot_trajectories_.updateForward(relative_translations_, settings.swing_apex);
-  x0_ = problem_->get_x0_from_multibody((x_multibody_));
+  x0_ = problem_->getMultibodyState((x_multibody_));
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
                                             0., maxiters, aligator::QUIET);
@@ -69,29 +69,29 @@ void MPC::initialize(const MPCSettings &settings,
   solver_->force_initial_condition_ = true;
   // solver_->reg_min = 1e-6;
 
-  if (u0_.size() != problem_->get_nu()) {
+  if (u0_.size() != problem_->getNu()) {
     throw std::runtime_error(
         "Provided u0 does not have the correct size problem.nu");
   }
-  ee_names_ = problem_->get_handler().get_ee_names();
+  ee_names_ = problem_->getHandler().getFeetNames();
 
-  for (std::size_t i = 0; i < problem->get_size(); i++) {
+  for (std::size_t i = 0; i < problem->getSize(); i++) {
     std::map<std::string, pinocchio::SE3> map_se3;
 
     for (std::string name : ee_names_) {
-      map_se3.insert({name, problem_->get_handler().get_ee_pose(name)});
+      map_se3.insert({name, problem_->getHandler().getFootPose(name)});
     }
     ref_frame_poses_.push_back(map_se3);
   }
 
-  for (std::size_t i = 0; i < problem_->get_problem()->numSteps(); i++) {
+  for (std::size_t i = 0; i < problem_->getProblem()->numSteps(); i++) {
     xs_.push_back(x0_);
     us_.push_back(u0_);
   }
   xs_.push_back(x0_);
 
-  solver_->setup(*problem_->get_problem());
-  solver_->run(*problem_->get_problem(), xs_, us_);
+  solver_->setup(*problem_->getProblem());
+  solver_->run(*problem_->getProblem(), xs_, us_);
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -109,10 +109,10 @@ void MPC::generateFullHorizon(
   for (size_t i = 1; i < contact_states.size(); i++) {
     for (auto const &name : ee_names_) {
       if (!contact_states[i].at(name) && contact_states[i - 1].at(name)) {
-        foot_takeoff_times_.at(name).push_back((int)(i + problem_->get_size()));
+        foot_takeoff_times_.at(name).push_back((int)(i + problem_->getSize()));
       }
       if (contact_states[i].at(name) && !contact_states[i - 1].at(name)) {
-        foot_land_times_.at(name).push_back((int)(i + problem_->get_size()));
+        foot_land_times_.at(name).push_back((int)(i + problem_->getSize()));
       }
     }
   }
@@ -123,10 +123,10 @@ void MPC::generateFullHorizon(
         active_contacts += 1;
     }
 
-    Eigen::VectorXd force_ref(problem_->get_reference_force(
-        0, problem_->get_handler().get_ee_name(0)));
-    Eigen::VectorXd force_zero(problem_->get_reference_force(
-        0, problem_->get_handler().get_ee_name(0)));
+    Eigen::VectorXd force_ref(
+        problem_->getReferenceForce(0, problem_->getHandler().getFootName(0)));
+    Eigen::VectorXd force_zero(
+        problem_->getReferenceForce(0, problem_->getHandler().getFootName(0)));
     force_ref.setZero();
     force_zero.setZero();
     force_ref[2] = settings_.support_force / active_contacts;
@@ -137,7 +137,7 @@ void MPC::generateFullHorizon(
 
     for (auto const &name : ee_names_) {
       contact_poses.push_back(
-          problem_->get_handler().get_ee_pose(name).translation());
+          problem_->getHandler().getFootPose(name).translation());
       contact_bools.push_back(state.at(name));
       if (state.at(name))
         force_map.insert({name, force_ref});
@@ -147,7 +147,7 @@ void MPC::generateFullHorizon(
 
     ContactMap contact_map(ee_names_, contact_bools, contact_poses);
 
-    StageModel sm = problem_->create_stage(contact_map, force_map);
+    StageModel sm = problem_->createStage(contact_map, force_map);
     full_horizon_.push_back(sm);
     full_horizon_data_.push_back(sm.createData());
   }
@@ -156,15 +156,15 @@ void MPC::generateFullHorizon(
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
 
-  problem_->get_handler().set_q0(q_current);
-  x_multibody_ = problem_->get_handler().shapeState(q_current, v_current);
+  problem_->getHandler().setConfiguration(q_current);
+  x_multibody_ = problem_->getHandler().shapeState(q_current, v_current);
 
   // ~~TIMING~~ //
   recedeWithCycle();
   updateSupportTiming();
 
   // ~~REFERENCES~~ //
-  x0_ = problem_->get_x0_from_multibody(x_multibody_);
+  x0_ = problem_->getMultibodyState(x_multibody_);
   // updateStepTrackerLastReference();
   updateStepTrackerReferences();
 
@@ -174,10 +174,10 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   us_.erase(us_.begin());
   us_.push_back(us_.back());
-  problem_->get_problem()->setInitState(x0_);
+  problem_->getProblem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
-  solver_->run(*problem_->get_problem(), xs_, us_);
+  solver_->run(*problem_->getProblem(), xs_, us_);
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -186,19 +186,19 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
 void MPC::recedeWithCycle() {
   if (horizon_iteration_ < full_horizon_.size()) {
-    problem_->get_problem()->replaceStageCircular(
+    problem_->getProblem()->replaceStageCircular(
         full_horizon_[horizon_iteration_]);
     solver_->workspace_.cycleAppend(full_horizon_data_[horizon_iteration_]);
     horizon_iteration_++;
   } else {
-    problem_->get_problem()->replaceStageCircular(
-        problem_->get_problem()->stages_[0]);
+    problem_->getProblem()->replaceStageCircular(
+        problem_->getProblem()->stages_[0]);
     solver_->workspace_.cycleLeft();
   }
 }
 
 void MPC::updateSupportTiming() {
-  RobotHandler handler = problem_->get_handler();
+  RobotHandler handler = problem_->getHandler();
   for (auto const &name : ee_names_) {
     for (size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
       foot_land_times_.at(name)[i] -= 1;
@@ -225,9 +225,9 @@ void MPC::updateStepTrackerReferences() {
 
     foot_trajectories_.updateTrajectory(
         foot_takeoff_time, foot_land_time,
-        problem_->get_handler().get_ee_pose(name).translation(), name);
+        problem_->getHandler().getFootPose(name).translation(), name);
 
-    for (unsigned long time = 0; time < problem_->get_problem()->stages_.size();
+    for (unsigned long time = 0; time < problem_->getProblem()->stages_.size();
          time++) {
       pinocchio::SE3 pose = pinocchio::SE3::Identity();
       pose.translation() = foot_trajectories_.getReference(name)[time];
@@ -235,19 +235,19 @@ void MPC::updateStepTrackerReferences() {
     }
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     pose.translation() = foot_trajectories_.getReference(
-        name)[problem_->get_problem()->stages_.size() - 1];
+        name)[problem_->getProblem()->stages_.size() - 1];
     setTerminalReferencePose(name, pose);
   }
 }
 
 void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,
                            const pinocchio::SE3 &pose_ref) {
-  problem_->set_reference_pose(t, ee_name, pose_ref);
+  problem_->setReferencePose(t, ee_name, pose_ref);
 }
 
 void MPC::setTerminalReferencePose(const std::string &ee_name,
                                    const pinocchio::SE3 &pose_ref) {
-  problem_->set_terminal_reference_pose(ee_name, pose_ref);
+  problem_->setTerminalReferencePose(ee_name, pose_ref);
 }
 
 void MPC::setRelativeTranslation(

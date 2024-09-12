@@ -36,13 +36,13 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
 
   pinocchio::srdf::loadReferenceConfigurations(rmodel_complete_,
                                                settings_.srdf_path, false);
-  if (settings.loadRotor) {
+  if (settings.load_rotor) {
     pinocchio::srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path,
                                          false);
   }
-  q0Complete_ =
+  q0_complete_ =
       rmodel_complete_.referenceConfigurations[settings.base_configuration];
-  v0Complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
+  v0_complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
 
   // REDUCED MODEL //
 
@@ -78,7 +78,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   }
 
   rmodel_ = pinocchio::buildReducedModel(rmodel_complete_, locked_joints_id,
-                                         q0Complete_);
+                                         q0_complete_);
   for (auto &name : settings_.end_effector_names) {
     end_effector_map_.insert({name, rmodel_.getFrameId(name)});
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
@@ -88,7 +88,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
 
   pinocchio::srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path,
                                                false);
-  if (settings.loadRotor) {
+  if (settings.load_rotor) {
     pinocchio::srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
   }
   q0_ = rmodel_.referenceConfigurations[settings_.base_configuration];
@@ -109,11 +109,11 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   }
 
   updateInternalData(q0_);
-  compute_mass();
+  computeMass();
   initialized_ = true;
 }
 
-void RobotHandler::set_q0(const Eigen::VectorXd &q0) {
+void RobotHandler::setConfiguration(const Eigen::VectorXd &q0) {
   q0_ = q0;
   x0_ << q0_, v0_;
   updateInternalData(q0_);
@@ -153,7 +153,7 @@ const Eigen::VectorXd &RobotHandler::shapeState(const Eigen::VectorXd &q,
   }
 }
 
-void RobotHandler::compute_mass() {
+void RobotHandler::computeMass() {
   mass_ = 0;
   for (pinocchio::Inertia &I : rmodel_.inertias)
     mass_ += I.mass();

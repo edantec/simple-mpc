@@ -53,61 +53,65 @@ public:
 
   // Create one instance of stage from desired contacts and forces
   virtual StageModel
-  create_stage(const ContactMap &contact_map,
-               const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
-  virtual CostStack create_terminal_cost() = 0;
-
-  virtual void updateTerminalConstraint() = 0;
-
-  // Setter and getter for poses reference
-  virtual void set_reference_pose(const std::size_t t,
-                                  const std::string &ee_name,
-                                  const pinocchio::SE3 &pose_ref) = 0;
-  virtual void set_reference_poses(
-      const std::size_t t,
-      const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;
-  virtual void set_terminal_reference_pose(const std::string &ee_name,
-                                           const pinocchio::SE3 &pose_ref) = 0;
-  virtual pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                            const std::string &ee_name) = 0;
-
-  // Setter and getter for forces reference
-  virtual void set_reference_forces(
-      const std::size_t t,
-      const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
-  virtual void set_reference_force(const std::size_t t,
-                                   const std::string &ee_name,
-                                   const Eigen::VectorXd &force_ref) = 0;
-  virtual Eigen::VectorXd get_reference_force(const std::size_t t,
-                                              const std::string &ee_name) = 0;
-  virtual Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) = 0;
-  /// Common functions to all types of problems
+  createStage(const ContactMap &contact_map,
+              const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
 
   // Create the complete vector of stages from contact_sequence
   virtual std::vector<xyz::polymorphic<StageModel>>
-  create_stages(const std::vector<ContactMap> &contact_sequence,
-                const std::vector<std::map<std::string, Eigen::VectorXd>>
-                    &force_sequence);
+  createStages(const std::vector<ContactMap> &contact_sequence,
+               const std::vector<std::map<std::string, Eigen::VectorXd>>
+                   &force_sequence);
+
+  // Manage terminal cost and constraint
+  virtual CostStack createTerminalCost() = 0;
+
+  virtual void updateTerminalConstraint() = 0;
+
+  virtual void createTerminalConstraint() = 0;
+
+  // Setter and getter for poses reference
+  virtual void setReferencePose(const std::size_t t, const std::string &ee_name,
+                                const pinocchio::SE3 &pose_ref) = 0;
+  virtual void
+  setReferencePoses(const std::size_t t,
+                    const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;
+  virtual void setTerminalReferencePose(const std::string &ee_name,
+                                        const pinocchio::SE3 &pose_ref) = 0;
+  virtual pinocchio::SE3 getReferencePose(const std::size_t t,
+                                          const std::string &ee_name) = 0;
+
+  // Setter and getter for forces reference
+  virtual void setReferenceForces(
+      const std::size_t t,
+      const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
+  virtual void setReferenceForce(const std::size_t t,
+                                 const std::string &ee_name,
+                                 const Eigen::VectorXd &force_ref) = 0;
+  virtual Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                            const std::string &ee_name) = 0;
+  virtual Eigen::VectorXd
+  getMultibodyState(const Eigen::VectorXd &x_multibody) = 0;
+
+  /// Common functions for all problems
 
   // Create one TrajOptProblem from contact sequence
-  void create_problem(const Eigen::VectorXd &x0, const size_t horizon,
-                      const int force_size, const double gravity);
+  void createProblem(const Eigen::VectorXd &x0, const size_t horizon,
+                     const int force_size, const double gravity);
 
   // Setter and getter for control reference
-  void set_reference_control(const std::size_t t, const Eigen::VectorXd &u_ref);
+  void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref);
 
-  Eigen::VectorXd get_reference_control(const std::size_t t);
+  Eigen::VectorXd getReferenceControl(const std::size_t t);
 
   // Getter for various objects and quantities
-  CostStack *get_cost_stack(std::size_t t);
-  CostStack *get_terminal_cost_stack();
-  std::size_t get_cost_number();
-  std::size_t get_size();
-  std::shared_ptr<TrajOptProblem> get_problem() { return problem_; }
-  std::map<std::string, std::size_t> get_cost_map() { return cost_map_; }
-  RobotHandler &get_handler() { return handler_; }
-  int get_nu() { return nu_; }
+  CostStack *getCostStack(std::size_t t);
+  CostStack *getTerminalCostStack();
+  std::size_t getCostNumber();
+  std::size_t getSize();
+  std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
+  std::map<std::string, std::size_t> getCostMap() { return cost_map_; }
+  RobotHandler &getHandler() { return handler_; }
+  int getNu() { return nu_; }
 
 protected:
   // Size of the problem
@@ -115,6 +119,8 @@ protected:
   int nv_;
   int ndx_;
   int nu_;
+  bool problem_initialized_ = false;
+  bool terminal_constraint_ = false;
 
   /// Dictionnaries of cost name + cost id in the CostStack objects
   std::map<std::string, std::size_t> cost_map_;

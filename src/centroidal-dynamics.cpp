@@ -17,7 +17,7 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
 void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   settings_ = settings;
   nx_ = 9;
-  nu_ = (int)handler_.get_ee_names().size() * settings_.force_size;
+  nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
   if (nu_ != settings_.u0.size()) {
     throw std::runtime_error("settings.u0 does not have the correct size nu");
   }
@@ -37,7 +37,7 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   cost_incr++;
 }
 
-StageModel CentroidalProblem::create_stage(
+StageModel CentroidalProblem::createStage(
     const ContactMap &contact_map,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   auto space = VectorSpace(nx_);
@@ -45,16 +45,16 @@ StageModel CentroidalProblem::create_stage(
   std::vector<bool> contact_states = contact_map.getContactStates();
   auto contact_poses = contact_map.getContactPoses();
 
-  compute_control_from_forces(force_refs);
+  computeControlFromForces(force_refs);
 
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
 
   auto linear_acc = CentroidalAccelerationResidual(
-      space.ndx(), nu_, handler_.get_mass(), settings_.gravity, contact_map,
+      space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
   auto angular_acc = AngularAccelerationResidual(
-      space.ndx(), nu_, handler_.get_mass(), settings_.gravity, contact_map,
+      space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
 
   rcost.addCost(QuadraticControlCost(space, control_ref_, settings_.w_u));
@@ -68,7 +68,7 @@ StageModel CentroidalProblem::create_stage(
       QuadraticResidualCost(space, angular_acc, settings_.w_angular_acc));
 
   CentroidalFwdDynamics ode =
-      CentroidalFwdDynamics(space, handler_.get_mass(), settings_.gravity,
+      CentroidalFwdDynamics(space, handler_.getMass(), settings_.gravity,
                             contact_map, settings_.force_size);
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
@@ -76,25 +76,25 @@ StageModel CentroidalProblem::create_stage(
   return StageModel(rcost, dyn_model);
 }
 
-void CentroidalProblem::compute_control_from_forces(
+void CentroidalProblem::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < handler_.get_ee_names().size(); i++) {
-    if (settings_.force_size != force_refs.at(handler_.get_ee_name(i)).size()) {
+  for (std::size_t i = 0; i < handler_.getFeetNames().size(); i++) {
+    if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs.at(handler_.get_ee_name(i));
+        force_refs.at(handler_.getFootName(i));
   }
 }
 
-void CentroidalProblem::set_reference_poses(
+void CentroidalProblem::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  if (pose_refs.size() != handler_.get_ee_names().size()) {
+  if (pose_refs.size() != handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
@@ -107,9 +107,9 @@ void CentroidalProblem::set_reference_poses(
     cent_dyn->contact_map_.setContactPose(pose.first,
                                           pose.second.translation());
   }
-  CostStack *cs = get_cost_stack(t);
+  CostStack *cs = getCostStack(t);
 
-  for (auto ee_name : handler_.get_ee_names()) {
+  for (auto ee_name : handler_.getFeetNames()) {
     QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
         &*cs->components_[cost_map_.at("linear_acc_cost")]);
     QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
@@ -125,9 +125,9 @@ void CentroidalProblem::set_reference_poses(
   }
 }
 
-void CentroidalProblem::set_reference_pose(const std::size_t t,
-                                           const std::string &ee_name,
-                                           const pinocchio::SE3 &pose_ref) {
+void CentroidalProblem::setReferencePose(const std::size_t t,
+                                         const std::string &ee_name,
+                                         const pinocchio::SE3 &pose_ref) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -137,7 +137,7 @@ void CentroidalProblem::set_reference_pose(const std::size_t t,
       dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
   cent_dyn->contact_map_.setContactPose(ee_name, pose_ref.translation());
 
-  CostStack *cs = get_cost_stack(t);
+  CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
       &*cs->components_[cost_map_.at("linear_acc_cost")]);
   QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
@@ -150,9 +150,8 @@ void CentroidalProblem::set_reference_pose(const std::size_t t,
   aar->contact_map_.setContactPose(ee_name, pose_ref.translation());
 }
 
-pinocchio::SE3
-CentroidalProblem::get_reference_pose(const std::size_t t,
-                                      const std::string &ee_name) {
+pinocchio::SE3 CentroidalProblem::getReferencePose(const std::size_t t,
+                                                   const std::string &ee_name) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -167,53 +166,53 @@ CentroidalProblem::get_reference_pose(const std::size_t t,
   return pose;
 }
 
-void CentroidalProblem::set_reference_forces(
+void CentroidalProblem::setReferenceForces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  compute_control_from_forces(force_refs);
-  set_reference_control(t, control_ref_);
+  computeControlFromForces(force_refs);
+  setReferenceControl(t, control_ref_);
 }
 
-void CentroidalProblem::set_reference_force(const std::size_t t,
-                                            const std::string &ee_name,
-                                            const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = handler_.get_ee_names();
+void CentroidalProblem::setReferenceForce(const std::size_t t,
+                                          const std::string &ee_name,
+                                          const Eigen::VectorXd &force_ref) {
+  std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
   control_ref_.segment(id * settings_.force_size, settings_.force_size) =
       force_ref;
-  set_reference_control(t, control_ref_);
+  setReferenceControl(t, control_ref_);
 }
 
 Eigen::VectorXd
-CentroidalProblem::get_reference_force(const std::size_t t,
-                                       const std::string &ee_name) {
-  std::vector<std::string> hname = handler_.get_ee_names();
+CentroidalProblem::getReferenceForce(const std::size_t t,
+                                     const std::string &ee_name) {
+  std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
 
-  return get_reference_control(t).segment(id * settings_.force_size,
-                                          settings_.force_size);
+  return getReferenceControl(t).segment(id * settings_.force_size,
+                                        settings_.force_size);
 }
 
 Eigen::VectorXd
-CentroidalProblem::get_x0_from_multibody(const Eigen::VectorXd &x_multibody) {
-  if (x_multibody.size() != handler_.get_x0().size()) {
+CentroidalProblem::getMultibodyState(const Eigen::VectorXd &x_multibody) {
+  if (x_multibody.size() != handler_.getState().size()) {
     throw std::runtime_error("x_multibody is of incorrect size");
   }
   handler_.updateInternalData(x_multibody);
   Eigen::VectorXd x0(9);
   x0.setZero();
-  x0.head(3) = handler_.get_com_position();
-  x0.segment(3, 3) = handler_.get_rdata().hg.linear();
-  x0.tail(3) = handler_.get_rdata().hg.angular();
+  x0.head(3) = handler_.getComPosition();
+  x0.segment(3, 3) = handler_.getData().hg.linear();
+  x0.tail(3) = handler_.getData().hg.angular();
 
   return x0;
 }
 
-CostStack CentroidalProblem::create_terminal_cost() {
+CostStack CentroidalProblem::createTerminalCost() {
   auto ter_space = VectorSpace(nx_);
   auto term_cost = CostStack(ter_space, nu_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
@@ -223,22 +222,30 @@ CostStack CentroidalProblem::create_terminal_cost() {
   term_cost.addCost(
       QuadraticResidualCost(ter_space, angular_mom, settings_.w_angular_mom));
 
-  CentroidalCoMResidual com_cstr =
-      CentroidalCoMResidual(ter_space.ndx(), nu_, handler_.get_com_position());
-
-  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
-  problem_->addTerminalConstraint(term_constraint_com);
-
   return term_cost;
 }
 
-void CentroidalProblem::updateTerminalConstraint() {
+void CentroidalProblem::createTerminalConstraint() {
+  if (!problem_initialized_) {
+    throw std::runtime_error("Create problem first!");
+  }
   CentroidalCoMResidual com_cstr =
-      CentroidalCoMResidual(ndx_, nu_, handler_.get_com_position());
+      CentroidalCoMResidual(ndx_, nu_, handler_.getComPosition());
 
   StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
-  problem_->removeTerminalConstraints();
   problem_->addTerminalConstraint(term_constraint_com);
+  terminal_constraint_ = true;
+}
+
+void CentroidalProblem::updateTerminalConstraint() {
+  if (terminal_constraint_) {
+    CentroidalCoMResidual com_cstr =
+        CentroidalCoMResidual(ndx_, nu_, handler_.getComPosition());
+
+    StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
+    problem_->removeTerminalConstraints();
+    problem_->addTerminalConstraint(term_constraint_com);
+  }
 }
 
 } // namespace simple_mpc

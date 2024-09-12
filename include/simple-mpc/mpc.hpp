@@ -126,19 +126,19 @@ public:
       const double swing_apex);
 
   // getters and setters
-  MPCSettings &get_settings() { return settings_; }
+  MPCSettings &getSettings() { return settings_; }
 
-  std::vector<StageModel> &get_fullHorizon() { return full_horizon_; }
-  std::vector<std::shared_ptr<StageData>> &get_fullHorizonData() {
+  std::vector<StageModel> &getFullHorizon() { return full_horizon_; }
+  std::vector<std::shared_ptr<StageData>> &getFullHorizonData() {
     return full_horizon_data_;
   }
 
-  std::shared_ptr<Problem> get_problem() { return problem_; }
-  RobotHandler &get_handler() { return problem_->get_handler(); }
-  std::vector<int> &get_foot_takeoff_timings(const std::string &ee_name) {
+  std::shared_ptr<Problem> getProblem() { return problem_; }
+  RobotHandler &getHandler() { return problem_->getHandler(); }
+  std::vector<int> &getFootTakeoffTimings(const std::string &ee_name) {
     return foot_takeoff_times_.at(ee_name);
   }
-  std::vector<int> &get_foot_land_timings(const std::string &ee_name) {
+  std::vector<int> &getFootLandTimings(const std::string &ee_name) {
     return foot_land_times_.at(ee_name);
   }
 

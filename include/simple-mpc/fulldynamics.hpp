@@ -91,35 +91,37 @@ public:
   virtual ~FullDynamicsProblem() {}
 
   // Create one FullDynamics stage
-  StageModel create_stage(
+  StageModel createStage(
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;
 
-  // Create one FullDynamics terminal cost
-  CostStack create_terminal_cost() override;
+  // Manage terminal cost and constraint
+  CostStack createTerminalCost() override;
+
+  void createTerminalConstraint() override;
 
   void updateTerminalConstraint() override;
 
   // Getters and setters
-  void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_ref) override;
-  void set_reference_poses(
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_ref) override;
+  void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;
-  void set_terminal_reference_pose(const std::string &ee_name,
-                                   const pinocchio::SE3 &pose_ref) override;
-  void set_reference_forces(
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_ref) override;
+  void setReferenceForces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;
-  void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref) override;
-  pinocchio::SE3 get_reference_pose(const std::size_t t,
+  void setReferenceForce(const std::size_t t, const std::string &ee_name,
+                         const Eigen::VectorXd &force_ref) override;
+  pinocchio::SE3 getReferencePose(const std::size_t t,
+                                  const std::string &cost_name) override;
+  Eigen::VectorXd getReferenceForce(const std::size_t t,
                                     const std::string &cost_name) override;
-  Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &cost_name) override;
   Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override;
-  FullDynamicsSettings get_settings() { return settings_; }
+  getMultibodyState(const Eigen::VectorXd &x_multibody) override;
+  FullDynamicsSettings getSettings() { return settings_; }
 
 protected:
   // Problem settings

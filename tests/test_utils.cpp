@@ -28,7 +28,7 @@ RobotHandler getTalosHandler() {
   settings.end_effector_names = {"left_sole_link", "right_sole_link"};
   settings.base_configuration = "half_sitting";
   settings.root_name = "root_joint";
-  settings.loadRotor = true;
+  settings.load_rotor = true;
 
   RobotHandler handler(settings);
 
@@ -56,11 +56,11 @@ RobotHandler getSoloHandler() {
 }
 
 FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
-  int nv = handler.get_rmodel().nv;
+  int nv = handler.getModel().nv;
   int nu = nv - 6;
 
   FullDynamicsSettings settings;
-  settings.x0 = handler.get_x0();
+  settings.x0 = handler.getState();
   settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
   settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
@@ -87,23 +87,23 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
   settings.w_forces.diagonal() << 0.01, 0.01, 0.01, 0.0001, 0.0001, 0.0001;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
   settings.umin =
-      -handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
+      -handler.getModel().effortLimit.tail(handler.getModel().nv - 6);
   settings.umax =
-      handler.get_rmodel().effortLimit.tail(handler.get_rmodel().nv - 6);
+      handler.getModel().effortLimit.tail(handler.getModel().nv - 6);
   settings.qmin =
-      handler.get_rmodel().lowerPositionLimit.tail(handler.get_rmodel().nv - 6);
+      handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
   settings.qmax =
-      handler.get_rmodel().upperPositionLimit.tail(handler.get_rmodel().nv - 6);
+      handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
 
   return settings;
 }
 
 KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
-  int nv = handler.get_rmodel().nv;
+  int nv = handler.getModel().nv;
   int nu = nv + 6;
 
   KinodynamicsSettings settings;
-  settings.x0 = handler.get_x0();
+  settings.x0 = handler.getState();
   settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
   settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
@@ -136,9 +136,9 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
   settings.force_size = 6;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 50000;
   settings.qmin =
-      handler.get_rmodel().lowerPositionLimit.tail(handler.get_rmodel().nv - 6);
+      handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
   settings.qmax =
-      handler.get_rmodel().upperPositionLimit.tail(handler.get_rmodel().nv - 6);
+      handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
 
   return settings;
 }
@@ -149,7 +149,7 @@ CentroidalSettings getCentroidalSettings(RobotHandler handler) {
 
   CentroidalSettings settings;
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nx);
-  x0.head(3) = handler.get_com_position();
+  x0.head(3) = handler.getComPosition();
   settings.x0 = x0;
   settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;

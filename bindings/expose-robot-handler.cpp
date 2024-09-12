@@ -43,8 +43,8 @@ void initialize(RobotHandler &self, bp::dict settings) {
   self.initialize(conf);
 }
 
-bp::dict get_settings(RobotHandler &self) {
-  RobotHandlerSettings conf = self.get_settings();
+bp::dict getSettings(RobotHandler &self) {
+  RobotHandlerSettings conf = self.getSettings();
   bp::dict settings;
   settings["urdfPath"] = conf.urdf_path;
   settings["srdfPath"] = conf.srdf_path;
@@ -58,61 +58,60 @@ bp::dict get_settings(RobotHandler &self) {
 void exposeHandler() {
   bp::class_<RobotHandler>("RobotHandler", bp::init<>())
       .def("initialize", &initialize)
-      .def("get_settings", &get_settings)
+      .def("getSettings", &getSettings)
       .def("updateInternalData", &RobotHandler::updateInternalData)
       .def("shapeState",
            bp::make_function(
                &RobotHandler::shapeState,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("set_q0", &RobotHandler::set_q0)
-      .def("get_rmodel",
+      .def("setConfiguration", &RobotHandler::setConfiguration)
+      .def("getModel",
            bp::make_function(
-               &RobotHandler::get_rmodel,
+               &RobotHandler::getModel,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_rdata",
+      .def("getData",
            bp::make_function(
-               &RobotHandler::get_rdata,
+               &RobotHandler::getData,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_com_position",
+      .def("getComPosition",
            bp::make_function(
-               &RobotHandler::get_com_position,
+               &RobotHandler::getComPosition,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_q0",
+      .def("getConfiguration",
            bp::make_function(
-               &RobotHandler::get_q0,
+               &RobotHandler::getConfiguration,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_v0",
+      .def("getVelocity",
            bp::make_function(
-               &RobotHandler::get_v0,
+               &RobotHandler::getVelocity,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_x0",
+      .def("getState",
            bp::make_function(
-               &RobotHandler::get_x0,
+               &RobotHandler::getState,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_settings",
+      .def("getSettings",
            bp::make_function(
-               &RobotHandler::get_settings,
+               &RobotHandler::getSettings,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("get_controlledJointsIDs",
+      .def("getControlledJointsIDs",
            bp::make_function(
-               &RobotHandler::get_controlledJointsIDs,
+               &RobotHandler::getControlledJointsIDs,
                bp::return_value_policy<bp::copy_const_reference>()))
-      .def("get_ee_id",
+      .def("getFootId",
            bp::make_function(
-               &RobotHandler::get_ee_id,
+               &RobotHandler::getFootId,
                bp::return_value_policy<bp::copy_const_reference>()))
-      .def("get_ee_names",
+      .def("getFeetNames",
            bp::make_function(
-               &RobotHandler::get_ee_names,
+               &RobotHandler::getFeetNames,
                bp::return_value_policy<bp::copy_const_reference>()))
-      .def("get_ee_pose",
+      .def("getFootPose",
            bp::make_function(
-               &RobotHandler::get_ee_pose,
+               &RobotHandler::getFootPose,
                bp::return_value_policy<bp::copy_const_reference>()))
-      .def("get_mass",
-           bp::make_function(
-               &RobotHandler::get_mass,
-               bp::return_value_policy<bp::copy_const_reference>()));
+      .def("getMass", bp::make_function(
+                          &RobotHandler::getMass,
+                          bp::return_value_policy<bp::copy_const_reference>()));
 
   return;
 }

@@ -66,78 +66,80 @@ template <class T> bp::list std_vector_to_py_list(const std::vector<T> &v) {
 struct PyProblem : Problem, bp::wrapper<Problem> {
   using Problem::Problem;
 
-  StageModel create_stage(
+  StageModel createStage(
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::StageModelTpl<double>,
                                     "create_stage", contact_map, force_refs);
   }
 
-  CostStack create_terminal_cost() override {
+  CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::CostStackTpl<double>,
-                                    "create_terminal_cost");
+                                    "createTerminalCost");
+  }
+
+  void createTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint");
   }
 
   void updateTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint");
   }
 
-  void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_pose", t, ee_name,
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setReferencePose", t, ee_name,
                                     pose_ref);
   }
 
-  void set_reference_poses(
+  void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_poses", t, pose_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setReferencePoses", t, pose_refs);
   }
 
-  void set_terminal_reference_pose(const std::string &ee_name,
-                                   const pinocchio::SE3 &pose_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_terminal_reference_pose",
-                                    ee_name, pose_ref);
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setTerminalReferencePose", ee_name,
+                                    pose_ref);
   }
 
-  pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &ee_name) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(pinocchio::SE3, "get_reference_pose", t,
+  pinocchio::SE3 getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(pinocchio::SE3, "getReferencePose", t,
                                     ee_name);
   }
 
-  void set_reference_forces(
+  void setReferenceForces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_forces", t,
-                                    force_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setReferenceForces", t, force_refs);
   }
 
-  void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "set_reference_force", t, ee_name,
+  void setReferenceForce(const std::size_t t, const std::string &ee_name,
+                         const Eigen::VectorXd &force_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setReferenceForce", t, ee_name,
                                     force_ref);
   }
 
-  Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &ee_name) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "get_reference_force", t,
+  Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                    const std::string &ee_name) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getReferenceForce", t,
                                     ee_name);
   }
 
   Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "get_x0_from_multibody",
+  getMultibodyState(const Eigen::VectorXd &x_multibody) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getMultibodyState",
                                     x_multibody);
   }
 
-  void set_reference_control(const std::size_t t,
-                             const Eigen::VectorXd &u_ref) {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, Problem, set_reference_control, t, u_ref);
+  void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref) {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, Problem, setReferenceControl, t, u_ref);
   }
 
-  Eigen::VectorXd get_reference_control(const std::size_t t) {
-    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, Problem, get_reference_control,
+  Eigen::VectorXd getReferenceControl(const std::size_t t) {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, Problem, getReferenceControl,
                                t);
   }
 };
@@ -146,17 +148,22 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                bp::wrapper<FullDynamicsProblem> {
   using FullDynamicsProblem::FullDynamicsProblem;
 
-  StageModel create_stage(
+  StageModel createStage(
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
-                               FullDynamicsProblem, create_stage, contact_map,
+                               FullDynamicsProblem, createStage, contact_map,
                                force_refs);
   }
 
-  CostStack create_terminal_cost() override {
+  CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               FullDynamicsProblem, create_terminal_cost);
+                               FullDynamicsProblem, createTerminalCost);
+  }
+
+  void createTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
+                               createTerminalConstraint);
   }
 
   void updateTerminalConstraint() override {
@@ -164,71 +171,76 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                updateTerminalConstraint);
   }
 
-  void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, set_reference_pose, t,
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setReferencePose, t,
                                ee_name, pose_refs);
   }
 
-  void set_reference_poses(
+  void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, set_reference_poses,
-                               t, pose_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setReferencePoses, t,
+                               pose_refs);
   }
 
-  void set_terminal_reference_pose(const std::string &ee_name,
-                                   const pinocchio::SE3 &pose_refs) override {
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
-                               set_terminal_reference_pose, ee_name, pose_refs);
+                               setTerminalReferencePose, ee_name, pose_refs);
   }
 
-  pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &ee_name) override {
+  pinocchio::SE3 getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(pinocchio::SE3, FullDynamicsProblem,
-                               get_reference_pose, t, ee_name);
+                               getReferencePose, t, ee_name);
   }
 
-  void set_reference_forces(
+  void setReferenceForces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, set_reference_forces,
-                               t, force_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setReferenceForces, t,
+                               force_refs);
   }
 
-  void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, set_reference_force,
-                               t, ee_name, force_ref);
+  void setReferenceForce(const std::size_t t, const std::string &ee_name,
+                         const Eigen::VectorXd &force_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setReferenceForce, t,
+                               ee_name, force_ref);
   }
 
-  Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &ee_name) override {
+  Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                    const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
-                               get_reference_force, t, ee_name);
+                               getReferenceForce, t, ee_name);
   }
 
   Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override {
+  getMultibodyState(const Eigen::VectorXd &x_multibody) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
-                               get_x0_from_multibody, x_multibody);
+                               getMultibodyState, x_multibody);
   }
 };
 
 struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
   using CentroidalProblem::CentroidalProblem;
 
-  StageModel create_stage(
+  StageModel createStage(
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
-                               CentroidalProblem, create_stage, contact_map,
+                               CentroidalProblem, createStage, contact_map,
                                force_refs);
   }
 
-  CostStack create_terminal_cost() override {
+  CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               CentroidalProblem, create_terminal_cost);
+                               CentroidalProblem, createTerminalCost);
+  }
+
+  void createTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
+                               createTerminalConstraint);
   }
 
   void updateTerminalConstraint() override {
@@ -236,54 +248,54 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
                                updateTerminalConstraint);
   }
 
-  void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, set_reference_pose, t,
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setReferencePose, t,
                                ee_name, pose_refs);
   }
 
-  void set_reference_poses(
+  void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, set_reference_poses, t,
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setReferencePoses, t,
                                pose_refs);
   }
 
-  void set_terminal_reference_pose(const std::string &ee_name,
-                                   const pinocchio::SE3 &pose_refs) override {
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
-                               set_terminal_reference_pose, ee_name, pose_refs);
+                               setTerminalReferencePose, ee_name, pose_refs);
   }
 
-  pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &ee_name) override {
+  pinocchio::SE3 getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(pinocchio::SE3, CentroidalProblem,
-                               get_reference_pose, t, ee_name);
+                               getReferencePose, t, ee_name);
   }
 
-  void set_reference_forces(
+  void setReferenceForces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, set_reference_forces, t,
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setReferenceForces, t,
                                force_refs);
   }
 
-  void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, set_reference_force, t,
+  void setReferenceForce(const std::size_t t, const std::string &ee_name,
+                         const Eigen::VectorXd &force_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setReferenceForce, t,
                                ee_name, force_ref);
   }
 
-  Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &ee_name) override {
+  Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                    const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
-                               get_reference_force, t, ee_name);
+                               getReferenceForce, t, ee_name);
   }
 
   Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override {
+  getMultibodyState(const Eigen::VectorXd &x_multibody) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
-                               get_x0_from_multibody, x_multibody);
+                               getMultibodyState, x_multibody);
   }
 };
 
@@ -291,17 +303,22 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                                bp::wrapper<KinodynamicsProblem> {
   using KinodynamicsProblem::KinodynamicsProblem;
 
-  StageModel create_stage(
+  StageModel createStage(
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
-                               KinodynamicsProblem, create_stage, contact_map,
+                               KinodynamicsProblem, createStage, contact_map,
                                force_refs);
   }
 
-  CostStack create_terminal_cost() override {
+  CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               KinodynamicsProblem, create_terminal_cost);
+                               KinodynamicsProblem, createTerminalCost);
+  }
+
+  void createTerminalConstraint() override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
+                               createTerminalConstraint);
   }
 
   void updateTerminalConstraint() override {
@@ -309,54 +326,54 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                                updateTerminalConstraint);
   }
 
-  void set_reference_pose(const std::size_t t, const std::string &ee_name,
-                          const pinocchio::SE3 &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, set_reference_pose, t,
+  void setReferencePose(const std::size_t t, const std::string &ee_name,
+                        const pinocchio::SE3 &pose_refs) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setReferencePose, t,
                                ee_name, pose_refs);
   }
 
-  void set_reference_poses(
+  void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, set_reference_poses,
-                               t, pose_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setReferencePoses, t,
+                               pose_refs);
   }
 
-  void set_terminal_reference_pose(const std::string &ee_name,
-                                   const pinocchio::SE3 &pose_refs) override {
+  void setTerminalReferencePose(const std::string &ee_name,
+                                const pinocchio::SE3 &pose_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
-                               set_terminal_reference_pose, ee_name, pose_refs);
+                               setTerminalReferencePose, ee_name, pose_refs);
   }
 
-  pinocchio::SE3 get_reference_pose(const std::size_t t,
-                                    const std::string &ee_name) override {
+  pinocchio::SE3 getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(pinocchio::SE3, KinodynamicsProblem,
-                               get_reference_pose, t, ee_name);
+                               getReferencePose, t, ee_name);
   }
 
-  void set_reference_forces(
+  void setReferenceForces(
       const std::size_t t,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, set_reference_forces,
-                               t, force_refs);
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setReferenceForces, t,
+                               force_refs);
   }
 
-  void set_reference_force(const std::size_t t, const std::string &ee_name,
-                           const Eigen::VectorXd &force_ref) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, set_reference_force,
-                               t, ee_name, force_ref);
+  void setReferenceForce(const std::size_t t, const std::string &ee_name,
+                         const Eigen::VectorXd &force_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setReferenceForce, t,
+                               ee_name, force_ref);
   }
 
-  Eigen::VectorXd get_reference_force(const std::size_t t,
-                                      const std::string &ee_name) override {
+  Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                    const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
-                               get_reference_force, t, ee_name);
+                               getReferenceForce, t, ee_name);
   }
 
   Eigen::VectorXd
-  get_x0_from_multibody(const Eigen::VectorXd &x_multibody) override {
+  getMultibodyState(const Eigen::VectorXd &x_multibody) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
-                               get_x0_from_multibody, x_multibody);
+                               getMultibodyState, x_multibody);
   }
 };
 

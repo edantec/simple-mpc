@@ -33,7 +33,7 @@ public:
   std::vector<std::string> end_effector_names;
   std::string root_name = "";
   std::string base_configuration = "";
-  bool loadRotor = false;
+  bool load_rotor = false;
 };
 
 class RobotHandler {
@@ -51,8 +51,8 @@ private:
   pinocchio::Data rdata_;
 
   // State vectors
-  Eigen::VectorXd q0Complete_, q0_;
-  Eigen::VectorXd v0Complete_, v0_;
+  Eigen::VectorXd q0_complete_, q0_;
+  Eigen::VectorXd v0_complete_, v0_;
   Eigen::VectorXd x0_;
   Eigen::VectorXd x_internal_;
 
@@ -68,52 +68,52 @@ public:
 
   // Set new robot state
   void updateInternalData(const Eigen::VectorXd &x);
-  void set_q0(const Eigen::VectorXd &q0);
+  void setConfiguration(const Eigen::VectorXd &q0);
 
   // Return reduced state from measures
   const Eigen::VectorXd &shapeState(const Eigen::VectorXd &q,
                                     const Eigen::VectorXd &v);
 
   // Getters
-  const pinocchio::FrameIndex &get_root_id() { return root_ids_; }
-  const std::vector<pinocchio::FrameIndex> &get_ee_ids() {
+  const pinocchio::FrameIndex &getRootId() { return root_ids_; }
+  const std::vector<pinocchio::FrameIndex> &getFeetIds() {
     return end_effector_ids_;
   }
-  const pinocchio::FrameIndex &get_ee_id(const std::string &ee_name) {
+  const pinocchio::FrameIndex &getFootId(const std::string &ee_name) {
     return end_effector_map_.at(ee_name);
   }
 
-  const pinocchio::SE3 &get_ee_pose(const std::string &ee_name) {
-    return rdata_.oMf[get_ee_id(ee_name)];
+  const pinocchio::SE3 &getFootPose(const std::string &ee_name) {
+    return rdata_.oMf[getFootId(ee_name)];
   };
 
-  const pinocchio::SE3 &get_root_frame();
+  const pinocchio::SE3 &getRootFrame();
 
-  const double &get_mass() { return mass_; }
-  const pinocchio::Model &get_rmodel() { return rmodel_; }
-  const pinocchio::Model &get_rmodel_complete() { return rmodel_complete_; }
-  const pinocchio::Data &get_rdata() { return rdata_; }
-  const Eigen::VectorXd &get_q0() { return q0_; }
-  const Eigen::VectorXd &get_v0() { return v0_; }
-  const Eigen::VectorXd &get_q0Complete() { return q0Complete_; }
-  const Eigen::VectorXd &get_v0Complete() { return v0Complete_; }
-  const Eigen::VectorXd &get_x0() { return x0_; }
+  const double &getMass() { return mass_; }
+  const pinocchio::Model &getModel() { return rmodel_; }
+  const pinocchio::Model &getModelComplete() { return rmodel_complete_; }
+  const pinocchio::Data &getData() { return rdata_; }
+  const Eigen::VectorXd &getConfiguration() { return q0_; }
+  const Eigen::VectorXd &getVelocity() { return v0_; }
+  const Eigen::VectorXd &getCompleteConfiguration() { return q0_complete_; }
+  const Eigen::VectorXd &getCompleteVelocity() { return v0_complete_; }
+  const Eigen::VectorXd &getState() { return x0_; }
 
-  const std::string &get_ee_name(const unsigned long &i) {
+  const std::string &getFootName(const unsigned long &i) {
     return settings_.end_effector_names[i];
   }
-  const std::vector<std::string> &get_ee_names() {
+  const std::vector<std::string> &getFeetNames() {
     return settings_.end_effector_names;
   }
-  const RobotHandlerSettings &get_settings() { return settings_; }
-  const std::vector<unsigned long> &get_controlledJointsIDs() {
+  const RobotHandlerSettings &getSettings() { return settings_; }
+  const std::vector<unsigned long> &getControlledJointsIDs() {
     return controlled_joints_ids_;
   }
 
-  const Eigen::Vector3d &get_com_position() { return com_position_; }
+  const Eigen::Vector3d &getComPosition() { return com_position_; }
 
   // Compute the total robot mass
-  void compute_mass();
+  void computeMass();
 };
 
 } // namespace simple_mpc
