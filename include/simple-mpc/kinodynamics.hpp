@@ -32,14 +32,20 @@ using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using StageConstraint = StageConstraintTpl<double>;
 /**
- * @brief Build a full dynamics problem
+ * @brief Build a kinodynamics problem based on
+ * the KinodynamicsFwdDynamics object of Aligator.
+ *
+ * State is defined as concatenation of joint positions and
+ * joint velocities; control is defined as concatenation of
+ * contact forces and joint acceleration.
  */
 
 struct KinodynamicsSettings {
-  /// @brief reference 0 state and control
+  /// reference for state and control residuals
   Eigen::VectorXd x0;
   Eigen::VectorXd u0;
-  /// @brief timestep in problem shooting nodes
+
+  /// timestep in problem shooting nodes
   double DT;
 
   // Cost function weights

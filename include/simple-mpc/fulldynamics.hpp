@@ -43,12 +43,16 @@ using CenterOfMassTranslationResidual =
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 /**
- * @brief Build a full dynamics problem
+ * @brief Build a full dynamics problem based on the
+ * MultibodyConstraintFwdDynamics of Aligator.
+ *
+ * State is defined as concatenation of joint positions and
+ * joint velocities; control is defined as joint torques.
  */
 
 struct FullDynamicsSettings {
 public:
-  // reference 0 state and control
+  // reference for state and control residuals
   Eigen::VectorXd x0;
   Eigen::VectorXd u0;
 
@@ -97,9 +101,7 @@ public:
 
   // Manage terminal cost and constraint
   CostStack createTerminalCost() override;
-
   void createTerminalConstraint() override;
-
   void updateTerminalConstraint() override;
 
   // Getters and setters
@@ -131,7 +133,7 @@ protected:
   // Actuation matrix
   Eigen::MatrixXd actuation_matrix_;
 
-  // Complete list of contact models
+  // Complete list of contact models to compute dynamics
   pinocchio::context::RigidConstraintModelVector constraint_models_;
 };
 

@@ -20,19 +20,30 @@
 namespace simple_mpc {
 
 /**
- * @brief Class managing every robot-related quantities
+ * @brief Class managing every robot-related quantities.
+ *
+ * It holds the robot data, controlled joints, end-effector names
+ * and other useful items.
  */
 
 struct RobotHandlerSettings {
 public:
+  // Path to fetch the robot model.
+  // Either urdf_path or robot_description should
+  // be filled.
   std::string urdf_path = "";
   std::string srdf_path = "";
   std::string robot_description = "";
-  std::vector<std::string> controlled_joints_names;
 
+  // Joint-related items
+  std::vector<std::string> controlled_joints_names;
   std::vector<std::string> end_effector_names;
+
+  // Useful names
   std::string root_name = "";
   std::string base_configuration = "";
+
+  // Wether to use rotor parameters in joint dynamics
   bool load_rotor = false;
 };
 
@@ -40,7 +51,7 @@ class RobotHandler {
 private:
   RobotHandlerSettings settings_;
 
-  // Vectors of usefull index
+  // Useful index
   std::vector<unsigned long> controlled_joints_ids_;
   std::map<std::string, pinocchio::FrameIndex> end_effector_map_;
   std::vector<pinocchio::FrameIndex> end_effector_ids_;
@@ -82,13 +93,10 @@ public:
   const pinocchio::FrameIndex &getFootId(const std::string &ee_name) {
     return end_effector_map_.at(ee_name);
   }
-
   const pinocchio::SE3 &getFootPose(const std::string &ee_name) {
     return rdata_.oMf[getFootId(ee_name)];
   };
-
   const pinocchio::SE3 &getRootFrame();
-
   const double &getMass() { return mass_; }
   const pinocchio::Model &getModel() { return rmodel_; }
   const pinocchio::Model &getModelComplete() { return rmodel_complete_; }
@@ -98,7 +106,6 @@ public:
   const Eigen::VectorXd &getCompleteConfiguration() { return q0_complete_; }
   const Eigen::VectorXd &getCompleteVelocity() { return v0_complete_; }
   const Eigen::VectorXd &getState() { return x0_; }
-
   const std::string &getFootName(const unsigned long &i) {
     return settings_.end_effector_names[i];
   }

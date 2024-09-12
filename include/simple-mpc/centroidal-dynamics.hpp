@@ -32,7 +32,12 @@ using StageConstraint = StageConstraintTpl<double>;
 using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
 
 /**
- * @brief Build a full dynamics problem
+ * @brief Build a centroidal dynamics problem based on
+ * the CentroidalFwdDynamics from Aligator.
+ *
+ * State is defined as concatenation of center of mass position and
+ * centroidal momentum; control is defined as concatenation of
+ * contact forces.
  */
 
 struct CentroidalSettings {

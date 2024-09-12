@@ -43,38 +43,35 @@ using CentroidalMomentumDerivativeResidual =
     CentroidalMomentumDerivativeResidualTpl<double>;
 using SolverProxDDP = SolverProxDDPTpl<double>;
 /**
- * @brief Build a full dynamics problem
+ * @brief Build a MPC object holding an instance
+ * of a trajectory optimization problem
  */
 
 struct MPCSettings {
-  ///@todo: add the cost names as setting parameters.
 public:
-  // timing
+  // Step-related quantities
   int totalSteps = 4;
-  int ddpIteration = 1;
+  double swing_apex = 0.15;
+  double x_translation = 0.1;
+  double y_translation = 0.;
 
+  // Force parameters
   double min_force = 150;
   double support_force = 1000;
 
+  // Solver-related quantities
   double TOL = 1e-4;
   double mu_init = 1e-8;
   std::size_t max_iters = 1;
   std::size_t num_threads = 2;
+  int ddpIteration = 1;
 
-  double swing_apex = 0.15;
-  double x_translation = 0.1;
-  double y_translation = 0.;
+  // Timings
   int T_fly = 80;
   int T_contact = 20;
   size_t T = 100;
 };
 class MPC {
-  /**
-   * Form to use this class:
-   * 1) The function iterate produces the torques to command.
-   * 2) All cost references must be updated separtely in the control loop.
-   *
-   */
 
 protected:
   MPCSettings settings_;
@@ -85,7 +82,7 @@ protected:
   FootTrajectory foot_trajectories_;
   std::map<std::string, Eigen::Vector3d> relative_translations_;
 
-  // INTERNAL UPDATING functions
+  // INTERNAL UPDATING function
   void updateStepTrackerReferences();
 
   // References for costs:
@@ -105,21 +102,26 @@ public:
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<Problem> problem);
 
+  // Generate the full walking problem along which we will iterate
+  // the receding horizon
   void generateFullHorizon(
       const std::vector<std::map<std::string, bool>> &contact_states);
 
+  // Perform one iteration of MPC
   void iterate(const Eigen::VectorXd &q_current,
                const Eigen::VectorXd &v_current);
 
+  void updateSupportTiming();
+
+  // Recede the horizon
   void recedeWithCycle();
 
+  // Getters and setters
   void setReferencePose(const std::size_t t, const std::string &ee_name,
                         const pinocchio::SE3 &pose_ref);
 
   void setTerminalReferencePose(const std::string &ee_name,
                                 const pinocchio::SE3 &pose_ref);
-
-  void updateSupportTiming();
 
   void setRelativeTranslation(
       const std::map<std::string, Eigen::Vector3d> &relative_translations,
@@ -143,14 +145,18 @@ public:
     return foot_land_times_.at(ee_name);
   }
 
-  // timings
+  // Footstep timings for each end effector
   std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
   std::size_t horizon_iteration_;
 
+  // Solution vectors for state and control
   std::vector<Eigen::VectorXd> xs_;
   std::vector<Eigen::VectorXd> us_;
+
+  // Riccati gains for first stage
   Eigen::MatrixXd K0_;
 
+  // Initial quantities
   Eigen::VectorXd x0_;
   Eigen::VectorXd x_multibody_;
   Eigen::VectorXd u0_;
