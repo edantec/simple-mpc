@@ -150,8 +150,9 @@ void CentroidalProblem::setReferencePose(const std::size_t t,
   aar->contact_map_.setContactPose(ee_name, pose_ref.translation());
 }
 
-pinocchio::SE3 CentroidalProblem::getReferencePose(const std::size_t t,
-                                                   const std::string &ee_name) {
+const pinocchio::SE3
+CentroidalProblem::getReferencePose(const std::size_t t,
+                                    const std::string &ee_name) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -185,7 +186,7 @@ void CentroidalProblem::setReferenceForce(const std::size_t t,
   setReferenceControl(t, control_ref_);
 }
 
-Eigen::VectorXd
+const Eigen::VectorXd
 CentroidalProblem::getReferenceForce(const std::size_t t,
                                      const std::string &ee_name) {
   std::vector<std::string> hname = handler_.getFeetNames();
@@ -197,19 +198,8 @@ CentroidalProblem::getReferenceForce(const std::size_t t,
                                         settings_.force_size);
 }
 
-Eigen::VectorXd
-CentroidalProblem::getMultibodyState(const Eigen::VectorXd &x_multibody) {
-  if (x_multibody.size() != handler_.getState().size()) {
-    throw std::runtime_error("x_multibody is of incorrect size");
-  }
-  handler_.updateInternalData(x_multibody);
-  Eigen::VectorXd x0(9);
-  x0.setZero();
-  x0.head(3) = handler_.getComPosition();
-  x0.segment(3, 3) = handler_.getData().hg.linear();
-  x0.tail(3) = handler_.getData().hg.angular();
-
-  return x0;
+const Eigen::VectorXd CentroidalProblem::getProblemState() {
+  return handler_.getCentroidalState();
 }
 
 CostStack CentroidalProblem::createTerminalCost() {

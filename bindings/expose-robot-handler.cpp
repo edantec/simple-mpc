@@ -59,12 +59,12 @@ void exposeHandler() {
   bp::class_<RobotHandler>("RobotHandler", bp::init<>())
       .def("initialize", &initialize)
       .def("getSettings", &getSettings)
+      .def("updateConfiguration", &RobotHandler::updateConfiguration)
+      .def("updateState", &RobotHandler::updateState)
       .def("updateInternalData", &RobotHandler::updateInternalData)
-      .def("shapeState",
-           bp::make_function(
-               &RobotHandler::shapeState,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("setConfiguration", &RobotHandler::setConfiguration)
+      .def("updateJacobiansMassMatrix",
+           &RobotHandler::updateJacobiansMassMatrix)
+      .def("shapeState", &RobotHandler::shapeState)
       .def("getModel",
            bp::make_function(
                &RobotHandler::getModel,
@@ -89,6 +89,10 @@ void exposeHandler() {
            bp::make_function(
                &RobotHandler::getState,
                bp::return_value_policy<bp::reference_existing_object>()))
+      .def("getCentroidalState",
+           bp::make_function(
+               &RobotHandler::getCentroidalState,
+               bp::return_value_policy<bp::reference_existing_object>()))
       .def("getSettings",
            bp::make_function(
                &RobotHandler::getSettings,
@@ -111,7 +115,11 @@ void exposeHandler() {
                bp::return_value_policy<bp::copy_const_reference>()))
       .def("getMass", bp::make_function(
                           &RobotHandler::getMass,
-                          bp::return_value_policy<bp::copy_const_reference>()));
+                          bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getMassMatrix",
+           bp::make_function(
+               &RobotHandler::getMassMatrix,
+               bp::return_value_policy<bp::copy_const_reference>()));
 
   return;
 }

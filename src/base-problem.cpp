@@ -37,7 +37,7 @@ void Problem::setReferenceControl(const std::size_t i,
   qc->setTarget(u_ref);
 }
 
-Eigen::VectorXd Problem::getReferenceControl(const std::size_t t) {
+const Eigen::VectorXd Problem::getReferenceControl(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
       &*cs->components_[cost_map_.at("control_cost")]);

@@ -77,8 +77,8 @@ public:
                     const std::map<std::string, pinocchio::SE3> &pose_refs) = 0;
   virtual void setTerminalReferencePose(const std::string &ee_name,
                                         const pinocchio::SE3 &pose_ref) = 0;
-  virtual pinocchio::SE3 getReferencePose(const std::size_t t,
-                                          const std::string &ee_name) = 0;
+  virtual const pinocchio::SE3 getReferencePose(const std::size_t t,
+                                                const std::string &ee_name) = 0;
 
   // Setter and getter for forces reference
   virtual void setReferenceForces(
@@ -87,10 +87,9 @@ public:
   virtual void setReferenceForce(const std::size_t t,
                                  const std::string &ee_name,
                                  const Eigen::VectorXd &force_ref) = 0;
-  virtual Eigen::VectorXd getReferenceForce(const std::size_t t,
-                                            const std::string &ee_name) = 0;
-  virtual Eigen::VectorXd
-  getMultibodyState(const Eigen::VectorXd &x_multibody) = 0;
+  virtual const Eigen::VectorXd
+  getReferenceForce(const std::size_t t, const std::string &ee_name) = 0;
+  virtual const Eigen::VectorXd getProblemState() = 0;
 
   /// Common functions for all problems
 
@@ -101,7 +100,7 @@ public:
   // Setter and getter for control reference
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref);
 
-  Eigen::VectorXd getReferenceControl(const std::size_t t);
+  const Eigen::VectorXd getReferenceControl(const std::size_t t);
 
   // Getter for various objects and quantities
   CostStack *getCostStack(std::size_t t);

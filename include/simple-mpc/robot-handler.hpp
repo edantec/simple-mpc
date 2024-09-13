@@ -10,7 +10,9 @@
 #include <pinocchio/fwd.hpp>
 // Include pinocchio first
 #include <Eigen/Dense>
+#include <pinocchio/algorithm/crba.hpp>
 #include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/spatial/se3.hpp>
 #include <string>
 #include <vector>
@@ -18,7 +20,7 @@
 #include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
-
+using namespace pinocchio;
 /**
  * @brief Class managing every robot-related quantities.
  *
@@ -53,19 +55,20 @@ private:
 
   // Useful index
   std::vector<unsigned long> controlled_joints_ids_;
-  std::map<std::string, pinocchio::FrameIndex> end_effector_map_;
-  std::vector<pinocchio::FrameIndex> end_effector_ids_;
+  std::map<std::string, FrameIndex> end_effector_map_;
+  std::vector<FrameIndex> end_effector_ids_;
   unsigned long root_ids_;
 
   // Pinocchio objects
-  pinocchio::Model rmodel_complete_, rmodel_;
-  pinocchio::Data rdata_;
+  Model rmodel_complete_, rmodel_;
+  Data rdata_;
 
   // State vectors
-  Eigen::VectorXd q0_complete_, q0_;
-  Eigen::VectorXd v0_complete_, v0_;
-  Eigen::VectorXd x0_;
-  Eigen::VectorXd x_internal_;
+  Eigen::VectorXd q_complete_, q_;
+  Eigen::VectorXd v_complete_, v_;
+  Eigen::VectorXd x_;
+  Eigen::VectorXd x_centroidal_;
+  Eigen::MatrixXd M_; // Mass matrix
 
   // Robot total mass and CoM
   double mass_ = 0;
@@ -78,34 +81,36 @@ public:
   bool initialized_ = false;
 
   // Set new robot state
-  void updateInternalData(const Eigen::VectorXd &x);
-  void setConfiguration(const Eigen::VectorXd &q0);
+  void updateConfiguration(const Eigen::VectorXd &q,
+                           const bool updateJacobians);
+  void updateState(const Eigen::VectorXd &x, const bool updateJacobians);
+  void updateInternalData(const bool updateJacobians);
+  void updateJacobiansMassMatrix();
 
   // Return reduced state from measures
-  const Eigen::VectorXd &shapeState(const Eigen::VectorXd &q,
-                                    const Eigen::VectorXd &v);
+  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,
+                                   const Eigen::VectorXd &v);
 
   // Getters
-  const pinocchio::FrameIndex &getRootId() { return root_ids_; }
-  const std::vector<pinocchio::FrameIndex> &getFeetIds() {
-    return end_effector_ids_;
-  }
-  const pinocchio::FrameIndex &getFootId(const std::string &ee_name) {
+  const FrameIndex &getRootId() { return root_ids_; }
+  const std::vector<FrameIndex> &getFeetIds() { return end_effector_ids_; }
+  const FrameIndex &getFootId(const std::string &ee_name) {
     return end_effector_map_.at(ee_name);
   }
-  const pinocchio::SE3 &getFootPose(const std::string &ee_name) {
+  const SE3 &getFootPose(const std::string &ee_name) {
     return rdata_.oMf[getFootId(ee_name)];
   };
-  const pinocchio::SE3 &getRootFrame();
+  const SE3 &getRootFrame() { return rdata_.oMf[root_ids_]; }
+  const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
   const double &getMass() { return mass_; }
-  const pinocchio::Model &getModel() { return rmodel_; }
-  const pinocchio::Model &getModelComplete() { return rmodel_complete_; }
-  const pinocchio::Data &getData() { return rdata_; }
-  const Eigen::VectorXd &getConfiguration() { return q0_; }
-  const Eigen::VectorXd &getVelocity() { return v0_; }
-  const Eigen::VectorXd &getCompleteConfiguration() { return q0_complete_; }
-  const Eigen::VectorXd &getCompleteVelocity() { return v0_complete_; }
-  const Eigen::VectorXd &getState() { return x0_; }
+  const Model &getModel() { return rmodel_; }
+  const Model &getModelComplete() { return rmodel_complete_; }
+  const Data &getData() { return rdata_; }
+  const Eigen::VectorXd &getConfiguration() { return q_; }
+  const Eigen::VectorXd &getVelocity() { return v_; }
+  const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
+  const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
+  const Eigen::VectorXd &getState() { return x_; }
   const std::string &getFootName(const unsigned long &i) {
     return settings_.end_effector_names[i];
   }
@@ -116,8 +121,8 @@ public:
   const std::vector<unsigned long> &getControlledJointsIDs() {
     return controlled_joints_ids_;
   }
-
   const Eigen::Vector3d &getComPosition() { return com_position_; }
+  const Eigen::MatrixXd &getMassMatrix() { return M_; }
 
   // Compute the total robot mass
   void computeMass();

@@ -117,12 +117,11 @@ public:
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;
   void setReferenceForce(const std::size_t t, const std::string &ee_name,
                          const Eigen::VectorXd &force_ref) override;
-  pinocchio::SE3 getReferencePose(const std::size_t t,
-                                  const std::string &cost_name) override;
-  Eigen::VectorXd getReferenceForce(const std::size_t t,
-                                    const std::string &cost_name) override;
-  Eigen::VectorXd
-  getMultibodyState(const Eigen::VectorXd &x_multibody) override;
+  const pinocchio::SE3 getReferencePose(const std::size_t t,
+                                        const std::string &cost_name) override;
+  const Eigen::VectorXd
+  getReferenceForce(const std::size_t t, const std::string &cost_name) override;
+  const Eigen::VectorXd getProblemState() override;
   FullDynamicsSettings getSettings() { return settings_; }
 
 protected:

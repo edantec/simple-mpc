@@ -56,7 +56,7 @@ void MPC::initialize(const MPCSettings &settings,
                      settings_.T_contact, settings_.T);
 
   foot_trajectories_.updateForward(relative_translations_, settings.swing_apex);
-  x0_ = problem_->getMultibodyState((x_multibody_));
+  x0_ = problem_->getProblemState();
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
                                             0., maxiters, aligator::QUIET);
@@ -156,7 +156,7 @@ void MPC::generateFullHorizon(
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
 
-  problem_->getHandler().setConfiguration(q_current);
+  problem_->getHandler().updateConfiguration(q_current, false);
   x_multibody_ = problem_->getHandler().shapeState(q_current, v_current);
 
   // ~~TIMING~~ //
@@ -164,7 +164,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   updateSupportTiming();
 
   // ~~REFERENCES~~ //
-  x0_ = problem_->getMultibodyState(x_multibody_);
+  x0_ = problem_->getProblemState();
   // updateStepTrackerLastReference();
   updateStepTrackerReferences();
 

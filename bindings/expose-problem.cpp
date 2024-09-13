@@ -56,8 +56,8 @@ void exposeBaseProblem() {
            bp::args("self", "t", "ee_name", "force_ref"))
       .def("getReferenceForce", bp::pure_virtual(&Problem::getReferenceForce),
            bp::args("self", "t", "ee_name"))
-      .def("getMultibodyState", bp::pure_virtual(&Problem::getMultibodyState),
-           bp::args("self", "x_multibody"))
+      .def("getProblemState", bp::pure_virtual(&Problem::getProblemState),
+           bp::args("self"))
       .def("createProblem", &Problem::createProblem,
            bp::args("self", "x0", "horizon", "force_size", "gravity"))
       .def("setReferenceControl", &Problem::setReferenceControl,
@@ -183,8 +183,8 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &FullDynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("getMultibodyState", &FullDynamicsProblem::getMultibodyState,
-           bp::args("self", "x_multibody"))
+      .def("getProblemState", &FullDynamicsProblem::getProblemState,
+           bp::args("self"))
       .def("createTerminalCost", &FullDynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("updateTerminalConstraint",
@@ -288,8 +288,8 @@ void exposeCentroidalProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &CentroidalProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("getMultibodyState", &CentroidalProblem::getMultibodyState,
-           bp::args("self", "x_multibody"))
+      .def("getProblemState", &CentroidalProblem::getProblemState,
+           bp::args("self"))
       .def("createTerminalCost", &CentroidalProblem::createTerminalCost,
            bp::args("self"))
       .def("createTerminalConstraint",
@@ -399,8 +399,8 @@ void exposeKinodynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &KinodynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
-      .def("getMultibodyState", &KinodynamicsProblem::getMultibodyState,
-           bp::args("self", "x_multibody"))
+      .def("getProblemState", &KinodynamicsProblem::getProblemState,
+           bp::args("self"))
       .def("createTerminalCost", &KinodynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("createTerminalConstraint",

@@ -92,8 +92,8 @@ public:
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;
   void setTerminalReferencePose(const std::string &ee_name,
                                 const pinocchio::SE3 &pose_ref) override {}
-  pinocchio::SE3 getReferencePose(const std::size_t t,
-                                  const std::string &ee_name) override;
+  const pinocchio::SE3 getReferencePose(const std::size_t t,
+                                        const std::string &ee_name) override;
 
   // Getters and setters for contact forces
   void setReferenceForces(
@@ -101,13 +101,12 @@ public:
       const std::map<std::string, Eigen::VectorXd> &force_refs) override;
   void setReferenceForce(const std::size_t t, const std::string &ee_name,
                          const Eigen::VectorXd &force_ref) override;
-  Eigen::VectorXd getReferenceForce(const std::size_t t,
-                                    const std::string &ee_name) override;
+  const Eigen::VectorXd getReferenceForce(const std::size_t t,
+                                          const std::string &ee_name) override;
   void computeControlFromForces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
 
-  Eigen::VectorXd
-  getMultibodyState(const Eigen::VectorXd &x_multibody) override;
+  const Eigen::VectorXd getProblemState() override;
   CentroidalSettings getSettings() { return settings_; }
 
 protected:

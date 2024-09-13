@@ -229,7 +229,7 @@ void FullDynamicsProblem::setReferenceForce(const std::size_t i,
   cfr->setReference(force_ref);
 }
 
-pinocchio::SE3
+const pinocchio::SE3
 FullDynamicsProblem::getReferencePose(const std::size_t t,
                                       const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
@@ -240,7 +240,7 @@ FullDynamicsProblem::getReferencePose(const std::size_t t,
   return cfr->getReference();
 }
 
-Eigen::VectorXd
+const Eigen::VectorXd
 FullDynamicsProblem::getReferenceForce(const std::size_t t,
                                        const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
@@ -251,13 +251,8 @@ FullDynamicsProblem::getReferenceForce(const std::size_t t,
   return cfr->getReference();
 }
 
-Eigen::VectorXd
-FullDynamicsProblem::getMultibodyState(const Eigen::VectorXd &x_multibody) {
-  if (x_multibody.size() != handler_.getState().size()) {
-    throw std::runtime_error("x_multibody is of incorrect size");
-  }
-  handler_.updateInternalData(x_multibody);
-  return x_multibody;
+const Eigen::VectorXd FullDynamicsProblem::getProblemState() {
+  return handler_.getState();
 }
 
 CostStack FullDynamicsProblem::createTerminalCost() {

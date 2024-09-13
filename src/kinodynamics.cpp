@@ -129,7 +129,7 @@ void KinodynamicsProblem::setTerminalReferencePose(
   cfr->setReference(pose_ref);
 }
 
-pinocchio::SE3
+const pinocchio::SE3
 KinodynamicsProblem::getReferencePose(const std::size_t t,
                                       const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
@@ -171,7 +171,7 @@ void KinodynamicsProblem::setReferenceForce(const std::size_t i,
   setReferenceControl(i, control_ref_);
 }
 
-Eigen::VectorXd
+const Eigen::VectorXd
 KinodynamicsProblem::getReferenceForce(const std::size_t i,
                                        const std::string &ee_name) {
   std::vector<std::string> hname = handler_.getFeetNames();
@@ -183,13 +183,8 @@ KinodynamicsProblem::getReferenceForce(const std::size_t i,
                                         settings_.force_size);
 }
 
-Eigen::VectorXd
-KinodynamicsProblem::getMultibodyState(const Eigen::VectorXd &x_multibody) {
-  if (x_multibody.size() != handler_.getState().size()) {
-    throw std::runtime_error("x_multibody is of incorrect size");
-  }
-  handler_.updateInternalData(x_multibody);
-  return x_multibody;
+const Eigen::VectorXd KinodynamicsProblem::getProblemState() {
+  return handler_.getState();
 }
 
 CostStack KinodynamicsProblem::createTerminalCost() {

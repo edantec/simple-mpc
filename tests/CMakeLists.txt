@@ -46,7 +46,7 @@ function(add_aligator_test name)
   _add_test_prototype(${name} "" ${PROJECT_NAME})
 endfunction()
 
-set(TEST_NAMES robot_handler problem mpc)
+set(TEST_NAMES robot_handler problem mpc lowlevel)
 
 foreach(test_name ${TEST_NAMES})
   add_aligator_test(${test_name})
