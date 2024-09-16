@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import example_robot_data
 
-from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
+from simple_mpc import RobotHandler, CentroidalProblem, MPC
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -54,99 +54,46 @@ handler.initialize(design_conf)
 
 T = 100
 
-x0 = handler.getState()
-nu = handler.getModel().nv - 6
-w_x_vec = np.array(
-    [
-        0,
-        0,
-        0,
-        100,
-        100,
-        100,  # Base pos/ori
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Left leg
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Right leg
-        10,
-        10,  # Torso
-        1,
-        1,
-        1,
-        1,  # Left arm
-        1,
-        1,
-        1,
-        1,  # Right arm
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,  # Base pos/ori vel
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.01,
-        0.01,  # Left leg vel
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.01,
-        0.01,  # Right leg vel
-        10,
-        10,  # Torso vel
-        1,
-        1,
-        1,
-        1,  # Left arm vel
-        1,
-        1,
-        1,
-        1,  # Right arm vel
-    ]
-)
-w_cent_lin = np.ones(3) * 0
-w_cent_ang = np.array([0.1, 0.1, 100])
-w_cent_ang = np.ones(3) * 0
-w_forces_lin = np.ones(3) * 0.0001
-w_forces_ang = np.ones(3) * 0.01
+x0 = np.zeros(9)
+x0[:3] = handler.getComPosition()
+nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
 
 gravity = np.array([0, 0, -9.81])
+fref = np.zeros(6)
+fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
+u0 = np.concatenate((fref, fref))
+
+w_control_linear = np.ones(3) * 0.001
+w_control_angular = np.ones(3) * 0.1
+w_u = np.diag(
+    np.concatenate(
+        (w_control_linear, w_control_angular, w_control_linear, w_control_angular)
+    )
+)
+w_linear_mom = np.diag(np.array([0.01, 0.01, 100]))
+w_linear_acc = 0.01 * np.eye(3)
+w_angular_mom = np.diag(np.array([0.1, 0.1, 1000]))
+w_angular_acc = 0.01 * np.eye(3)
 
 problem_conf = dict(
-    x0=handler.getState(),
-    u0=np.zeros(nu),
+    x0=x0,
+    u0=u0,
     DT=0.01,
-    w_x=np.diag(w_x_vec),
-    w_u=np.eye(nu) * 1e-4,
-    w_cent=np.diag(np.concatenate((w_cent_lin, w_cent_ang))),
+    w_u=w_u,
+    w_linear_mom=w_linear_mom,
+    w_angular_mom=w_angular_mom,
+    w_linear_acc=w_linear_acc,
+    w_angular_acc=w_angular_acc,
     gravity=gravity,
     force_size=6,
-    w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
-    w_frame=np.eye(6) * 2000,
-    umin=-handler.getModel().effortLimit[6:],
-    umax=handler.getModel().effortLimit[6:],
-    qmin=handler.getModel().lowerPositionLimit[7:],
-    qmax=handler.getModel().upperPositionLimit[7:],
-    mu=0.8,
-    Lfoot=0.1,
-    Wfoot=0.075,
 )
 
-problem = FullDynamicsProblem(handler)
+problem = CentroidalProblem(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getState(), T, 6, gravity[2])
+
+T_ds = 20
+T_ss = 80
 
 mpc_conf = dict(
     totalSteps=4,
@@ -158,19 +105,15 @@ mpc_conf = dict(
     max_iters=1,
     num_threads=2,
     swing_apex=0.15,
-    T_fly=80,
-    T_contact=20,
-    T=100,
+    T_fly=T_ss,
+    T_contact=T_ds,
+    T=T,
     x_translation=0.1,
     y_translation=0.1,
 )
 
-u0 = np.zeros(handler.getModel().nv - 6)
-mpc = MPC()
+mpc = MPC(x0, u0)
 mpc.initialize(mpc_conf, problem)
-
-T_ds = 20
-T_ss = 80
 
 """ Define contact sequence throughout horizon"""
 total_steps = 3
@@ -196,6 +139,3 @@ for s in range(total_steps):
     )
 
 mpc.generateFullHorizon(contact_phases)
-
-for i in range(200):
-    mpc.iterate(x0[: handler.getModel().nq], x0[handler.getModel().nq :])

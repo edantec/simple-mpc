@@ -200,7 +200,6 @@ void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
   conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
-  conf.w_x_ter = bp::extract<Eigen::MatrixXd>(settings["w_x_ter"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_linear_mom = bp::extract<Eigen::Matrix3d>(settings["w_linear_mom"]);
   conf.w_angular_mom = bp::extract<Eigen::Matrix3d>(settings["w_angular_mom"]);
@@ -219,7 +218,6 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
   settings["x0"] = conf.x0;
   settings["u0"] = conf.u0;
   settings["DT"] = conf.DT;
-  settings["w_x_ter"] = conf.w_x_ter;
   settings["w_u"] = conf.w_u;
   settings["w_linear_mom"] = conf.w_linear_mom;
   settings["w_angular_mom"] = conf.w_angular_mom;

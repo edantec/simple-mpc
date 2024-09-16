@@ -48,7 +48,6 @@ struct CentroidalSettings {
   double DT;
 
   // Cost function weights
-  Eigen::MatrixXd w_x_ter;       // State at terminal node
   Eigen::MatrixXd w_u;           // Control
   Eigen::Matrix3d w_linear_mom;  // Linear momentum
   Eigen::Matrix3d w_angular_mom; // Angular momentum

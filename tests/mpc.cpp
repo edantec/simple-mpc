@@ -41,10 +41,8 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   mpc_settings.T = T;
   mpc_settings.x_translation = 0.1;
   mpc_settings.y_translation = 0.;
-  Eigen::VectorXd u0(handler.getModel().nv - 6);
-  u0.setZero();
 
-  MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
+  MPC mpc = MPC(mpc_settings, problem);
 
   BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.us_.size(), T);
@@ -89,8 +87,9 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 110);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 220);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
-
+  std::cout << "ok" << std::endl;
   for (std::size_t i = 0; i < 10; i++) {
+    std::cout << "ok" << i << std::endl;
     mpc.iterate(settings.x0.head(handler.getModel().nq),
                 settings.x0.tail(handler.getModel().nv));
   }
@@ -101,8 +100,9 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
 
   BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
-
+  std::cout << "oki" << std::endl;
   for (std::size_t i = 0; i < 160; i++) {
+    std::cout << "oki" << i << std::endl;
     mpc.iterate(settings.x0.head(handler.getModel().nq),
                 settings.x0.tail(handler.getModel().nv));
   }
@@ -140,11 +140,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   mpc_settings.T_fly = 80;
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
-  Eigen::VectorXd u0(handler.getModel().nv + 6);
-  u0.setZero();
-  u0.head(12) << f1, f1;
 
-  MPC mpc = MPC(mpc_settings, problem, settings.x0, u0);
+  MPC mpc = MPC(mpc_settings, problem);
 
   BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.us_.size(), T);
@@ -228,11 +225,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
 
-  Eigen::VectorXd u0(12);
-  u0.setZero();
-  u0.head(12) << f1, f1;
-
-  MPC mpc = MPC(mpc_settings, problem, handler.getState(), u0);
+  MPC mpc = MPC(mpc_settings, problem);
 
   BOOST_CHECK_EQUAL(mpc.xs_.size(), T + 1);
   BOOST_CHECK_EQUAL(mpc.us_.size(), T);

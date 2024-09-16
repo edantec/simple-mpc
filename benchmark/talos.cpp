@@ -102,8 +102,7 @@ int main() {
   mpc_settings.max_iters = 1;
   mpc_settings.num_threads = 2;
 
-  MPC mpc(handler.getState(), u0);
-  mpc.initialize(mpc_settings, problemPtr);
+  MPC mpc = MPC(mpc_settings, problemPtr);
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;

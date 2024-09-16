@@ -63,8 +63,7 @@ void exposeMPC() {
   StdVectorPythonVisitor<std::vector<MapBool>, true>::expose("StdVec_MapBool");
 
   bp::class_<MPC>("MPC", bp::no_init)
-      .def(bp::init<const Eigen::VectorXd &, const Eigen::VectorXd &>(
-          bp::args("self", "x_multibody", "u0")))
+      .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize)
       .def("generateFullHorizon", &MPC::generateFullHorizon,
            bp::args("self", "contact_states"))

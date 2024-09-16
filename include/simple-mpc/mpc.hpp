@@ -96,9 +96,7 @@ protected:
 
 public:
   MPC();
-  MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem,
-      const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
-  MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0);
+  MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem);
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<Problem> problem);
 
@@ -158,7 +156,6 @@ public:
 
   // Initial quantities
   Eigen::VectorXd x0_;
-  Eigen::VectorXd x_multibody_;
   Eigen::VectorXd u0_;
 };
 

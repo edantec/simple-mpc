@@ -117,14 +117,20 @@ void RobotHandler::updateConfiguration(const Eigen::VectorXd &q,
   updateInternalData(updateJacobians);
 }
 
-void RobotHandler::updateState(const Eigen::VectorXd &x,
+void RobotHandler::updateState(const Eigen::VectorXd &q,
+                               const Eigen::VectorXd &v,
                                const bool updateJacobians) {
-  if (x.size() != rmodel_.nq + rmodel_.nv) {
-    throw std::runtime_error("x must have the dimensions of the robot state.");
+  if (q.size() != rmodel_.nq) {
+    throw std::runtime_error(
+        "q must have the dimensions of the robot configuration.");
   }
-  q_ = x.head(rmodel_.nq);
-  v_ = x.tail(rmodel_.nv);
-  x_ = x;
+  if (v.size() != rmodel_.nv) {
+    throw std::runtime_error(
+        "v must have the dimensions of the robot velocity.");
+  }
+  q_ = q;
+  v_ = v;
+  x_ << q, v;
   updateInternalData(updateJacobians);
 }
 

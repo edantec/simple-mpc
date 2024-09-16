@@ -83,7 +83,8 @@ public:
   // Set new robot state
   void updateConfiguration(const Eigen::VectorXd &q,
                            const bool updateJacobians);
-  void updateState(const Eigen::VectorXd &x, const bool updateJacobians);
+  void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v,
+                   const bool updateJacobians);
   void updateInternalData(const bool updateJacobians);
   void updateJacobiansMassMatrix();
 

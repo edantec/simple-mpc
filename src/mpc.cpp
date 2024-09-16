@@ -23,19 +23,10 @@ constexpr std::size_t maxiters = 10;
 
 MPC::MPC() {}
 
-MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem,
-         const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
-  x_multibody_ = x_multibody;
-  u0_ = u0;
+MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem) {
   horizon_iteration_ = 0;
 
   initialize(settings, problem);
-}
-
-MPC::MPC(const Eigen::VectorXd &x_multibody, const Eigen::VectorXd &u0) {
-  x_multibody_ = x_multibody;
-  u0_ = u0;
-  horizon_iteration_ = 0;
 }
 
 void MPC::initialize(const MPCSettings &settings,
@@ -69,10 +60,6 @@ void MPC::initialize(const MPCSettings &settings,
   solver_->force_initial_condition_ = true;
   // solver_->reg_min = 1e-6;
 
-  if (u0_.size() != problem_->getNu()) {
-    throw std::runtime_error(
-        "Provided u0 does not have the correct size problem.nu");
-  }
   ee_names_ = problem_->getHandler().getFeetNames();
 
   for (std::size_t i = 0; i < problem->getSize(); i++) {
@@ -86,7 +73,7 @@ void MPC::initialize(const MPCSettings &settings,
 
   for (std::size_t i = 0; i < problem_->getProblem()->numSteps(); i++) {
     xs_.push_back(x0_);
-    us_.push_back(u0_);
+    us_.push_back(problem_->getReferenceControl(0));
   }
   xs_.push_back(x0_);
 
@@ -156,8 +143,7 @@ void MPC::generateFullHorizon(
 void MPC::iterate(const Eigen::VectorXd &q_current,
                   const Eigen::VectorXd &v_current) {
 
-  problem_->getHandler().updateConfiguration(q_current, false);
-  x_multibody_ = problem_->getHandler().shapeState(q_current, v_current);
+  problem_->getHandler().updateState(q_current, v_current, false);
 
   // ~~TIMING~~ //
   recedeWithCycle();
