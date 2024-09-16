@@ -22,7 +22,8 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
   }
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (std::size_t i = 0; i < contact_sequence.size(); i++) {
-    stage_models.push_back(createStage(contact_sequence[i], force_sequence[i]));
+    StageModel stage = createStage(contact_sequence[i], force_sequence[i]);
+    stage_models.push_back(stage);
   }
 
   return stage_models;
@@ -69,7 +70,6 @@ std::size_t Problem::getSize() { return problem_->stages_.size(); }
 
 void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
                             const int force_size, const double gravity) {
-
   std::vector<ContactMap> contact_sequence;
   std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
 
@@ -98,7 +98,6 @@ void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
 
   problem_ =
       std::make_shared<TrajOptProblem>(x0, stage_models, createTerminalCost());
-
   problem_initialized_ = true;
 
   // createTerminalConstraint();

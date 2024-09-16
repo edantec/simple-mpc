@@ -42,8 +42,8 @@ int main() {
   size_t T = 100;
 
   FullDynamicsSettings problem_settings;
-  int nu = handler.get_rmodel().nv - 6;
-  int ndx = handler.get_rmodel().nv * 2;
+  int nu = handler.getModel().nv - 6;
+  int ndx = handler.getModel().nv * 2;
 
   Eigen::VectorXd w_x_vec(ndx);
   w_x_vec << 0, 0, 0, 100, 100, 100,  // Base pos/ori
@@ -65,7 +65,7 @@ int main() {
 
   Eigen::VectorXd u0 = Eigen::VectorXd::Zero(nu);
 
-  problem_settings.x0 = handler.get_x0();
+  problem_settings.x0 = handler.getState();
   problem_settings.u0 = u0;
   problem_settings.DT = 0.01;
   problem_settings.w_x = Eigen::MatrixXd::Zero(ndx, ndx);
@@ -78,17 +78,17 @@ int main() {
   problem_settings.w_forces = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_forces.diagonal() = w_forces;
   problem_settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
-  problem_settings.umin = -handler.get_rmodel().effortLimit.tail(nu);
-  problem_settings.umax = handler.get_rmodel().effortLimit.tail(nu);
-  problem_settings.qmin = handler.get_rmodel().lowerPositionLimit.tail(nu);
-  problem_settings.qmax = handler.get_rmodel().upperPositionLimit.tail(nu);
+  problem_settings.umin = -handler.getModel().effortLimit.tail(nu);
+  problem_settings.umax = handler.getModel().effortLimit.tail(nu);
+  problem_settings.qmin = handler.getModel().lowerPositionLimit.tail(nu);
+  problem_settings.qmax = handler.getModel().upperPositionLimit.tail(nu);
   problem_settings.mu = 0.8;
   problem_settings.Lfoot = 0.1;
   problem_settings.Wfoot = 0.075;
 
   FullDynamicsProblem problem = FullDynamicsProblem(handler);
   problem.initialize(problem_settings);
-  problem.create_problem(handler.get_x0(), T, 6, problem_settings.gravity[2]);
+  problem.createProblem(handler.getState(), T, 6, problem_settings.gravity[2]);
 
   std::shared_ptr<Problem> problemPtr =
       std::make_shared<FullDynamicsProblem>(problem);
@@ -96,46 +96,45 @@ int main() {
   MPCSettings mpc_settings;
   mpc_settings.totalSteps = 4;
   mpc_settings.min_force = 150;
-  mpc_settings.support_force =
-      -problem_settings.gravity[2] * handler.get_mass();
+  mpc_settings.support_force = -problem_settings.gravity[2] * handler.getMass();
   mpc_settings.TOL = 1e-4;
   mpc_settings.mu_init = 1e-8;
   mpc_settings.max_iters = 1;
   mpc_settings.num_threads = 2;
 
-  MPC mpc(handler.get_x0(), u0);
+  MPC mpc(handler.getState(), u0);
   mpc.initialize(mpc_settings, problemPtr);
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.get_ee_name(0), true});
-    contact_state.insert({handler.get_ee_name(1), true});
+    contact_state.insert({handler.getFootName(0), true});
+    contact_state.insert({handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.get_ee_name(0), true});
-    contact_state.insert({handler.get_ee_name(1), false});
+    contact_state.insert({handler.getFootName(0), true});
+    contact_state.insert({handler.getFootName(1), false});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.get_ee_name(0), true});
-    contact_state.insert({handler.get_ee_name(1), true});
+    contact_state.insert({handler.getFootName(0), true});
+    contact_state.insert({handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.get_ee_name(0), false});
-    contact_state.insert({handler.get_ee_name(1), true});
+    contact_state.insert({handler.getFootName(0), false});
+    contact_state.insert({handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.get_ee_name(0), true});
-    contact_state.insert({handler.get_ee_name(1), true});
+    contact_state.insert({handler.getFootName(0), true});
+    contact_state.insert({handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
 

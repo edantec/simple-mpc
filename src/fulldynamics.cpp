@@ -76,6 +76,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
 StageModel FullDynamicsProblem::createStage(
     const ContactMap &contact_map,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
+
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
 
@@ -261,7 +262,7 @@ CostStack FullDynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  term_cost.addCost(
+  /* term_cost.addCost(
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
   term_cost.addCost(
       QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent));
@@ -272,7 +273,7 @@ CostStack FullDynamicsProblem::createTerminalCost() {
 
     term_cost.addCost(
         QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
-  }
+  } */
 
   return term_cost;
 }

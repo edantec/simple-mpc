@@ -70,20 +70,20 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
       const ContactMap &contact_map,
       const std::map<std::string, Eigen::VectorXd> &force_refs) override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::StageModelTpl<double>,
-                                    "create_stage", contact_map, force_refs);
+                                    "createStage", contact_map, force_refs);
   }
 
   CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::CostStackTpl<double>,
-                                    "createTerminalCost");
+                                    "createTerminalCost", );
   }
 
   void createTerminalConstraint() override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint");
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint", );
   }
 
   void updateTerminalConstraint() override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint");
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint", );
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -129,7 +129,7 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
   }
 
   const Eigen::VectorXd getProblemState() override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState");
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", );
   }
 
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref) {
@@ -156,17 +156,17 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
 
   CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               FullDynamicsProblem, createTerminalCost);
+                               FullDynamicsProblem, createTerminalCost, );
   }
 
   void createTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
-                               createTerminalConstraint);
+                               createTerminalConstraint, );
   }
 
   void updateTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
-                               updateTerminalConstraint);
+                               updateTerminalConstraint, );
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -215,7 +215,7 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
 
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
-                               getProblemState);
+                               getProblemState, );
   }
 };
 
@@ -232,17 +232,17 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
 
   CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               CentroidalProblem, createTerminalCost);
+                               CentroidalProblem, createTerminalCost, );
   }
 
   void createTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
-                               createTerminalConstraint);
+                               createTerminalConstraint, );
   }
 
   void updateTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
-                               updateTerminalConstraint);
+                               updateTerminalConstraint, );
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -291,7 +291,7 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
 
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
-                               getProblemState);
+                               getProblemState, );
   }
 };
 
@@ -309,17 +309,17 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
 
   CostStack createTerminalCost() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::CostStackTpl<double>,
-                               KinodynamicsProblem, createTerminalCost);
+                               KinodynamicsProblem, createTerminalCost, );
   }
 
   void createTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
-                               createTerminalConstraint);
+                               createTerminalConstraint, );
   }
 
   void updateTerminalConstraint() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
-                               updateTerminalConstraint);
+                               updateTerminalConstraint, );
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -368,7 +368,7 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
 
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
-                               getProblemState);
+                               getProblemState, );
   }
 };
 

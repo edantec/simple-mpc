@@ -70,8 +70,7 @@ StageModel CentroidalProblem::createStage(
   CentroidalFwdDynamics ode =
       CentroidalFwdDynamics(space, handler_.getMass(), settings_.gravity,
                             contact_map, settings_.force_size);
-  IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+  IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
   return StageModel(rcost, dyn_model);
 }
@@ -98,8 +97,8 @@ void CentroidalProblem::setReferencePoses(
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
-  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
-      &*problem_->stages_[t]->dynamics_);
+  IntegratorEuler *dyn =
+      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
   CentroidalFwdDynamics *cent_dyn =
       dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
 
@@ -131,8 +130,8 @@ void CentroidalProblem::setReferencePose(const std::size_t t,
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
-      &*problem_->stages_[t]->dynamics_);
+  IntegratorEuler *dyn =
+      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
   CentroidalFwdDynamics *cent_dyn =
       dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
   cent_dyn->contact_map_.setContactPose(ee_name, pose_ref.translation());
@@ -156,8 +155,8 @@ CentroidalProblem::getReferencePose(const std::size_t t,
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  IntegratorSemiImplEuler *dyn = dynamic_cast<IntegratorSemiImplEuler *>(
-      &*problem_->stages_[t]->dynamics_);
+  IntegratorEuler *dyn =
+      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
   CentroidalFwdDynamics *cent_dyn =
       dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
 

@@ -236,7 +236,7 @@ void MPC::updateStepTrackerReferences() {
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     pose.translation() = foot_trajectories_.getReference(
         name)[problem_->getProblem()->stages_.size() - 1];
-    setTerminalReferencePose(name, pose);
+    // setTerminalReferencePose(name, pose);
   }
 }
 

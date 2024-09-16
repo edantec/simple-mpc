@@ -54,8 +54,8 @@ handler.initialize(design_conf)
 
 T = 100
 
-x0 = handler.get_x0()
-nu = handler.get_rmodel().nv - 6
+x0 = handler.getState()
+nu = handler.getModel().nv - 6
 w_x_vec = np.array(
     [
         0,
@@ -125,7 +125,7 @@ w_forces_ang = np.ones(3) * 0.01
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
-    x0=handler.get_x0(),
+    x0=handler.getState(),
     u0=np.zeros(nu),
     DT=0.01,
     w_x=np.diag(w_x_vec),
@@ -135,10 +135,10 @@ problem_conf = dict(
     force_size=6,
     w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
     w_frame=np.eye(6) * 2000,
-    umin=-handler.get_rmodel().effortLimit[6:],
-    umax=handler.get_rmodel().effortLimit[6:],
-    qmin=handler.get_rmodel().lowerPositionLimit[7:],
-    qmax=handler.get_rmodel().upperPositionLimit[7:],
+    umin=-handler.getModel().effortLimit[6:],
+    umax=handler.getModel().effortLimit[6:],
+    qmin=handler.getModel().lowerPositionLimit[7:],
+    qmax=handler.getModel().upperPositionLimit[7:],
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
@@ -146,24 +146,30 @@ problem_conf = dict(
 
 problem = FullDynamicsProblem(handler)
 problem.initialize(problem_conf)
-problem.create_problem(handler.get_x0(), T, 6, gravity[2])
+problem.createProblem(handler.getState(), T, 6, gravity[2])
 
 mpc_conf = dict(
     totalSteps=4,
     ddpIteration=1,
     min_force=150,
-    support_force=-handler.get_mass() * gravity[2],
+    support_force=-handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
     num_threads=2,
+    swing_apex=0.15,
+    T_fly=80,
+    T_contact=20,
+    T=100,
+    x_translation=0.1,
+    y_translation=0.1,
 )
 
-u0 = np.zeros(handler.get_rmodel().nv - 6)
-mpc = MPC(handler.get_x0(), u0)
+u0 = np.zeros(handler.getModel().nv - 6)
+mpc = MPC(handler.getState(), u0)
 mpc.initialize(mpc_conf, problem)
 
-T_ds = 100
+T_ds = 20
 T_ss = 80
 
 """ Define contact sequence throughout horizon"""
@@ -189,4 +195,7 @@ for s in range(total_steps):
         + [contact_phase_double] * T_ds
     )
 
-# mpc.generateFullHorizon(contact_phases)
+mpc.generateFullHorizon(contact_phases)
+
+for i in range(200):
+    mpc.iterate(x0[: handler.getModel().nq], x0[handler.getModel().nq :])

@@ -33,12 +33,14 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   mpc_settings.TOL = 1e-6;
   mpc_settings.mu_init = 1e-8;
-  mpc_settings.num_threads = 8;
+  mpc_settings.num_threads = 1;
 
   mpc_settings.swing_apex = 0.1;
   mpc_settings.T_fly = 80;
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
+  mpc_settings.x_translation = 0.1;
+  mpc_settings.y_translation = 0.;
   Eigen::VectorXd u0(handler.getModel().nv - 6);
   u0.setZero();
 
@@ -236,7 +238,6 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   BOOST_CHECK_EQUAL(mpc.us_.size(), T);
 
   std::vector<std::map<std::string, bool>> contact_states;
-  // std::vector<std::vector<bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
     contact_state.insert({handler.getFootName(0), true});
@@ -272,12 +273,6 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
 
   BOOST_CHECK_EQUAL(mpc.getFullHorizon().size(), 130);
   BOOST_CHECK_EQUAL(mpc.getFullHorizonData().size(), 130);
-
-  /* for (std::size_t i = 0; i < 50; i++)
-    mpc.recedeWithCycle();
-
-  BOOST_CHECK_EQUAL(
-      mpc.get_problem()->get_reference_force(80, "right_sole_link"), f0); */
 
   for (std::size_t i = 0; i < 10; i++) {
     mpc.iterate(handler.getState().head(handler.getModel().nq),

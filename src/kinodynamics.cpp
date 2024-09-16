@@ -53,7 +53,6 @@ StageModel KinodynamicsProblem::createStage(
   std::vector<bool> contact_states = contact_map.getContactStates();
   std::vector<std::string> contact_names = contact_map.getContactNames();
   auto contact_poses = contact_map.getContactPoses();
-
   computeControlFromForces(force_refs);
 
   auto cent_mom = CentroidalMomentumResidual(
@@ -61,7 +60,6 @@ StageModel KinodynamicsProblem::createStage(
   auto centder_mom = CentroidalMomentumDerivativeResidual(
       space.ndx(), handler_.getModel(), settings_.gravity, contact_states,
       handler_.getFeetIds(), 6);
-
   rcost.addCost(QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
   rcost.addCost(QuadraticControlCost(space, control_ref_, settings_.w_u));
   rcost.addCost(QuadraticResidualCost(space, cent_mom, settings_.w_cent));

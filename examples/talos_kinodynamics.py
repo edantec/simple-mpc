@@ -54,13 +54,13 @@ handler.initialize(design_conf)
 
 T = 100
 
-x0 = handler.get_x0()
-nu = handler.get_rmodel().nv - 6 + len(handler.get_ee_names()) * 6
+x0 = handler.getState()
+nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
 
 gravity = np.array([0, 0, -9.81])
 fref = np.zeros(6)
-fref[2] = -handler.get_mass() / len(handler.get_ee_names()) * gravity[2]
-u0 = np.concatenate((fref, fref, np.zeros(handler.get_rmodel().nv - 6)))
+fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
+u0 = np.concatenate((fref, fref, np.zeros(handler.getModel().nv - 6)))
 
 w_x = np.array(
     [
@@ -131,7 +131,7 @@ w_u = np.concatenate(
         w_angforce,
         w_linforce,
         w_angforce,
-        np.ones(handler.get_rmodel().nv - 6) * 1e-4,
+        np.ones(handler.getModel().nv - 6) * 1e-4,
     )
 )
 w_u = np.diag(w_u)
@@ -144,7 +144,7 @@ w_centder_ang = np.ones(3) * 0.1
 w_centder = np.diag(np.concatenate((w_centder_lin, w_centder_ang)))
 
 problem_conf = dict(
-    x0=handler.get_x0(),
+    x0=handler.getState(),
     u0=u0,
     DT=0.01,
     w_x=w_x,
@@ -154,28 +154,34 @@ problem_conf = dict(
     gravity=gravity,
     force_size=6,
     w_frame=np.eye(6) * w_LFRF,
-    umin=-handler.get_rmodel().effortLimit[6:],
-    umax=handler.get_rmodel().effortLimit[6:],
-    qmin=handler.get_rmodel().lowerPositionLimit[7:],
-    qmax=handler.get_rmodel().upperPositionLimit[7:],
+    umin=-handler.getModel().effortLimit[6:],
+    umax=handler.getModel().effortLimit[6:],
+    qmin=handler.getModel().lowerPositionLimit[7:],
+    qmax=handler.getModel().upperPositionLimit[7:],
 )
 
 problem = KinodynamicsProblem(handler)
 problem.initialize(problem_conf)
-problem.create_problem(handler.get_x0(), T, 6, gravity[2])
+problem.createProblem(handler.getState(), T, 6, gravity[2])
 
 mpc_conf = dict(
     totalSteps=4,
     ddpIteration=1,
     min_force=150,
-    support_force=-handler.get_mass() * gravity[2],
+    support_force=-handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
     num_threads=2,
+    swing_apex=0.15,
+    T_fly=80,
+    T_contact=20,
+    T=100,
+    x_translation=0.1,
+    y_translation=0.1,
 )
 
-mpc = MPC(handler.get_x0(), u0)
+mpc = MPC(handler.getState(), u0)
 mpc.initialize(mpc_conf, problem)
 
 T_ds = 100

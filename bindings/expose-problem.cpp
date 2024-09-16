@@ -377,13 +377,13 @@ void exposeKinodynamicsProblem() {
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeKino, bp::args("self", "settings"))
-      .def("get_settings", &getSettingsKino)
+      .def("getSettings", &getSettingsKino)
       .def("initialize",
            bp::make_function(
                &KinodynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("create_stage", &createKinoStage)
-      .def("create_problem", &createKinoProblem)
+      .def("createStage", &createKinoStage)
+      .def("createProblem", &createKinoProblem)
       .def("setReferencePose", &KinodynamicsProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("setReferencePoses", &KinodynamicsProblem::setReferencePoses,
