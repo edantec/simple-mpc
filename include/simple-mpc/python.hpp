@@ -13,6 +13,8 @@ void exposeFullDynamicsProblem();
 void exposeCentroidalProblem();
 void exposeKinodynamicsProblem();
 void exposeMPC();
+void exposeIDSolver();
+void exposeIKIDSolver();
 
 } // namespace python
 } // namespace simple_mpc

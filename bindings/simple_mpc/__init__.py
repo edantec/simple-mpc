@@ -7,4 +7,6 @@ from .simple_mpc_pywrap import (
     CentroidalProblem,
     KinodynamicsProblem,
     MPC,
+    IKIDSolver,
+    IDSolver,
 )

@@ -34,6 +34,10 @@ struct Settings;
 struct FullDynamicsSettings;
 class RobotHandler;
 class FullDynamicsProblem;
+class KinodynamicsProblem;
+class CentroidalProblem;
 class Problem;
+class IDSolver;
+class IKIDSolver;
 
 } // namespace simple_mpc

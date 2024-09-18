@@ -28,7 +28,6 @@ using Manifold = aligator::ManifoldAbstractTpl<double>;
 
 struct IDSettings {
 public:
-  int nk;                                         // Number of contacts
   std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
   double mu;                                      // Friction parameter
   double Lfoot;    // Half-length of foot (if contact 6D)
@@ -42,7 +41,6 @@ public:
 
 struct IKIDSettings {
 public:
-  int nk;
   std::vector<Eigen::VectorXd> Kp_gains;          // Proportional gains
   std::vector<Eigen::VectorXd> Kd_gains;          // Derivative gains
   std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
@@ -69,6 +67,7 @@ protected:
   std::shared_ptr<proxqp::dense::QP<double>> qp_;
   pinocchio::Model model_;
   int force_dim_;
+  int nk_;
 
   Eigen::MatrixXd H_;
   Eigen::MatrixXd A_;
@@ -113,6 +112,7 @@ protected:
   std::shared_ptr<proxqp::dense::QP<double>> qp_;
   pinocchio::Model model_;
   int force_dim_;
+  int nk_;
   int fs_;
 
   Eigen::MatrixXd H_;

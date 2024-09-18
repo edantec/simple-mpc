@@ -14,7 +14,6 @@ BOOST_AUTO_TEST_CASE(ID_solver) {
   RobotHandler handler = getTalosHandler();
 
   IDSettings settings;
-  settings.nk = 2;
   settings.contact_ids = handler.getFeetIds();
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
@@ -63,7 +62,6 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
 
   vec_base.push_back(handler.getRootId());
   IKIDSettings settings;
-  settings.nk = 2;
   settings.contact_ids = handler.getFeetIds();
   settings.fixed_frame_ids = vec_base;
   settings.x0 = handler.getState();

@@ -21,11 +21,12 @@ void IDSolver::initialize(const IDSettings &settings,
   settings_ = settings;
   model_ = model;
 
-  force_dim_ = (int)settings.force_size * settings.nk;
+  nk_ = (int)settings.contact_ids.size();
+  force_dim_ = (int)settings.force_size * nk_;
 
   int n = 2 * model_.nv - 6 + force_dim_;
   int neq = model_.nv + force_dim_;
-  int nin = 9 * settings.nk;
+  int nin = 9 * nk_;
 
   baum_gains_.setZero();
   baum_gains_.diagonal() << settings_.kd, settings_.kd, settings_.kd;
@@ -51,7 +52,7 @@ void IDSolver::initialize(const IDSettings &settings,
         settings.Lfoot, 0, -1, 0, 0, 0, settings.Lfoot, 0, 1, 0;
   }
 
-  for (long i = 0; i < settings_.nk; i++) {
+  for (long i = 0; i < nk_; i++) {
     C_.block(i * 9, model_.nv + i * settings_.force_size, 9,
              settings_.force_size) = Cmin_;
   }
@@ -62,7 +63,7 @@ void IDSolver::initialize(const IDSettings &settings,
   Jdot_.resize(6, model_.nv);
   Jdot_.setZero();
 
-  u_ = Eigen::VectorXd::Ones(9 * settings.nk) * 100000;
+  u_ = Eigen::VectorXd::Ones(9 * nk_) * 100000;
   g_ = Eigen::VectorXd::Zero(n);
   H_ = Eigen::MatrixXd::Zero(n, n);
   H_.topLeftCorner(model_.nv, model_.nv).diagonal() =
@@ -99,7 +100,7 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
   gamma_.setZero();
   l_.setZero();
   C_.setZero();
-  for (long i = 0; i < settings_.nk; i++) {
+  for (long i = 0; i < nk_; i++) {
     if (contact_state[(size_t)i]) {
       Jvel_ = getFrameVelocity(model_, data, settings_.contact_ids[(size_t)i],
                                pinocchio::LOCAL_WORLD_ALIGNED);
@@ -189,11 +190,12 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   dq_diff_.setZero();
 
   fs_ = (int)settings.force_size;
-  force_dim_ = fs_ * settings.nk;
+  nk_ = (int)settings.contact_ids.size();
+  force_dim_ = fs_ * nk_;
 
   int n = 2 * model_.nv - 6 + force_dim_;
   int neq = model_.nv + force_dim_;
-  int nin = 9 * settings.nk;
+  int nin = 9 * nk_;
 
   A_.resize(neq, n);
   A_.setZero();
@@ -226,7 +228,7 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
         settings.Lfoot, 0, -1, 0, 0, 0, settings.Lfoot, 0, 1, 0;
   }
 
-  for (long i = 0; i < settings_.nk; i++) {
+  for (long i = 0; i < nk_; i++) {
     C_.block(i * 9, model_.nv + i * settings_.force_size, 9,
              settings_.force_size) = Cmin_;
   }
@@ -239,7 +241,7 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   dJframe_.resize(6, model_.nv);
   dJframe_.setZero();
 
-  u_ = Eigen::VectorXd::Ones(9 * settings.nk) * 100000;
+  u_ = Eigen::VectorXd::Ones(9 * nk_) * 100000;
   g_ = Eigen::VectorXd::Zero(n);
   H_ = Eigen::MatrixXd::Zero(n, n);
   H_.block(model_.nv, model_.nv, force_dim_, force_dim_).diagonal() =
