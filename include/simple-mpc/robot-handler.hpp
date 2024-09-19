@@ -105,7 +105,7 @@ public:
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
   const double &getMass() { return mass_; }
   const Model &getModel() { return rmodel_; }
-  const Model &getModelComplete() { return rmodel_complete_; }
+  const Model &getCompleteModel() { return rmodel_complete_; }
   const Data &getData() { return rdata_; }
   const Eigen::VectorXd &getConfiguration() { return q_; }
   const Eigen::VectorXd &getVelocity() { return v_; }

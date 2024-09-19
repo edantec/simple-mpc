@@ -85,6 +85,8 @@ void exposeMPC() {
       .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
            bp::return_internal_reference<>(),
            "Get the trajectory optimal problem.")
+      .def("getSolver", &MPC::getSolver, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)

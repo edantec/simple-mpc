@@ -21,6 +21,20 @@ def difference(x1, x2, model):
     return dx
 
 
+def shapeState(q_current, v_current, nq, nxq, cj_ids):
+    x_internal = np.zeros(nxq)
+    x_internal[:7] = q_current[:7]
+    x_internal[nq : nq + 6] = v_current[:6]
+    i = 0
+    for jointID in cj_ids:
+        if jointID > 1:
+            x_internal[i + 7] = q_current[jointID + 5]
+            x_internal[nq + i + 6] = v_current[jointID + 4]
+            i += 1
+
+    return x_internal
+
+
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
 design_conf = dict(
@@ -62,6 +76,8 @@ design_conf = dict(
 handler = RobotHandler()
 handler.initialize(design_conf)
 
+nq = handler.getModel().nq
+nv = handler.getModel().nv
 T = 100
 
 x0 = handler.getState()
@@ -70,7 +86,7 @@ nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
 gravity = np.array([0, 0, -9.81])
 fref = np.zeros(6)
 fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
-u0 = np.concatenate((fref, fref, np.zeros(handler.getModel().nv - 6)))
+u0 = np.concatenate((fref, fref, np.zeros(nv - 6)))
 
 w_x = np.array(
     [
@@ -191,10 +207,10 @@ mpc_conf = dict(
     y_translation=0.0,
 )
 
-mpc = MPC(handler.getState(), u0)
+mpc = MPC()
 mpc.initialize(mpc_conf, problem)
 
-T_ds = 100
+T_ds = 20
 T_ss = 80
 
 """ Define contact sequence throughout horizon"""
@@ -235,7 +251,8 @@ id_conf = dict(
     verbose=False,
 )
 
-qp = IDSolver(id_conf, handler.getModel())
+qp = IDSolver()
+qp.initialize(id_conf, handler.getModel())
 
 """ Initialize simulation"""
 print("Initialize simu")
@@ -244,16 +261,24 @@ device = BulletRobot(
     modelPath,
     URDF_FILENAME,
     1e-3,
-    handler.getModelComplete(),
+    handler.getCompleteModel(),
 )
 device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
 device.initializeJoints(handler.getCompleteConfiguration())
-q_current, v_current = device.measureState()
+qc_current, vc_current = device.measureState()
+
+x_measured = shapeState(
+    qc_current, vc_current, nq, nq + nv, handler.getControlledJointsIDs()
+)
+
+q_current = x_measured[:nq]
+v_current = x_measured[nq:]
 
 Tmpc = len(contact_phases)
-
+nk = 2
+force_size = 6
 for t in range(Tmpc):
-    print("Time " + str(t))
+    # print("Time " + str(t))
     LF_takeoffs = mpc.getFootTakeoffTimings("left_sole_link")
     RF_takeoffs = mpc.getFootTakeoffTimings("right_sole_link")
     LF_lands = mpc.getFootLandTimings("left_sole_link")
@@ -270,11 +295,49 @@ for t in range(Tmpc):
     )
 
     mpc.iterate(q_current, v_current)
-
+    a0 = (
+        mpc.getSolver()
+        .workspace.problem_data.stage_data[0]
+        .dynamics_data.continuous_data.xdot[handler.getModel().nv :]
+    )
+    contact_states = (
+        mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
+    )
+    # print("Left " + str(contact_states[0]) + ", right " + str(contact_states[1]))
     for j in range(10):
-        x_measured = np.concatenate((q_current, v_current))
+        qc_current, vc_current = device.measureState()
+        x_measured = np.concatenate((qc_current, vc_current))
 
-        current_torque = mpc.us[0] - mpc.K0 @ difference(
-            handler.getModel(), x_measured, mpc.xs[0]
+        x_measured = shapeState(
+            qc_current, vc_current, nq, nq + nv, handler.getControlledJointsIDs()
         )
-        device.execute(current_torque)
+
+        q_current = x_measured[:nq]
+        v_current = x_measured[nq:]
+
+        state_diff = difference(x_measured, mpc.xs[0], handler.getModel())
+        mpc.getHandler().updateState(q_current, v_current, True)
+        a0[6:] = (
+            mpc.us[0][nk * force_size :]
+            - 1
+            * mpc.getSolver().results.controlFeedbacks()[0][nk * force_size :]
+            @ state_diff
+        )
+        forces = (
+            mpc.us[0][: nk * force_size]
+            - 1
+            * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
+            @ state_diff
+        )
+        qp.solve_qp(
+            handler.getData(),
+            contact_states,
+            v_current,
+            a0,
+            forces,
+            handler.getMassMatrix(),
+        )
+        solved_acc = qp.solved_acc
+        solved_forces = qp.solved_forces
+        solved_torque = qp.solved_torque
+        device.execute(solved_torque)

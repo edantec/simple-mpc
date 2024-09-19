@@ -24,8 +24,6 @@ constexpr std::size_t maxiters = 10;
 MPC::MPC() {}
 
 MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem) {
-  horizon_iteration_ = 0;
-
   initialize(settings, problem);
 }
 
@@ -33,6 +31,7 @@ void MPC::initialize(const MPCSettings &settings,
                      std::shared_ptr<Problem> problem) {
   settings_ = settings;
   problem_ = problem;
+  horizon_iteration_ = 0;
 
   std::map<std::string, Eigen::Vector3d> initial_poses;
   Eigen::Vector3d rel_trans;
@@ -150,8 +149,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   updateSupportTiming();
 
   // ~~REFERENCES~~ //
-  x0_ = problem_->getProblemState();
-  // updateStepTrackerLastReference();
+  x0_ << q_current, v_current;
   updateStepTrackerReferences();
 
   xs_.erase(xs_.begin());
@@ -222,7 +220,7 @@ void MPC::updateStepTrackerReferences() {
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     pose.translation() = foot_trajectories_.getReference(
         name)[problem_->getProblem()->stages_.size() - 1];
-    // setTerminalReferencePose(name, pose);
+    setTerminalReferencePose(name, pose);
   }
 }
 

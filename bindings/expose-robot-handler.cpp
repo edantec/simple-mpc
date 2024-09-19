@@ -69,6 +69,10 @@ void exposeHandler() {
            bp::make_function(
                &RobotHandler::getModel,
                bp::return_value_policy<bp::reference_existing_object>()))
+      .def("getCompleteModel",
+           bp::make_function(
+               &RobotHandler::getCompleteModel,
+               bp::return_value_policy<bp::reference_existing_object>()))
       .def("getData",
            bp::make_function(
                &RobotHandler::getData,
@@ -80,6 +84,10 @@ void exposeHandler() {
       .def("getConfiguration",
            bp::make_function(
                &RobotHandler::getConfiguration,
+               bp::return_value_policy<bp::reference_existing_object>()))
+      .def("getCompleteConfiguration",
+           bp::make_function(
+               &RobotHandler::getCompleteConfiguration,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("getVelocity",
            bp::make_function(
@@ -108,6 +116,10 @@ void exposeHandler() {
       .def("getFeetNames",
            bp::make_function(
                &RobotHandler::getFeetNames,
+               bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getFeetIds",
+           bp::make_function(
+               &RobotHandler::getFeetIds,
                bp::return_value_policy<bp::copy_const_reference>()))
       .def("getFootPose",
            bp::make_function(

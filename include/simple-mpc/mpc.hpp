@@ -15,6 +15,7 @@
 #include "aligator/modelling/dynamics/kinodynamics-fwd.hpp"
 #include "aligator/modelling/multibody/centroidal-momentum-derivative.hpp"
 #include "aligator/modelling/multibody/centroidal-momentum.hpp"
+#include "aligator/solvers/proxddp/solver-proxddp.hpp"
 #include <pinocchio/algorithm/proximal.hpp>
 
 #include "simple-mpc/base-problem.hpp"
@@ -135,6 +136,7 @@ public:
 
   std::shared_ptr<Problem> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
+  SolverProxDDP &getSolver() { return *solver_; }
   RobotHandler &getHandler() { return problem_->getHandler(); }
   std::vector<int> &getFootTakeoffTimings(const std::string &ee_name) {
     return foot_takeoff_times_.at(ee_name);
