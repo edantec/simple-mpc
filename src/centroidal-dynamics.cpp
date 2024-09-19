@@ -22,19 +22,6 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
     throw std::runtime_error("settings.u0 does not have the correct size nu");
   }
   control_ref_ = settings_.u0;
-
-  // Set up cost names used in kinodynamics problem
-  std::size_t cost_incr = 0;
-  cost_map_.insert({"control_cost", cost_incr});
-  cost_incr++;
-  cost_map_.insert({"linear_mom_cost", cost_incr});
-  cost_incr++;
-  cost_map_.insert({"angular_mom_cost", cost_incr});
-  cost_incr++;
-  cost_map_.insert({"linear_acc_cost", cost_incr});
-  cost_incr++;
-  cost_map_.insert({"angular_acc_cost", cost_incr});
-  cost_incr++;
 }
 
 StageModel CentroidalProblem::createStage(
@@ -57,14 +44,19 @@ StageModel CentroidalProblem::createStage(
       space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
 
-  rcost.addCost(QuadraticControlCost(space, control_ref_, settings_.w_u));
+  rcost.addCost("control_cost",
+                QuadraticControlCost(space, control_ref_, settings_.w_u));
   rcost.addCost(
+      "linear_mom_cost",
       QuadraticResidualCost(space, linear_mom, settings_.w_linear_mom));
   rcost.addCost(
+      "angular_mom_cost",
       QuadraticResidualCost(space, angular_mom, settings_.w_angular_mom));
   rcost.addCost(
+      "linear_acc_cost",
       QuadraticResidualCost(space, linear_acc, settings_.w_linear_acc));
   rcost.addCost(
+      "angular_acc_cost",
       QuadraticResidualCost(space, angular_acc, settings_.w_angular_acc));
 
   CentroidalFwdDynamics ode =
@@ -109,14 +101,14 @@ void CentroidalProblem::setReferencePoses(
   CostStack *cs = getCostStack(t);
 
   for (auto ee_name : handler_.getFeetNames()) {
-    QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
-        &*cs->components_[cost_map_.at("linear_acc_cost")]);
-    QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
-        &*cs->components_[cost_map_.at("angular_acc_cost")]);
+    QuadraticResidualCost *qrc1 =
+        cs->getComponent<QuadraticResidualCost>("linear_acc_cost");
+    QuadraticResidualCost *qrc2 =
+        cs->getComponent<QuadraticResidualCost>("angular_acc_cost");
     CentroidalAccelerationResidual *car =
-        dynamic_cast<CentroidalAccelerationResidual *>(&*qrc1->residual_);
+        qrc1->getResidual<CentroidalAccelerationResidual>();
     AngularAccelerationResidual *aar =
-        dynamic_cast<AngularAccelerationResidual *>(&*qrc2->residual_);
+        qrc2->getResidual<AngularAccelerationResidual>();
     car->contact_map_.setContactPose(ee_name,
                                      pose_refs.at(ee_name).translation());
     aar->contact_map_.setContactPose(ee_name,
@@ -137,14 +129,14 @@ void CentroidalProblem::setReferencePose(const std::size_t t,
   cent_dyn->contact_map_.setContactPose(ee_name, pose_ref.translation());
 
   CostStack *cs = getCostStack(t);
-  QuadraticResidualCost *qrc1 = dynamic_cast<QuadraticResidualCost *>(
-      &*cs->components_[cost_map_.at("linear_acc_cost")]);
-  QuadraticResidualCost *qrc2 = dynamic_cast<QuadraticResidualCost *>(
-      &*cs->components_[cost_map_.at("angular_acc_cost")]);
+  QuadraticResidualCost *qrc1 =
+      cs->getComponent<QuadraticResidualCost>("linear_acc_cost");
+  QuadraticResidualCost *qrc2 =
+      cs->getComponent<QuadraticResidualCost>("angular_acc_cost");
   CentroidalAccelerationResidual *car =
-      dynamic_cast<CentroidalAccelerationResidual *>(&*qrc1->residual_);
+      qrc1->getResidual<CentroidalAccelerationResidual>();
   AngularAccelerationResidual *aar =
-      dynamic_cast<AngularAccelerationResidual *>(&*qrc2->residual_);
+      qrc2->getResidual<AngularAccelerationResidual>();
   car->contact_map_.setContactPose(ee_name, pose_ref.translation());
   aar->contact_map_.setContactPose(ee_name, pose_ref.translation());
 }
@@ -207,8 +199,10 @@ CostStack CentroidalProblem::createTerminalCost() {
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   term_cost.addCost(
+      "linear_mom_cost",
       QuadraticResidualCost(ter_space, linear_mom, settings_.w_linear_mom));
   term_cost.addCost(
+      "angular_mom_cost",
       QuadraticResidualCost(ter_space, angular_mom, settings_.w_angular_mom));
 
   return term_cost;

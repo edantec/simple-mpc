@@ -32,17 +32,15 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
 void Problem::setReferenceControl(const std::size_t i,
                                   const Eigen::VectorXd &u_ref) {
   CostStack *cs = getCostStack(i);
-  QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
-      &*cs->components_[cost_map_.at("control_cost")]);
-
+  QuadraticControlCost *qc =
+      cs->getComponent<QuadraticControlCost>("control_cost");
   qc->setTarget(u_ref);
 }
 
 const Eigen::VectorXd Problem::getReferenceControl(const std::size_t t) {
   CostStack *cs = getCostStack(t);
-  QuadraticControlCost *qc = dynamic_cast<QuadraticControlCost *>(
-      &*cs->components_[cost_map_.at("control_cost")]);
-
+  QuadraticControlCost *qc =
+      cs->getComponent<QuadraticControlCost>("control_cost");
   return qc->getTarget();
 }
 

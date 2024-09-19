@@ -1,5 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
+#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/centroidal-dynamics.hpp"
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/fwd.hpp"
@@ -13,14 +14,6 @@ using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(fulldynamics) {
   RobotHandler handler = getTalosHandler();
-
-  FullDynamicsSettings settings = getFullDynamicsSettings(handler);
-
-  FullDynamicsProblem fdproblem(settings, handler);
-
-  BOOST_CHECK_EQUAL(fdproblem.getCostMap().at("control_cost"), 1);
-  BOOST_CHECK_EQUAL(fdproblem.getCostMap().at("centroidal_cost"), 2);
-  BOOST_CHECK_EQUAL(fdproblem.getCostMap().at("left_sole_link_pose_cost"), 3);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -37,6 +30,9 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
+
+  FullDynamicsSettings settings = getFullDynamicsSettings(handler);
+  FullDynamicsProblem fdproblem(settings, handler);
   StageModel sm = fdproblem.createStage(cm, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
@@ -45,7 +41,19 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
   fdproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
 
+  CostStack *csp =
+      dynamic_cast<CostStack *>(&*fdproblem.getProblem()->stages_[0]->cost_);
+  QuadraticControlCost *cc =
+      csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost *crc =
+      csp->getComponent<QuadraticResidualCost>("centroidal_cost");
+  QuadraticResidualCost *cpc =
+      csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
+
   BOOST_CHECK_EQUAL(fdproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
+  BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
+  BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
 
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
   fdproblem.setReferencePose(4, "left_sole_link", pose_left_random);
@@ -84,13 +92,6 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
   RobotHandler handler = getTalosHandler();
-  KinodynamicsSettings settings = getKinodynamicsSettings(handler);
-
-  KinodynamicsProblem knproblem(settings, handler);
-
-  BOOST_CHECK_EQUAL(knproblem.getCostMap().at("control_cost"), 1);
-  BOOST_CHECK_EQUAL(knproblem.getCostMap().at("centroidal_cost"), 2);
-  BOOST_CHECK_EQUAL(knproblem.getCostMap().at("left_sole_link_pose_cost"), 4);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -101,6 +102,9 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   contact_poses.push_back(p1);
   contact_poses.push_back(p2);
   ContactMap cm(contact_names, contact_states, contact_poses);
+
+  KinodynamicsSettings settings = getKinodynamicsSettings(handler);
+  KinodynamicsProblem knproblem(settings, handler);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -115,6 +119,18 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 
   knproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
 
+  CostStack *csp =
+      dynamic_cast<CostStack *>(&*knproblem.getProblem()->stages_[0]->cost_);
+  QuadraticControlCost *cc =
+      csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost *crc =
+      csp->getComponent<QuadraticResidualCost>("centroidal_cost");
+  QuadraticResidualCost *cpc =
+      csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
+
+  BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
+  BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
+  BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
   BOOST_CHECK_EQUAL(knproblem.getProblem()->stages_.size(), 100);
 
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
@@ -156,12 +172,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 BOOST_AUTO_TEST_CASE(centroidal) {
   RobotHandler handler = getTalosHandler();
   CentroidalSettings settings = getCentroidalSettings(handler);
-
   CentroidalProblem cproblem(settings, handler);
-
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("control_cost"), 0);
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("linear_mom_cost"), 1);
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("angular_acc_cost"), 4);
 
   std::vector<bool> contact_states = {true, false};
   std::vector<std::string> contact_names = {"left_sole_link",
@@ -186,6 +197,18 @@ BOOST_AUTO_TEST_CASE(centroidal) {
 
   cproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
 
+  CostStack *csp =
+      dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);
+  QuadraticControlCost *cc =
+      csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost *crc =
+      csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  QuadraticResidualCost *cpc =
+      csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
+
+  BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
+  BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
+  BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
   BOOST_CHECK_EQUAL(cproblem.getProblem()->stages_.size(), 100);
 
   force_refs.at("left_sole_link")[1] = 1;
@@ -232,10 +255,6 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
 
   CentroidalProblem cproblem(settings, handler);
 
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("control_cost"), 0);
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("linear_mom_cost"), 1);
-  BOOST_CHECK_EQUAL(cproblem.getCostMap().at("angular_acc_cost"), 4);
-
   std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
                                             "HL_FOOT"};
   std::vector<bool> contact_states = {true, true, true, false};
@@ -265,6 +284,18 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
 
   cproblem.createProblem(settings.x0, 100, 3, settings.gravity[2]);
 
+  CostStack *csp =
+      dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);
+  QuadraticControlCost *cc =
+      csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost *crc =
+      csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  QuadraticResidualCost *cpc =
+      csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
+
+  BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
+  BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
+  BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
   BOOST_CHECK_EQUAL(cproblem.getProblem()->stages_.size(), 100);
 
   force_refs.at("FR_FOOT")[1] = 1;

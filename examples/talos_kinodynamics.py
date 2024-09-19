@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import example_robot_data
-
-from simple_mpc import RobotHandler, KinodynamicsProblem, MPC
+from bullet_robot import BulletRobot
+from simple_mpc import RobotHandler, KinodynamicsProblem, MPC, IDSolver
+import pinocchio as pin
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -10,6 +11,15 @@ SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
 URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
 
 modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
+
+
+def difference(x1, x2, model):
+    dq = pin.difference(model, x1[: model.nq], x2[: model.nq])
+    dv = x2[model.nq :] - x1[model.nq :]
+    dx = np.concatenate((dq, dv))
+
+    return dx
+
 
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
@@ -122,7 +132,7 @@ w_x = np.array(
         10,  # Right arm vel
     ]
 )
-w_x = np.diag(w_x) * 10
+w_x = np.diag(w_x)
 w_linforce = np.array([0.001, 0.001, 0.01])
 w_angforce = np.ones(3) * 0.1
 w_u = np.concatenate(
@@ -177,8 +187,8 @@ mpc_conf = dict(
     T_fly=80,
     T_contact=20,
     T=100,
-    x_translation=0.1,
-    y_translation=0.1,
+    x_translation=0.0,
+    y_translation=0.0,
 )
 
 mpc = MPC(handler.getState(), u0)
@@ -211,3 +221,60 @@ for s in range(total_steps):
     )
 
 mpc.generateFullHorizon(contact_phases)
+contact_ids = handler.getFeetIds()
+id_conf = dict(
+    contact_ids=contact_ids,
+    x0=handler.getState(),
+    mu=0.8,
+    Lfoot=0.1,
+    Wfoot=0.075,
+    force_size=6,
+    kd=100,
+    w_force=100,
+    w_acc=100,
+    verbose=False,
+)
+
+qp = IDSolver(id_conf, handler.getModel())
+
+""" Initialize simulation"""
+print("Initialize simu")
+device = BulletRobot(
+    handler.getControlledJointsIDs(),
+    modelPath,
+    URDF_FILENAME,
+    1e-3,
+    handler.getModelComplete(),
+)
+device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+device.initializeJoints(handler.getCompleteConfiguration())
+q_current, v_current = device.measureState()
+
+Tmpc = len(contact_phases)
+
+for t in range(Tmpc):
+    print("Time " + str(t))
+    LF_takeoffs = mpc.getFootTakeoffTimings("left_sole_link")
+    RF_takeoffs = mpc.getFootTakeoffTimings("right_sole_link")
+    LF_lands = mpc.getFootLandTimings("left_sole_link")
+    RF_lands = mpc.getFootLandTimings("right_sole_link")
+
+    LF_land = -1 if LF_lands == [] else LF_lands[0]
+    RF_land = -1 if RF_lands == [] else RF_lands[0]
+    LF_takeoff = -1 if LF_takeoffs == [] else LF_takeoffs[0]
+    RF_takeoff = -1 if RF_takeoffs == [] else RF_takeoffs[0]
+    print(
+        "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
+        str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
+        str(LF_land),
+    )
+
+    mpc.iterate(q_current, v_current)
+
+    for j in range(10):
+        x_measured = np.concatenate((q_current, v_current))
+
+        current_torque = mpc.us[0] - mpc.K0 @ difference(
+            handler.getModel(), x_measured, mpc.xs[0]
+        )
+        device.execute(current_torque)

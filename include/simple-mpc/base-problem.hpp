@@ -110,7 +110,6 @@ public:
   std::size_t getCostNumber();
   std::size_t getSize();
   std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
-  std::map<std::string, std::size_t> getCostMap() { return cost_map_; }
   RobotHandler &getHandler() { return handler_; }
   int getNu() { return nu_; }
 
@@ -122,10 +121,6 @@ protected:
   int nu_;
   bool problem_initialized_ = false;
   bool terminal_constraint_ = false;
-
-  /// Dictionnaries of cost name + cost id in the CostStack objects
-  std::map<std::string, std::size_t> cost_map_;
-  std::map<std::string, std::size_t> terminal_cost_map_;
 
   /// The robot model
   RobotHandler handler_;

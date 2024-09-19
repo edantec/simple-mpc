@@ -85,10 +85,6 @@ protected:
   Eigen::VectorXd gamma_;
   Eigen::MatrixXd Jdot_;
 
-  Eigen::VectorXd solved_forces_;
-  Eigen::VectorXd solved_acc_;
-  Eigen::VectorXd solved_torque_;
-
   // Internal matrix computation
   void computeMatrice(pinocchio::Data &data,
                       const std::vector<bool> &contact_state,
@@ -103,6 +99,11 @@ public:
   void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
                 const Eigen::VectorXd &v, const Eigen::VectorXd &a,
                 const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
+
+  // QP results
+  Eigen::VectorXd solved_forces_;
+  Eigen::VectorXd solved_acc_;
+  Eigen::VectorXd solved_torque_;
 };
 
 class IKIDSolver {
@@ -133,10 +134,6 @@ protected:
   Eigen::MatrixXd Jframe_;
   Eigen::MatrixXd dJframe_;
 
-  Eigen::VectorXd solved_forces_;
-  Eigen::VectorXd solved_acc_;
-  Eigen::VectorXd solved_torque_;
-
   Eigen::VectorXd foot_diff_;
   Eigen::VectorXd dfoot_diff_;
   Eigen::VectorXd frame_diff_;
@@ -164,6 +161,11 @@ public:
                 const std::vector<pinocchio::SE3> foot_refs,
                 const std::vector<pinocchio::SE3> foot_refs_next,
                 const Eigen::VectorXd &dH, const Eigen::MatrixXd &M);
+
+  // QP results
+  Eigen::VectorXd solved_forces_;
+  Eigen::VectorXd solved_acc_;
+  Eigen::VectorXd solved_torque_;
 };
 
 } // namespace simple_mpc

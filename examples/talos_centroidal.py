@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import example_robot_data
 
-from simple_mpc import RobotHandler, CentroidalProblem, MPC
+from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -139,3 +139,80 @@ for s in range(total_steps):
     )
 
 mpc.generateFullHorizon(contact_phases)
+g_q = np.array(
+    [
+        0,
+        0,
+        0,
+        100,
+        100,
+        100,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        10,
+        10,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+    ]
+)
+
+g_p = np.array([400, 400, 400, 400, 400, 400])
+g_b = np.array([10, 10, 10])
+
+Kp_gains = [g_q, g_p, g_b]
+Kd_gains = [2 * np.sqrt(g_q), 2 * np.sqrt(g_p), 2 * np.sqrt(g_b)]
+contact_ids = handler.getFeetIds()
+fixed_frame_ids = [handler.getRootId()]
+ikid_conf = dict(
+    Kp_gains=Kp_gains,
+    Kd_gains=Kd_gains,
+    contact_ids=contact_ids,
+    fixed_frame_ids=fixed_frame_ids,
+    x0=handler.getState(),
+    dt=0.01,
+    mu=0.8,
+    Lfoot=0.1,
+    Wfoot=0.075,
+    force_size=6,
+    w_qref=500,
+    w_footpose=50000,
+    w_centroidal=10,
+    w_baserot=1000,
+    w_force=100,
+)
+
+contact_states = [True, True]
+forces = np.array([0, 0, 400, 0, 0, 0, 0, 0, 400, 0, 0, 0])
+foot_refs = [handler.getFootPose(0), handler.getFootPose(1)]
+foot_refs_next = [handler.getFootPose(0), handler.getFootPose(1)]
+dH = np.random.rand(6)
+M = handler.getMassMatrix()
+qp = IKIDSolver(ikid_conf, handler.getModel())
+qp.solve_qp(
+    handler.getData(),
+    contact_states,
+    handler.getState(),
+    forces,
+    foot_refs,
+    foot_refs_next,
+    dH,
+    M,
+)
+
+print(qp.solved_acc)

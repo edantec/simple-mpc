@@ -64,8 +64,7 @@ void exposeBaseProblem() {
            bp::args("self", "t", "u_ref"))
       .def("getReferenceControl", &Problem::getReferenceControl,
            bp::args("self", "t"))
-      .def("getProblem", &Problem::getProblem, bp::args("self"))
-      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
+      .def("getProblem", &Problem::getProblem, bp::args("self"));
 }
 
 void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
@@ -191,8 +190,7 @@ void exposeFullDynamicsProblem() {
            &FullDynamicsProblem::updateTerminalConstraint, bp::args("self"))
       .def("createTerminalConstraint",
            &FullDynamicsProblem::createTerminalConstraint, bp::args("self"))
-      .def("getProblem", &getFullProblem)
-      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
+      .def("getProblem", &getFullProblem);
 }
 
 void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
@@ -294,8 +292,7 @@ void exposeCentroidalProblem() {
            &CentroidalProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
            &CentroidalProblem::updateTerminalConstraint, bp::args("self"))
-      .def("getProblem", &getCentProblem)
-      .def("getCosMap", &Problem::getCostMap, bp::args("self"));
+      .def("getProblem", &getCentProblem);
 }
 
 void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
@@ -405,8 +402,7 @@ void exposeKinodynamicsProblem() {
            &KinodynamicsProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
            &KinodynamicsProblem::updateTerminalConstraint, bp::args("self"))
-      .def("getProblem", &getKinoProblem)
-      .def("getCostMap", &Problem::getCostMap, bp::args("self"));
+      .def("getProblem", &getKinoProblem);
 }
 } // namespace python
 } // namespace simple_mpc

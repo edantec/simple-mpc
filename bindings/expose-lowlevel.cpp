@@ -76,7 +76,11 @@ void exposeIDSolver() {
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize_ID)
       .def("solve_qp", &IDSolver::solve_qp,
-           bp::args("self", "data", "contact_state", "v", "a", "forces", "M"));
+           bp::args("self", "data", "contact_state", "v", "a", "forces", "M"))
+      .add_property("solved_acc", &IDSolver::solved_acc_)
+      .add_property("solved_forces", &IDSolver::solved_forces_)
+      .add_property("solved_torque", &IDSolver::solved_torque_);
+  ;
 }
 
 void exposeIKIDSolver() {
@@ -85,7 +89,10 @@ void exposeIKIDSolver() {
       .def("initialize", &initialize_IKID)
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
-                    "foot_refs", "foot_refs_next", "dH", "M"));
+                    "foot_refs", "foot_refs_next", "dH", "M"))
+      .add_property("solved_acc", &IKIDSolver::solved_acc_)
+      .add_property("solved_forces", &IKIDSolver::solved_forces_)
+      .add_property("solved_torque", &IKIDSolver::solved_torque_);
 }
 
 } // namespace python
