@@ -312,6 +312,10 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   conf.qmin = bp::extract<Eigen::VectorXd>(settings["qmin"]);
   conf.qmax = bp::extract<Eigen::VectorXd>(settings["qmax"]);
 
+  conf.mu = bp::extract<double>(settings["mu"]);
+  conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
+  conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
+
   self.initialize(conf);
 }
 
@@ -330,6 +334,9 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
   settings["force_size"] = conf.force_size;
   settings["qmin"] = conf.qmin;
   settings["qmax"] = conf.qmax;
+  settings["mu"] = conf.mu;
+  settings["Lfoot"] = conf.Lfoot;
+  settings["Wfoot"] = conf.Wfoot;
 
   return settings;
 }

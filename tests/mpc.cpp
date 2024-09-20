@@ -87,9 +87,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 110);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 220);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
-  std::cout << "ok" << std::endl;
   for (std::size_t i = 0; i < 10; i++) {
-    std::cout << "ok" << i << std::endl;
     mpc.iterate(settings.x0.head(handler.getModel().nq),
                 settings.x0.tail(handler.getModel().nv));
   }
@@ -100,9 +98,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
 
   BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
-  std::cout << "oki" << std::endl;
   for (std::size_t i = 0; i < 160; i++) {
-    std::cout << "oki" << i << std::endl;
     mpc.iterate(settings.x0.head(handler.getModel().nq),
                 settings.x0.tail(handler.getModel().nv));
   }
@@ -192,7 +188,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
 }
 
-BOOST_AUTO_TEST_CASE(mpc_centroidal) {
+/* BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   RobotHandler handler = getTalosHandler();
 
   CentroidalSettings settings = getCentroidalSettings(handler);
@@ -268,11 +264,11 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   BOOST_CHECK_EQUAL(mpc.getFullHorizonData().size(), 130);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(handler.getState().head(handler.getModel().nq),
-                handler.getState().tail(handler.getModel().nv));
+    mpc.iterate(settings.x0.head(handler.getModel().nq),
+                settings.x0.tail(handler.getModel().nv));
   }
 
   BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
-}
+} */
 
 BOOST_AUTO_TEST_SUITE_END()

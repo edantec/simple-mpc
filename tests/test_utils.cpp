@@ -139,6 +139,9 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
       handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
   settings.qmax =
       handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
+  settings.mu = 0.8;
+  settings.Lfoot = 0.1;
+  settings.Wfoot = 0.075;
 
   return settings;
 }

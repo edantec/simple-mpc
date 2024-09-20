@@ -7,13 +7,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
 #include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
+#include <aligator/modelling/function-xpr-slice.hpp>
 #include <aligator/modelling/multibody/center-of-mass-translation.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/frame-velocity.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
+#include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
 #include <proxsuite-nlp/modelling/constraints/equality-constraint.hpp>
+#include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 
 #include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
@@ -31,6 +36,13 @@ using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using StageConstraint = StageConstraintTpl<double>;
+using StateErrorResidual = StateErrorResidualTpl<double>;
+using FunctionSliceXpr = FunctionSliceXprTpl<double>;
+using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
+using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
+using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
+using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
+using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 /**
  * @brief Build a kinodynamics problem based on
  * the KinodynamicsFwdDynamics object of Aligator.
@@ -61,6 +73,9 @@ struct KinodynamicsSettings {
 
   // Physics parameters
   Eigen::Vector3d gravity;
+  double mu;
+  double Lfoot;
+  double Wfoot;
   int force_size;
 };
 

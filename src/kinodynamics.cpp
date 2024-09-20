@@ -63,7 +63,34 @@ StageModel KinodynamicsProblem::createStage(
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
 
-  return StageModel(rcost, dyn_model);
+  StageModel stm = StageModel(rcost, dyn_model);
+
+  StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
+  std::vector<int> state_id;
+  for (int i = 6; i < nv_; i++) {
+    state_id.push_back(i);
+  }
+  FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
+  stm.addConstraint(state_slice,
+                    BoxConstraint(-settings_.qmax, -settings_.qmin));
+
+  Motion v_ref = Motion::Zero();
+  for (std::size_t i = 0; i < contact_states.size(); i++) {
+    if (contact_states[i]) {
+      CentroidalWrenchConeResidual wrench_residual =
+          CentroidalWrenchConeResidual(space.ndx(), nu_, (int)i, settings_.mu,
+                                       settings_.Lfoot, settings_.Wfoot);
+      stm.addConstraint(wrench_residual, NegativeOrthant());
+
+      FrameVelocityResidual frame_vel = FrameVelocityResidual(
+          space.ndx(), nu_, handler_.getModel(), v_ref,
+          handler_.getFootId(contact_names[i]), pinocchio::LOCAL);
+
+      stm.addConstraint(frame_vel, EqualityConstraint());
+    }
+  }
+
+  return stm;
 }
 
 void KinodynamicsProblem::setReferencePose(const std::size_t t,

@@ -160,6 +160,9 @@ problem_conf = dict(
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
     qmax=handler.getModel().upperPositionLimit[7:],
+    mu=0.8,
+    Lfoot=0.1,
+    Wfoot=0.075,
 )
 
 problem = KinodynamicsProblem(handler)
@@ -221,9 +224,9 @@ id_conf = dict(
     Lfoot=0.1,
     Wfoot=0.075,
     force_size=6,
-    kd=100,
-    w_force=100,
-    w_acc=100,
+    kd=0,
+    w_force=10000,
+    w_acc=1,
     verbose=False,
 )
 
@@ -255,6 +258,7 @@ x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
+print(mpc.getSolver().results)
 
 Tmpc = len(contact_phases)
 nk = 2
@@ -286,12 +290,12 @@ for t in range(Tmpc):
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
     )
 
-    """ if t == 25:
+    if t == 120:
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             time.sleep(0.1)
             print("s = " + str(s))
-        exit() """
+        exit()
     # print("Left " + str(contact_states[0]) + ", right " + str(contact_states[1]))
     for j in range(10):
         q_current, v_current = device.measureState()

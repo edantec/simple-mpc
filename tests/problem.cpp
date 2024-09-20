@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
-  BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
   knproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
 
