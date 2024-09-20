@@ -186,4 +186,14 @@ void RobotHandler::computeMass() {
     mass_ += I.mass();
 }
 
+Eigen::VectorXd RobotHandler::difference(const Eigen::VectorXd &x1,
+                                         const Eigen::VectorXd &x2) {
+  Eigen::VectorXd dx = Eigen::VectorXd::Zero(2 * rmodel_.nv);
+  pinocchio::difference(rmodel_, x1.head(rmodel_.nq), x2.head(rmodel_.nq),
+                        dx.head(rmodel_.nv));
+  dx.tail(rmodel_.nq) = x2.tail(rmodel_.nq) - x1.tail(rmodel_.nq);
+
+  return dx;
+}
+
 } // namespace simple_mpc

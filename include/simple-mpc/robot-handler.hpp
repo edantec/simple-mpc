@@ -92,6 +92,8 @@ public:
   const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,
                                    const Eigen::VectorXd &v);
 
+  Eigen::VectorXd difference(const Eigen::VectorXd &x1,
+                             const Eigen::VectorXd &x2);
   // Getters
   const FrameIndex &getRootId() { return root_ids_; }
   const std::vector<FrameIndex> &getFeetIds() { return end_effector_ids_; }

@@ -1,41 +1,23 @@
-import numpy as np
-import example_robot_data
-from bullet_robot import BulletRobot
-import pinocchio as pin
-from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
+"""
+This script launches a locomotion MPC scheme which solves repeatedly an
+optimal control problem based on the full dynamics model of the humanoid robot Talos.
+The contacts forces are modeled as 6D wrenches.
+"""
 
+import numpy as np
+import time
+from bullet_robot import BulletRobot
+import example_robot_data
+from simple_mpc import MPC, FullDynamicsProblem, RobotHandler
+
+# ####### CONFIGURATION  ############
+# ### RobotWrapper
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
 SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
 URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
 
 modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-
-
-def difference(x1, x2, model):
-    dq = pin.difference(model, x1[: model.nq], x2[: model.nq])
-    dv = x2[model.nq :] - x1[model.nq :]
-    dx = np.concatenate((dq, dv))
-
-    return dx
-
-
-def shapeState(q_current, v_current, nq, nxq, cj_ids):
-    x_internal = np.zeros(nxq)
-    x_internal[:7] = q_current[:7]
-    x_internal[nq : nq + 6] = v_current[:6]
-    i = 0
-    for jointID in cj_ids:
-        if jointID > 1:
-            x_internal[i + 7] = q_current[jointID + 5]
-            x_internal[nq + i + 6] = v_current[jointID + 4]
-            i += 1
-
-    return x_internal
-
-
-# ####### CONFIGURATION  ############
-# ### RobotWrapper
 design_conf = dict(
     urdf_path=modelPath + URDF_SUBPATH,
     srdf_path=modelPath + SRDF_SUBPATH,
@@ -74,10 +56,9 @@ design_conf = dict(
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
-
 nq = handler.getModel().nq
 nv = handler.getModel().nv
-T = 100
+nu = nv - 6
 
 x0 = handler.getState()
 nu = handler.getModel().nv - 6
@@ -143,14 +124,13 @@ w_x = np.array(
 )
 w_cent_lin = np.array([0.0, 0.0, 10])
 w_cent_ang = np.array([0.0, 0.0, 10])
-w_cent_ang = np.ones(3) * 0
 w_forces_lin = np.array([0.0001, 0.0001, 0.0001])
 w_forces_ang = np.ones(3) * 0.0001
 
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
-    x0=handler.getState(),
+    x0=x0,
     u0=np.zeros(nu),
     DT=0.01,
     w_x=np.diag(w_x),
@@ -169,9 +149,21 @@ problem_conf = dict(
     Wfoot=0.075,
 )
 
-problem = FullDynamicsProblem(handler)
-problem.initialize(problem_conf)
-problem.createProblem(handler.getState(), T, 6, gravity[2])
+T = 100
+dynproblem = FullDynamicsProblem(handler)
+dynproblem.initialize(problem_conf)
+dynproblem.createProblem(x0, T, 6, gravity[2])
+
+""" Define feet trajectory """
+swing_apex = 0.15
+x_forward = 0.1
+y_forward = 0.0
+foot_yaw = 0
+y_gap = 0.18
+x_depth = 0.0
+T_ss = 80
+T_ds = 20
+nsteps = 100
 
 mpc_conf = dict(
     totalSteps=4,
@@ -183,19 +175,15 @@ mpc_conf = dict(
     max_iters=1,
     num_threads=2,
     swing_apex=0.15,
-    T_fly=80,
-    T_contact=20,
-    T=100,
-    x_translation=0.1,
-    y_translation=0.1,
+    x_translation=0.0,
+    y_translation=0,
+    T_fly=T_ss,
+    T_contact=T_ds,
+    T=nsteps,
 )
 
-u0 = np.zeros(handler.getModel().nv - 6)
 mpc = MPC()
-mpc.initialize(mpc_conf, problem)
-
-T_ds = 20
-T_ss = 80
+mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
 total_steps = 3
@@ -220,61 +208,80 @@ for s in range(total_steps):
         + [contact_phase_double] * T_ds
     )
 
+Tmpc = len(contact_phases)
 mpc.generateFullHorizon(contact_phases)
-
+problem = mpc.getTrajOptProblem()
 
 """ Initialize simulation"""
-print("Initialize simu")
 device = BulletRobot(
-    handler.getControlledJointsIDs(),
+    design_conf["controlled_joints_names"],
     modelPath,
     URDF_FILENAME,
     1e-3,
     handler.getCompleteModel(),
 )
-device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
 device.initializeJoints(handler.getCompleteConfiguration())
-qc_current, vc_current = device.measureState()
+device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+q_current, v_current = device.measureState()
 
-x_measured = shapeState(
-    qc_current, vc_current, nq, nq + nv, handler.getControlledJointsIDs()
-)
+x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
-Tmpc = len(contact_phases)
-nk = 2
-force_size = 6
+land_LF = -1
+land_RF = -1
+takeoff_LF = -1
+takeoff_RF = -1
+device.showTargetToTrack(
+    mpc.getHandler().getFootPose("left_sole_link"),
+    mpc.getHandler().getFootPose("right_sole_link"),
+)
+for t in range(Tmpc):
+    print("Time " + str(t))
+    land_LFs = mpc.getFootLandTimings("left_sole_link")
+    land_RFs = mpc.getFootLandTimings("right_sole_link")
+    takeoff_LFs = mpc.getFootTakeoffTimings("left_sole_link")
+    takeoff_RFs = mpc.getFootTakeoffTimings("right_sole_link")
 
-for i in range(Tmpc):
-    LF_takeoffs = mpc.getFootTakeoffTimings("left_sole_link")
-    RF_takeoffs = mpc.getFootTakeoffTimings("right_sole_link")
-    LF_lands = mpc.getFootLandTimings("left_sole_link")
-    RF_lands = mpc.getFootLandTimings("right_sole_link")
+    if len(land_LFs) > 0:
+        land_LF = land_LFs[0]
+    else:
+        land_LF == -1
+    if len(land_RFs) > 0:
+        land_RF = land_RFs[0]
+    else:
+        land_RF == -1
+    if len(takeoff_LFs) > 0:
+        takeoff_LF = takeoff_LFs[0]
+    else:
+        takeoff_LF == -1
+    if len(takeoff_RFs) > 0:
+        takeoff_RF = takeoff_RFs[0]
+    else:
+        takeoff_RF == -1
 
-    LF_land = -1 if LF_lands == [] else LF_lands[0]
-    RF_land = -1 if RF_lands == [] else RF_lands[0]
-    LF_takeoff = -1 if LF_takeoffs == [] else LF_takeoffs[0]
-    RF_takeoff = -1 if RF_takeoffs == [] else RF_takeoffs[0]
     print(
-        "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
-        str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
-        str(LF_land),
+        "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
+        str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
+        str(land_LF),
     )
 
-    mpc.iterate(x_measured[:nq], x_measured[nq:])
+    mpc.iterate(q_current, v_current)
+    device.moveMarkers(
+        mpc.getReferencePose(0, "left_sole_link").translation,
+        mpc.getReferencePose(0, "right_sole_link").translation,
+    )
+
     for j in range(10):
-        qc_current, vc_current = device.measureState()
-        x_measured = shapeState(
-            qc_current, vc_current, nq, nq + nv, handler.getControlledJointsIDs()
-        )
+        q_current, v_current = device.measureState()
+
+        x_measured = np.concatenate((q_current, v_current))
+
+        x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        state_diff = difference(x_measured, mpc.xs[0], handler.getModel())
-        solved_torque = mpc.us[0] - mpc.K0 @ difference(
-            x_measured, mpc.xs[0], handler.getModel()
-        )
-        device.execute(solved_torque)
+        current_torque = mpc.us[0] - mpc.K0 @ handler.difference(x_measured, mpc.xs[0])
+        device.execute(current_torque)

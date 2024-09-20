@@ -65,6 +65,7 @@ void exposeHandler() {
       .def("updateJacobiansMassMatrix",
            &RobotHandler::updateJacobiansMassMatrix)
       .def("shapeState", &RobotHandler::shapeState)
+      .def("difference", &RobotHandler::difference)
       .def("getModel",
            bp::make_function(
                &RobotHandler::getModel,

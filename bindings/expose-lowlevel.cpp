@@ -14,6 +14,8 @@
 #include <pinocchio/fwd.hpp>
 
 #include "simple-mpc/lowlevel-control.hpp"
+#include <proxsuite/proxqp/dense/dense.hpp>
+#include <proxsuite/proxqp/dense/wrapper.hpp>
 
 namespace simple_mpc {
 namespace python {
@@ -77,6 +79,8 @@ void exposeIDSolver() {
       .def("initialize", &initialize_ID)
       .def("solve_qp", &IDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "v", "a", "forces", "M"))
+      .def("getQP", &IDSolver::getQP, bp::args("self"),
+           bp::return_internal_reference<>(), "Get QP solver.")
       .add_property("solved_acc", &IDSolver::solved_acc_)
       .add_property("solved_forces", &IDSolver::solved_forces_)
       .add_property("solved_torque", &IDSolver::solved_torque_);

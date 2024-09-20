@@ -61,15 +61,6 @@ void MPC::initialize(const MPCSettings &settings,
 
   ee_names_ = problem_->getHandler().getFeetNames();
 
-  for (std::size_t i = 0; i < problem->getSize(); i++) {
-    std::map<std::string, pinocchio::SE3> map_se3;
-
-    for (std::string name : ee_names_) {
-      map_se3.insert({name, problem_->getHandler().getFootPose(name)});
-    }
-    ref_frame_poses_.push_back(map_se3);
-  }
-
   for (std::size_t i = 0; i < problem_->getProblem()->numSteps(); i++) {
     xs_.push_back(x0_);
     us_.push_back(problem_->getReferenceControl(0));
@@ -232,6 +223,11 @@ void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,
 void MPC::setTerminalReferencePose(const std::string &ee_name,
                                    const pinocchio::SE3 &pose_ref) {
   problem_->setTerminalReferencePose(ee_name, pose_ref);
+}
+
+const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
+                                           const std::string &ee_name) {
+  return problem_->getReferencePose(t, ee_name);
 }
 
 void MPC::setRelativeTranslation(

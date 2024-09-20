@@ -99,6 +99,7 @@ public:
   void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
                 const Eigen::VectorXd &v, const Eigen::VectorXd &a,
                 const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
+  proxqp::dense::QP<double> getQP() { return *qp_; }
 
   // QP results
   Eigen::VectorXd solved_forces_;
@@ -161,7 +162,7 @@ public:
                 const std::vector<pinocchio::SE3> foot_refs,
                 const std::vector<pinocchio::SE3> foot_refs_next,
                 const Eigen::VectorXd &dH, const Eigen::MatrixXd &M);
-
+  proxqp::dense::QP<double> getQP() { return *qp_; }
   // QP results
   Eigen::VectorXd solved_forces_;
   Eigen::VectorXd solved_acc_;

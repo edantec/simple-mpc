@@ -70,10 +70,14 @@ void exposeMPC() {
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
       .def("setReferencePose", &MPC::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
+      .def("getReferencePose", &MPC::getReferencePose,
+           bp::args("self", "t", "ee_name"))
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
       .def("getFullHorizon", &MPC::getFullHorizon, bp::args("self"),
            bp::return_internal_reference<>(), "Get the full horizon.")
+      .def("getFullHorizonData", &MPC::getFullHorizonData, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the full horizon data.")
       .def("getFootTakeoffTimings", &MPC::getFootTakeoffTimings,
            bp::args("self", "ee_name"), bp::return_internal_reference<>(),
            "Get the takeoff timings.")

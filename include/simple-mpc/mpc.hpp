@@ -86,9 +86,6 @@ protected:
   // INTERNAL UPDATING function
   void updateStepTrackerReferences();
 
-  // References for costs:
-  std::vector<std::map<std::string, pinocchio::SE3>> ref_frame_poses_;
-
   // Memory preallocations:
   std::vector<unsigned long> controlled_joints_id_;
   std::vector<std::string> ee_names_;
@@ -121,6 +118,9 @@ public:
 
   void setTerminalReferencePose(const std::string &ee_name,
                                 const pinocchio::SE3 &pose_ref);
+
+  const pinocchio::SE3 getReferencePose(const std::size_t t,
+                                        const std::string &ee_name);
 
   void setRelativeTranslation(
       const std::map<std::string, Eigen::Vector3d> &relative_translations,
