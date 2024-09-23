@@ -22,14 +22,16 @@ void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
 }
 
 StageModel KinodynamicsProblem::createStage(
-    const ContactMap &contact_map,
-    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, bool> &contact_phase,
+    const std::map<std::string, pinocchio::SE3> &contact_pose,
+    const std::map<std::string, Eigen::VectorXd> &contact_force) {
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
-  std::vector<bool> contact_states = contact_map.getContactStates();
-  std::vector<std::string> contact_names = contact_map.getContactNames();
-  auto contact_poses = contact_map.getContactPoses();
-  computeControlFromForces(force_refs);
+  std::vector<bool> contact_states;
+  for (auto const &x : contact_phase) {
+    contact_states.push_back(x.second);
+  }
+  computeControlFromForces(contact_force);
 
   auto cent_mom = CentroidalMomentumResidual(
       space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
@@ -45,15 +47,13 @@ StageModel KinodynamicsProblem::createStage(
   rcost.addCost("centroidal_derivative_cost",
                 QuadraticResidualCost(space, centder_mom, settings_.w_centder));
 
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
-    pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
-    frame_placement.translation() = contact_poses[i];
-    FramePlacementResidual frame_residual = FramePlacementResidual(
-        space.ndx(), nu_, handler_.getModel(), frame_placement,
-        handler_.getFootId(contact_names[i]));
+  for (auto const &name : handler_.getFeetNames()) {
+    FramePlacementResidual frame_residual =
+        FramePlacementResidual(space.ndx(), nu_, handler_.getModel(),
+                               contact_pose.at(name), handler_.getFootId(name));
 
     rcost.addCost(
-        contact_names[i] + "_pose_cost",
+        name + "_pose_cost",
         QuadraticResidualCost(space, frame_residual, settings_.w_frame));
   }
 
@@ -75,19 +75,21 @@ StageModel KinodynamicsProblem::createStage(
                     BoxConstraint(-settings_.qmax, -settings_.qmin));
 
   Motion v_ref = Motion::Zero();
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
-    if (contact_states[i]) {
+  int i = 0;
+  for (auto const &name : handler_.getFeetNames()) {
+    if (contact_phase.at(name)) {
       CentroidalWrenchConeResidual wrench_residual =
-          CentroidalWrenchConeResidual(space.ndx(), nu_, (int)i, settings_.mu,
+          CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
                                        settings_.Lfoot, settings_.Wfoot);
       stm.addConstraint(wrench_residual, NegativeOrthant());
 
-      FrameVelocityResidual frame_vel = FrameVelocityResidual(
-          space.ndx(), nu_, handler_.getModel(), v_ref,
-          handler_.getFootId(contact_names[i]), pinocchio::LOCAL);
+      FrameVelocityResidual frame_vel =
+          FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), v_ref,
+                                handler_.getFootId(name), pinocchio::LOCAL);
 
       stm.addConstraint(frame_vel, EqualityConstraint());
     }
+    i++;
   }
 
   return stm;
@@ -192,7 +194,7 @@ CostStack KinodynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  term_cost.addCost(
+  /* term_cost.addCost(
       "state_cost",
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
   term_cost.addCost("control_cost", QuadraticResidualCost(ter_space, cent_mom,
@@ -205,7 +207,7 @@ CostStack KinodynamicsProblem::createTerminalCost() {
     term_cost.addCost(
         name + "_pose_cost",
         QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
-  }
+  } */
 
   return term_cost;
 }

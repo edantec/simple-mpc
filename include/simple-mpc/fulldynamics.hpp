@@ -96,8 +96,9 @@ public:
 
   // Create one FullDynamics stage
   StageModel createStage(
-      const ContactMap &contact_map,
-      const std::map<std::string, Eigen::VectorXd> &force_refs) override;
+      const std::map<std::string, bool> &contact_phase,
+      const std::map<std::string, pinocchio::SE3> &contact_pose,
+      const std::map<std::string, Eigen::VectorXd> &contact_force) override;
 
   // Manage terminal cost and constraint
   CostStack createTerminalCost() override;

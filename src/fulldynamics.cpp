@@ -31,7 +31,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
 
-  for (auto &name : handler_.getFeetNames()) {
+  for (auto const &name : handler_.getFeetNames()) {
     auto frame_ids = handler_.getFootId(name);
     auto joint_ids = handler_.getModel().frames[frame_ids].parentJoint;
     pinocchio::SE3 pl1 = handler_.getModel().frames[frame_ids].placement;
@@ -48,8 +48,9 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
 }
 
 StageModel FullDynamicsProblem::createStage(
-    const ContactMap &contact_map,
-    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, bool> &contact_phase,
+    const std::map<std::string, pinocchio::SE3> &contact_pose,
+    const std::map<std::string, Eigen::VectorXd> &contact_force) {
 
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
@@ -65,46 +66,36 @@ StageModel FullDynamicsProblem::createStage(
                 QuadraticResidualCost(space, cent_mom, settings_.w_cent));
 
   pinocchio::context::RigidConstraintModelVector cms;
-  std::vector<std::string> contact_names = contact_map.getContactNames();
-  std::vector<bool> contact_states = contact_map.getContactStates();
-  auto contact_poses = contact_map.getContactPoses();
 
-  if (contact_states.size() != handler_.getFeetNames().size()) {
-    throw std::runtime_error(
-        "contact states size does not match number of end effectors");
-  }
+  size_t c_id = 0;
+  for (auto const &name : handler_.getFeetNames()) {
+    FramePlacementResidual frame_residual =
+        FramePlacementResidual(space.ndx(), nu_, handler_.getModel(),
+                               contact_pose.at(name), handler_.getFootId(name));
 
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
-    pinocchio::SE3 frame_placement = pinocchio::SE3::Identity();
-    frame_placement.translation() = contact_poses[i];
-    FramePlacementResidual frame_residual = FramePlacementResidual(
-        space.ndx(), nu_, handler_.getModel(), frame_placement,
-        handler_.getFootId(contact_names[i]));
-
-    if (contact_states[i])
-      cms.push_back(constraint_models_[i]);
+    if (contact_phase.at(name))
+      cms.push_back(constraint_models_[c_id]);
 
     rcost.addCost(
-        contact_names[i] + "_pose_cost",
+        name + "_pose_cost",
         QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+    c_id++;
   }
 
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
+  for (auto const &name : handler_.getFeetNames()) {
     std::shared_ptr<ContactForceResidual> frame_force;
     int is_active = 0;
-    if (contact_states[i]) {
+    if (contact_phase.at(name)) {
       frame_force = std::make_shared<ContactForceResidual>(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
-          prox_settings_, force_refs.at(handler_.getFootName(i)),
-          handler_.getFootName(i));
+          prox_settings_, contact_force.at(name), name);
       is_active = 1;
     } else {
       frame_force = std::make_shared<ContactForceResidual>(
           space.ndx(), handler_.getModel(), actuation_matrix_,
-          constraint_models_, prox_settings_,
-          force_refs.at(handler_.getFootName(i)), handler_.getFootName(i));
+          constraint_models_, prox_settings_, contact_force.at(name), name);
     }
-    rcost.addCost(contact_names[i] + "_force_cost",
+    rcost.addCost(name + "_force_cost",
                   QuadraticResidualCost(space, *frame_force,
                                         settings_.w_forces * is_active));
   }
@@ -129,12 +120,11 @@ StageModel FullDynamicsProblem::createStage(
   stm.addConstraint(state_slice,
                     BoxConstraint(-settings_.qmax, -settings_.qmin));
 
-  for (std::size_t i = 0; i < contact_states.size(); i++) {
-    if (contact_states[i]) {
+  for (auto const &name : handler_.getFeetNames()) {
+    if (contact_phase.at(name)) {
       MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
-          prox_settings_, handler_.getFootName(i), settings_.mu,
-          settings_.Lfoot, settings_.Wfoot);
+          prox_settings_, name, settings_.mu, settings_.Lfoot, settings_.Wfoot);
       stm.addConstraint(wrench_residual, NegativeOrthant());
     }
   }

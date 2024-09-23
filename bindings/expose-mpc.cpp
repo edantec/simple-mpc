@@ -36,7 +36,7 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.TOL = bp::extract<double>(settings["TOL"]);
   conf.mu_init = bp::extract<double>(settings["mu_init"]);
   conf.max_iters = bp::extract<std::size_t>(settings["max_iters"]);
-  conf.num_threads = bp::extract<std::size_t>(settings["max_iters"]);
+  conf.num_threads = bp::extract<std::size_t>(settings["num_threads"]);
 
   conf.swing_apex = bp::extract<double>(settings["swing_apex"]);
   conf.x_translation = bp::extract<double>(settings["x_translation"]);
@@ -46,6 +46,27 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.T = bp::extract<std::size_t>(settings["T"]);
 
   self.initialize(conf, problem);
+}
+
+bp::dict getSettings(MPC &self) {
+  MPCSettings conf = self.getSettings();
+  bp::dict settings;
+  settings["totalSteps"] = conf.totalSteps;
+  settings["ddpIteration"] = conf.ddpIteration;
+  settings["min_force"] = conf.min_force;
+  settings["support_force"] = conf.support_force;
+  settings["TOL"] = conf.TOL;
+  settings["mu_init"] = conf.mu_init;
+  settings["max_iters"] = conf.max_iters;
+  settings["num_threads"] = conf.num_threads;
+  settings["swing_apex"] = conf.swing_apex;
+  settings["x_translation"] = conf.x_translation;
+  settings["y_translation"] = conf.y_translation;
+  settings["T_fly"] = conf.T_fly;
+  settings["T_contact"] = conf.T_contact;
+  settings["T"] = conf.T;
+
+  return settings;
 }
 
 void exposeMPC() {
@@ -65,6 +86,7 @@ void exposeMPC() {
   bp::class_<MPC>("MPC", bp::no_init)
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize)
+      .def("getSettings", &getSettings)
       .def("generateFullHorizon", &MPC::generateFullHorizon,
            bp::args("self", "contact_states"))
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))

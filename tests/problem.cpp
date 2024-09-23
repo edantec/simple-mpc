@@ -17,13 +17,17 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
-  std::vector<bool> contact_states = {true, false};
-  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  Eigen::Vector3d p1 = {0, 0.1, 0};
-  Eigen::Vector3d p2 = {0, -0.1, 0};
-  contact_poses.push_back(p1);
-  contact_poses.push_back(p2);
-  ContactMap cm(contact_names, contact_states, contact_poses);
+  std::map<std::string, bool> contact_states;
+  std::map<std::string, pinocchio::SE3> contact_poses;
+  contact_states.insert({contact_names[0], true});
+  contact_states.insert({contact_names[1], false});
+
+  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  p1.translation() << 0, 0.1, 0;
+  p2.translation() << 0, -0.1, 0;
+  contact_poses.insert({contact_names[0], p1});
+  contact_poses.insert({contact_names[1], p2});
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -33,7 +37,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
   FullDynamicsSettings settings = getFullDynamicsSettings(handler);
   FullDynamicsProblem fdproblem(settings, handler);
-  StageModel sm = fdproblem.createStage(cm, force_refs);
+  StageModel sm =
+      fdproblem.createStage(contact_states, contact_poses, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 7);
@@ -95,13 +100,17 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
-  std::vector<bool> contact_states = {true, false};
-  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  Eigen::Vector3d p1 = {0, 0.1, 0};
-  Eigen::Vector3d p2 = {0, -0.1, 0};
-  contact_poses.push_back(p1);
-  contact_poses.push_back(p2);
-  ContactMap cm(contact_names, contact_states, contact_poses);
+  std::map<std::string, bool> contact_states;
+  std::map<std::string, pinocchio::SE3> contact_poses;
+  contact_states.insert({contact_names[0], true});
+  contact_states.insert({contact_names[1], false});
+
+  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  p1.translation() << 0, 0.1, 0;
+  p2.translation() << 0, -0.1, 0;
+  contact_poses.insert({contact_names[0], p1});
+  contact_poses.insert({contact_names[1], p2});
 
   KinodynamicsSettings settings = getKinodynamicsSettings(handler);
   KinodynamicsProblem knproblem(settings, handler);
@@ -111,7 +120,8 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm = knproblem.createStage(cm, force_refs);
+  StageModel sm =
+      knproblem.createStage(contact_states, contact_poses, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
@@ -174,22 +184,27 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   CentroidalSettings settings = getCentroidalSettings(handler);
   CentroidalProblem cproblem(settings, handler);
 
-  std::vector<bool> contact_states = {true, false};
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
-  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  Eigen::Vector3d p1 = {0, 0.1, 0};
-  Eigen::Vector3d p2 = {0, -0.1, 0};
-  contact_poses.push_back(p1);
-  contact_poses.push_back(p2);
-  ContactMap cm(contact_names, contact_states, contact_poses);
+  std::map<std::string, bool> contact_states;
+  std::map<std::string, pinocchio::SE3> contact_poses;
+  contact_states.insert({contact_names[0], true});
+  contact_states.insert({contact_names[1], false});
+
+  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  p1.translation() << 0, 0.1, 0;
+  p2.translation() << 0, -0.1, 0;
+  contact_poses.insert({contact_names[0], p1});
+  contact_poses.insert({contact_names[1], p2});
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm = cproblem.createStage(cm, force_refs);
+  StageModel sm =
+      cproblem.createStage(contact_states, contact_poses, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
@@ -257,17 +272,22 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
 
   std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
                                             "HL_FOOT"};
-  std::vector<bool> contact_states = {true, true, true, false};
-  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  Eigen::Vector3d p1 = handler.getFootPose("FR_FOOT").translation();
-  Eigen::Vector3d p2 = handler.getFootPose("FL_FOOT").translation();
-  Eigen::Vector3d p3 = handler.getFootPose("HR_FOOT").translation();
-  Eigen::Vector3d p4 = handler.getFootPose("HL_FOOT").translation();
-  contact_poses.push_back(p1);
-  contact_poses.push_back(p2);
-  contact_poses.push_back(p3);
-  contact_poses.push_back(p4);
-  ContactMap cm(contact_names, contact_states, contact_poses);
+  std::map<std::string, bool> contact_states;
+  std::map<std::string, pinocchio::SE3> contact_poses;
+
+  contact_states.insert({contact_names[0], true});
+  contact_states.insert({contact_names[1], true});
+  contact_states.insert({contact_names[2], true});
+  contact_states.insert({contact_names[3], false});
+  pinocchio::SE3 p1 = handler.getFootPose("FR_FOOT");
+  pinocchio::SE3 p2 = handler.getFootPose("FL_FOOT");
+  pinocchio::SE3 p3 = handler.getFootPose("HR_FOOT");
+  pinocchio::SE3 p4 = handler.getFootPose("HL_FOOT");
+
+  contact_poses.insert({contact_names[0], p1});
+  contact_poses.insert({contact_names[1], p2});
+  contact_poses.insert({contact_names[2], p3});
+  contact_poses.insert({contact_names[3], p4});
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(3);
@@ -276,7 +296,8 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   force_refs.insert({"FL_FOOT", f1});
   force_refs.insert({"HR_FOOT", f1});
   force_refs.insert({"HL_FOOT", Eigen::VectorXd::Zero(3)});
-  StageModel sm = cproblem.createStage(cm, force_refs);
+  StageModel sm =
+      cproblem.createStage(contact_states, contact_poses, force_refs);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);

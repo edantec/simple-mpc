@@ -12,7 +12,6 @@
 
 #include <aligator/core/cost-abstract.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/modelling/contact-map.hpp>
 #include <aligator/modelling/costs/quad-state-cost.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
 #include <aligator/modelling/dynamics/centroidal-fwd.hpp>
@@ -27,7 +26,6 @@ namespace simple_mpc {
 using namespace aligator;
 using StageModel = StageModelTpl<double>;
 using CostStack = CostStackTpl<double>;
-using ContactMap = ContactMapTpl<double>;
 using TrajOptProblem = TrajOptProblemTpl<double>;
 using CostAbstract = CostAbstractTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
@@ -55,14 +53,16 @@ public:
 
   // Create one instance of stage from desired contacts and forces
   virtual StageModel
-  createStage(const ContactMap &contact_map,
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
               const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
 
   // Create the complete vector of stages from contact_sequence
-  virtual std::vector<xyz::polymorphic<StageModel>>
-  createStages(const std::vector<ContactMap> &contact_sequence,
-               const std::vector<std::map<std::string, Eigen::VectorXd>>
-                   &force_sequence);
+  virtual std::vector<xyz::polymorphic<StageModel>> createStages(
+      const std::vector<std::map<std::string, bool>> &contact_phases,
+      const std::vector<std::map<std::string, pinocchio::SE3>> &contact_poses,
+      const std::vector<std::map<std::string, Eigen::VectorXd>>
+          &contact_forces);
 
   // Manage terminal cost and constraint
   virtual CostStack createTerminalCost() = 0;

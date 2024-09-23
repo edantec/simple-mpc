@@ -25,14 +25,25 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
 }
 
 StageModel CentroidalProblem::createStage(
-    const ContactMap &contact_map,
-    const std::map<std::string, Eigen::VectorXd> &force_refs) {
+    const std::map<std::string, bool> &contact_phase,
+    const std::map<std::string, pinocchio::SE3> &contact_pose,
+    const std::map<std::string, Eigen::VectorXd> &contact_force) {
   auto space = VectorSpace(nx_);
   auto rcost = CostStack(space, nu_);
-  std::vector<bool> contact_states = contact_map.getContactStates();
-  auto contact_poses = contact_map.getContactPoses();
+  std::vector<bool> contact_states;
+  StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
 
-  computeControlFromForces(force_refs);
+  for (auto const &x : contact_phase) {
+    contact_states.push_back(x.second);
+  }
+  for (auto const &x : contact_pose) {
+    contact_poses.push_back(x.second.translation());
+  }
+
+  computeControlFromForces(contact_force);
+
+  ContactMap contact_map =
+      ContactMap(handler_.getFeetNames(), contact_states, contact_poses);
 
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());

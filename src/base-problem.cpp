@@ -14,15 +14,21 @@ Problem::Problem(const RobotHandler &handler) : handler_(handler) {
 }
 
 std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
-    const std::vector<ContactMap> &contact_sequence,
-    const std::vector<std::map<std::string, Eigen::VectorXd>> &force_sequence) {
-  if (contact_sequence.size() != force_sequence.size()) {
+    const std::vector<std::map<std::string, bool>> &contact_phases,
+    const std::vector<std::map<std::string, pinocchio::SE3>> &contact_poses,
+    const std::vector<std::map<std::string, Eigen::VectorXd>> &contact_forces) {
+  if (contact_phases.size() != contact_poses.size()) {
     throw std::runtime_error(
-        "Contact and force sequences do not have the same size");
+        "Contact phases and poses sequences do not have the same size");
+  }
+  if (contact_phases.size() != contact_forces.size()) {
+    throw std::runtime_error(
+        "Contact phases and forces sequences do not have the same size");
   }
   std::vector<xyz::polymorphic<StageModel>> stage_models;
-  for (std::size_t i = 0; i < contact_sequence.size(); i++) {
-    StageModel stage = createStage(contact_sequence[i], force_sequence[i]);
+  for (std::size_t i = 0; i < contact_phases.size(); i++) {
+    StageModel stage =
+        createStage(contact_phases[i], contact_poses[i], contact_forces[i]);
     stage_models.push_back(stage);
   }
 
@@ -68,31 +74,31 @@ std::size_t Problem::getSize() { return problem_->stages_.size(); }
 
 void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
                             const int force_size, const double gravity) {
-  std::vector<ContactMap> contact_sequence;
-  std::vector<std::map<std::string, Eigen::VectorXd>> force_sequence;
+  std::vector<std::map<std::string, bool>> contact_phases;
+  std::vector<std::map<std::string, pinocchio::SE3>> contact_poses;
+  std::vector<std::map<std::string, Eigen::VectorXd>> contact_forces;
 
   Eigen::VectorXd force_ref(force_size);
   force_ref.setZero();
   force_ref[2] =
       -handler_.getMass() * gravity / (double)handler_.getFeetNames().size();
 
-  std::vector<bool> contact_states;
-  aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
-  std::map<std::string, Eigen::VectorXd> force_map;
+  std::map<std::string, bool> contact_phase;
+  std::map<std::string, pinocchio::SE3> contact_pose;
+  std::map<std::string, Eigen::VectorXd> contact_force;
   for (auto &name : handler_.getFeetNames()) {
-    contact_states.push_back(true);
-    contact_poses.push_back(handler_.getFootPose(name).translation());
-    force_map.insert({name, force_ref});
+    contact_phase.insert({name, true});
+    contact_pose.insert({name, handler_.getFootPose(name)});
+    contact_force.insert({name, force_ref});
   }
 
   for (size_t i = 0; i < horizon; i++) {
-    ContactMap contact_map(handler_.getFeetNames(), contact_states,
-                           contact_poses);
-    contact_sequence.push_back(contact_map);
-    force_sequence.push_back(force_map);
+    contact_phases.push_back(contact_phase);
+    contact_poses.push_back(contact_pose);
+    contact_forces.push_back(contact_force);
   }
   std::vector<xyz::polymorphic<StageModel>> stage_models =
-      createStages(contact_sequence, force_sequence);
+      createStages(contact_phases, contact_poses, contact_forces);
 
   problem_ =
       std::make_shared<TrajOptProblem>(x0, stage_models, createTerminalCost());

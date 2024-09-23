@@ -21,14 +21,14 @@ newpos = pin.SE3.Identity()
 newpos.translation[2] = 0.2
 print(
     "Translation stored = ",
-    str(rcost.components[0][0].residual.getReference().translation),
+    str(rcost.getComponent(0).residual.getReference().translation),
 )
-rcost.components[0][0].residual.setReference(newpos)
+rcost.getComponent(0).residual.setReference(newpos)
 print(
     "Set reference translation to ",
     str(newpos.translation),
 )
 print(
     "New translation stored = ",
-    str(rcost.components[0][0].residual.getReference().translation),
+    str(rcost.getComponent(0).residual.getReference().translation),
 )

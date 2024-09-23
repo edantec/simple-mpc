@@ -19,7 +19,7 @@
 
 namespace simple_mpc {
 using namespace aligator;
-constexpr std::size_t maxiters = 10;
+constexpr std::size_t maxiters = 100;
 
 MPC::MPC() {}
 
@@ -51,6 +51,7 @@ void MPC::initialize(const MPCSettings &settings,
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
                                             0., maxiters, aligator::QUIET);
   solver_->rollout_type_ = aligator::RolloutType::LINEAR;
+
   if (settings_.num_threads > 1) {
     solver_->linear_solver_choice = aligator::LQSolverChoice::PARALLEL;
     solver_->setNumThreads(settings_.num_threads);
@@ -108,23 +109,18 @@ void MPC::generateFullHorizon(
     force_zero.setZero();
     force_ref[2] = settings_.support_force / active_contacts;
 
-    aligator::StdVectorEigenAligned<Eigen::Vector3d> contact_poses;
+    std::map<std::string, pinocchio::SE3> contact_poses;
     std::map<std::string, Eigen::VectorXd> force_map;
-    std::vector<bool> contact_bools;
 
     for (auto const &name : ee_names_) {
-      contact_poses.push_back(
-          problem_->getHandler().getFootPose(name).translation());
-      contact_bools.push_back(state.at(name));
+      contact_poses.insert({name, problem_->getHandler().getFootPose(name)});
       if (state.at(name))
         force_map.insert({name, force_ref});
       else
         force_map.insert({name, force_zero});
     }
 
-    ContactMap contact_map(ee_names_, contact_bools, contact_poses);
-
-    StageModel sm = problem_->createStage(contact_map, force_map);
+    StageModel sm = problem_->createStage(state, contact_poses, force_map);
     full_horizon_.push_back(sm);
     full_horizon_data_.push_back(sm.createData());
   }
@@ -211,7 +207,7 @@ void MPC::updateStepTrackerReferences() {
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     pose.translation() = foot_trajectories_.getReference(
         name)[problem_->getProblem()->stages_.size() - 1];
-    setTerminalReferencePose(name, pose);
+    // setTerminalReferencePose(name, pose);
   }
 }
 

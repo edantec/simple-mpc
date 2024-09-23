@@ -124,7 +124,7 @@ w_x = np.array(
         10,  # Right arm vel
     ]
 )
-w_x = np.diag(w_x)
+w_x = np.diag(w_x) * 10
 w_linforce = np.array([0.001, 0.001, 0.01])
 w_angforce = np.ones(3) * 0.1
 w_u = np.concatenate(
@@ -173,14 +173,14 @@ T_ds = 20
 T_ss = 80
 
 mpc_conf = dict(
-    totalSteps=4,
+    totalSteps=3,
     ddpIteration=1,
     min_force=150,
     support_force=-handler.getMass() * gravity[2],
-    TOL=1e-4,
+    TOL=1e-5,
     mu_init=1e-8,
     max_iters=1,
-    num_threads=2,
+    num_threads=8,
     swing_apex=0.15,
     T_fly=T_ss,
     T_contact=T_ds,
@@ -242,6 +242,8 @@ ID_solver = IDSolverPython(
     handler.getModel(), weights_ID, 2, mu, Lfoot, Wfoot, contact_ids, force_size, False
 )
 
+print(mpc.getSolver().results)
+# exit()
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
@@ -258,7 +260,6 @@ x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
-print(mpc.getSolver().results)
 
 Tmpc = len(contact_phases)
 nk = 2
@@ -290,7 +291,7 @@ for t in range(Tmpc):
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
     )
 
-    if t == 120:
+    if t == 70:
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             time.sleep(0.1)
