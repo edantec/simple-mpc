@@ -94,6 +94,44 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
+StageModel createFullStage(FullDynamicsProblem &self,
+                           const bp::dict &phase_dict,
+                           const bp::dict &pose_dict,
+                           const bp::dict &force_dict) {
+  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
+  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
+  boost::python::list force_keys = boost::python::list(force_dict.keys());
+  std::map<std::string, bool> phase_contact;
+  std::map<std::string, pinocchio::SE3> pose_contact;
+  std::map<std::string, Eigen::VectorXd> force_contact;
+  for (int i = 0; i < len(phase_keys); ++i) {
+    boost::python::extract<std::string> extractor(phase_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(phase_dict[key]);
+      phase_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(pose_keys); ++i) {
+    boost::python::extract<std::string> extractor(pose_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
+      pose_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(force_keys); ++i) {
+    boost::python::extract<std::string> extractor(force_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
+      force_contact.insert({key, ff});
+    }
+  }
+
+  return self.createStage(phase_contact, pose_contact, force_contact);
+}
+
 bp::dict getSettingsFull(FullDynamicsProblem &self) {
   FullDynamicsSettings conf = self.getSettings();
   bp::dict settings;
@@ -158,8 +196,7 @@ void exposeFullDynamicsProblem() {
            bp::make_function(
                &FullDynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &FullDynamicsProblem::createStage,
-           bp::args("self", "contact_phase", "contact_pose", "contact_force"))
+      .def("createStage", &createFullStage)
       .def("createProblem", &createFullProblem)
       .def("setReferencePose", &FullDynamicsProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
@@ -204,6 +241,43 @@ void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
+StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
+                           const bp::dict &pose_dict,
+                           const bp::dict &force_dict) {
+  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
+  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
+  boost::python::list force_keys = boost::python::list(force_dict.keys());
+  std::map<std::string, bool> phase_contact;
+  std::map<std::string, pinocchio::SE3> pose_contact;
+  std::map<std::string, Eigen::VectorXd> force_contact;
+  for (int i = 0; i < len(phase_keys); ++i) {
+    boost::python::extract<std::string> extractor(phase_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(phase_dict[key]);
+      phase_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(pose_keys); ++i) {
+    boost::python::extract<std::string> extractor(pose_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
+      pose_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(force_keys); ++i) {
+    boost::python::extract<std::string> extractor(force_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
+      force_contact.insert({key, ff});
+    }
+  }
+
+  return self.createStage(phase_contact, pose_contact, force_contact);
+}
+
 bp::dict getSettingsCent(CentroidalProblem &self) {
   CentroidalSettings conf = self.getSettings();
   bp::dict settings;
@@ -235,6 +309,21 @@ TrajOptProblem getCentProblem(FullDynamicsProblem &self) {
 void exposeCentroidalProblem() {
   boost::python::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
 
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, Eigen::VectorXd, std::less<std::string>,
+      std::allocator<std::pair<const std::string, Eigen::VectorXd>>,
+      true>::expose("StdMap_Force");
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, pinocchio::SE3, std::less<std::string>,
+      std::allocator<std::pair<const std::string, pinocchio::SE3>>,
+      true>::expose("StdMap_SE3");
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, bool, std::less<std::string>,
+      std::allocator<std::pair<const std::string, bool>>,
+      true>::expose("StdMap_bool");
+
   bp::class_<PyCentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
       "CentroidalProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
@@ -244,8 +333,7 @@ void exposeCentroidalProblem() {
            bp::make_function(
                &CentroidalProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &CentroidalProblem::createStage,
-           bp::args("self", "contact_phase", "contact_pose", "contact_force"))
+      .def("createStage", &createCentStage)
       .def("createProblem", &createCentProblem)
       .def("setReferencePose", &CentroidalProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
@@ -319,6 +407,44 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
   return settings;
 }
 
+StageModel createKinoStage(KinodynamicsProblem &self,
+                           const bp::dict &phase_dict,
+                           const bp::dict &pose_dict,
+                           const bp::dict &force_dict) {
+  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
+  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
+  boost::python::list force_keys = boost::python::list(force_dict.keys());
+  std::map<std::string, bool> phase_contact;
+  std::map<std::string, pinocchio::SE3> pose_contact;
+  std::map<std::string, Eigen::VectorXd> force_contact;
+  for (int i = 0; i < len(phase_keys); ++i) {
+    boost::python::extract<std::string> extractor(phase_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(phase_dict[key]);
+      phase_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(pose_keys); ++i) {
+    boost::python::extract<std::string> extractor(pose_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
+      pose_contact.insert({key, ff});
+    }
+  }
+  for (int i = 0; i < len(force_keys); ++i) {
+    boost::python::extract<std::string> extractor(force_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
+      force_contact.insert({key, ff});
+    }
+  }
+
+  return self.createStage(phase_contact, pose_contact, force_contact);
+}
+
 void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
                        const size_t horizon, const int force_size,
                        const double gravity) {
@@ -336,6 +462,21 @@ void exposeKinodynamicsProblem() {
   boost::python::register_ptr_to_python<
       boost::shared_ptr<KinodynamicsProblem>>();
 
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, Eigen::VectorXd, std::less<std::string>,
+      std::allocator<std::pair<const std::string, Eigen::VectorXd>>,
+      true>::expose("StdMap_Force");
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, pinocchio::SE3, std::less<std::string>,
+      std::allocator<std::pair<const std::string, pinocchio::SE3>>,
+      true>::expose("StdMap_SE3");
+
+  eigenpy::python::StdMapPythonVisitor<
+      std::string, bool, std::less<std::string>,
+      std::allocator<std::pair<const std::string, bool>>,
+      true>::expose("StdMap_bool");
+
   bp::class_<PyKinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
@@ -345,8 +486,7 @@ void exposeKinodynamicsProblem() {
            bp::make_function(
                &KinodynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &KinodynamicsProblem::createStage,
-           bp::args("self", "contact_phase", "contact_pose", "contact_force"))
+      .def("createStage", &createKinoStage)
       .def("createProblem", &createKinoProblem)
       .def("setReferencePose", &KinodynamicsProblem::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))

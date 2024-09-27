@@ -79,12 +79,13 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
   settings.w_u = Eigen::MatrixXd::Identity(nu, nu) * 1e-4;
 
   settings.w_cent = Eigen::MatrixXd::Identity(6, 6);
-  settings.w_cent.diagonal() << 0, 0, 0, 0.1, 0.1, 100;
+  settings.w_cent.diagonal() << 0, 0, 10, 0, 0, 10;
 
   settings.gravity << 0, 0, -9.81;
   settings.force_size = 6;
   settings.w_forces = Eigen::MatrixXd::Identity(6, 6);
-  settings.w_forces.diagonal() << 0.01, 0.01, 0.01, 0.0001, 0.0001, 0.0001;
+  settings.w_forces.diagonal() << 0.0001, 0.0001, 0.0001, 0.0001, 0.0001,
+      0.0001;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
   settings.umin =
       -handler.getModel().effortLimit.tail(handler.getModel().nv - 6);
@@ -94,6 +95,9 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
       handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
   settings.qmax =
       handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
+  settings.mu = 0.8;
+  settings.Lfoot = 0.1;
+  settings.Wfoot = 0.075;
 
   return settings;
 }

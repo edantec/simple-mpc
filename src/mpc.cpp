@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <aligator/core/stage-model.hpp>
+#include <aligator/core/traj-opt-data.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
 #include <aligator/core/workspace-base.hpp>
 #include <aligator/fwd.hpp>
@@ -14,6 +15,7 @@
 #include <pinocchio/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
+#include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
@@ -136,9 +138,9 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   updateSupportTiming();
 
   // ~~REFERENCES~~ //
-  x0_ << q_current, v_current;
   updateStepTrackerReferences();
 
+  x0_ << problem_->getProblemState();
   xs_.erase(xs_.begin());
   xs_[0] = x0_;
   xs_.push_back(xs_.back());
@@ -159,12 +161,15 @@ void MPC::recedeWithCycle() {
   if (horizon_iteration_ < full_horizon_.size()) {
     problem_->getProblem()->replaceStageCircular(
         full_horizon_[horizon_iteration_]);
-    solver_->workspace_.cycleAppend(full_horizon_data_[horizon_iteration_]);
+    solver_->cycleProblem(*problem_->getProblem(),
+                          full_horizon_data_[horizon_iteration_]);
     horizon_iteration_++;
   } else {
     problem_->getProblem()->replaceStageCircular(
         problem_->getProblem()->stages_[0]);
-    solver_->workspace_.cycleLeft();
+    std::shared_ptr<StageDataTpl<double>> data =
+        problem_->getProblem()->stages_[0]->createData();
+    solver_->cycleProblem(*problem_->getProblem(), data);
   }
 }
 

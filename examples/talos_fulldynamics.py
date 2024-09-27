@@ -164,9 +164,9 @@ x_depth = 0.0
 T_ss = 80
 T_ds = 20
 nsteps = 100
-
+totalSteps = 1
 mpc_conf = dict(
-    totalSteps=4,
+    totalSteps=totalSteps,
     ddpIteration=1,
     min_force=150,
     support_force=-handler.getMass() * gravity[2],
@@ -186,7 +186,7 @@ mpc = MPC()
 mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 3
+total_steps = totalSteps
 contact_phase_double = {
     "left_sole_link": True,
     "right_sole_link": True,
