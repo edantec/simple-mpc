@@ -51,13 +51,11 @@ using SolverProxDDP = SolverProxDDPTpl<double>;
 struct MPCSettings {
 public:
   // Step-related quantities
-  int totalSteps = 4;
   double swing_apex = 0.15;
   double x_translation = 0.1;
   double y_translation = 0.;
 
   // Force parameters
-  double min_force = 150;
   double support_force = 1000;
 
   // Solver-related quantities
@@ -91,6 +89,7 @@ protected:
   std::vector<std::string> ee_names_;
   Eigen::VectorXd x_internal_;
   bool time_to_solve_ddp_ = false;
+  Eigen::Vector3d com0_;
 
 public:
   MPC();

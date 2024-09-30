@@ -27,10 +27,8 @@ void initialize(MPC &self, const bp::dict &settings,
                 std::shared_ptr<Problem> problem) {
   MPCSettings conf;
 
-  conf.totalSteps = bp::extract<int>(settings["totalSteps"]);
   conf.ddpIteration = bp::extract<int>(settings["ddpIteration"]);
 
-  conf.min_force = bp::extract<double>(settings["min_force"]);
   conf.support_force = bp::extract<double>(settings["support_force"]);
 
   conf.TOL = bp::extract<double>(settings["TOL"]);
@@ -51,9 +49,7 @@ void initialize(MPC &self, const bp::dict &settings,
 bp::dict getSettings(MPC &self) {
   MPCSettings conf = self.getSettings();
   bp::dict settings;
-  settings["totalSteps"] = conf.totalSteps;
   settings["ddpIteration"] = conf.ddpIteration;
-  settings["min_force"] = conf.min_force;
   settings["support_force"] = conf.support_force;
   settings["TOL"] = conf.TOL;
   settings["mu_init"] = conf.mu_init;

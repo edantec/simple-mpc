@@ -84,8 +84,8 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint", );
   }
 
-  void updateTerminalConstraint() override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint", );
+  void updateTerminalConstraint(const Eigen::Vector3d &com_ref) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "updateTerminalConstraint", com_ref);
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -167,9 +167,9 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                createTerminalConstraint, );
   }
 
-  void updateTerminalConstraint() override {
+  void updateTerminalConstraint(const Eigen::Vector3d &com_ref) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem,
-                               updateTerminalConstraint, );
+                               updateTerminalConstraint, com_ref);
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -244,9 +244,9 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
                                createTerminalConstraint, );
   }
 
-  void updateTerminalConstraint() override {
+  void updateTerminalConstraint(const Eigen::Vector3d &com_ref) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem,
-                               updateTerminalConstraint, );
+                               updateTerminalConstraint, com_ref);
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -322,9 +322,9 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                                createTerminalConstraint, );
   }
 
-  void updateTerminalConstraint() override {
+  void updateTerminalConstraint(const Eigen::Vector3d &com_ref) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem,
-                               updateTerminalConstraint, );
+                               updateTerminalConstraint, com_ref);
   }
 
   void setReferencePose(const std::size_t t, const std::string &ee_name,

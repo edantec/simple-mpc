@@ -40,7 +40,7 @@ void exposeBaseProblem() {
            bp::args("self"))
       .def("updateTerminalConstraint",
            bp::pure_virtual(&Problem::updateTerminalConstraint),
-           bp::args("self"))
+           bp::args("self", "com_ref"))
       .def("setReferencePose", bp::pure_virtual(&Problem::setReferencePose),
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("setReferencePoses", bp::pure_virtual(&Problem::setReferencePoses),
@@ -218,7 +218,8 @@ void exposeFullDynamicsProblem() {
       .def("createTerminalCost", &FullDynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("updateTerminalConstraint",
-           &FullDynamicsProblem::updateTerminalConstraint, bp::args("self"))
+           &FullDynamicsProblem::updateTerminalConstraint,
+           bp::args("self", "com_ref"))
       .def("createTerminalConstraint",
            &FullDynamicsProblem::createTerminalConstraint, bp::args("self"))
       .def("getProblem", &getFullProblem);
@@ -357,7 +358,8 @@ void exposeCentroidalProblem() {
       .def("createTerminalConstraint",
            &CentroidalProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
-           &CentroidalProblem::updateTerminalConstraint, bp::args("self"))
+           &CentroidalProblem::updateTerminalConstraint,
+           bp::args("self", "com_ref"))
       .def("getProblem", &getCentProblem);
 }
 
@@ -510,7 +512,8 @@ void exposeKinodynamicsProblem() {
       .def("createTerminalConstraint",
            &KinodynamicsProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
-           &KinodynamicsProblem::updateTerminalConstraint, bp::args("self"))
+           &KinodynamicsProblem::updateTerminalConstraint,
+           bp::args("self", "com_ref"))
       .def("getProblem", &getKinoProblem);
 }
 } // namespace python

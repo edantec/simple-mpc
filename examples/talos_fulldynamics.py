@@ -163,23 +163,20 @@ y_gap = 0.18
 x_depth = 0.0
 T_ss = 80
 T_ds = 20
-nsteps = 100
 totalSteps = 1
 mpc_conf = dict(
-    totalSteps=totalSteps,
     ddpIteration=1,
-    min_force=150,
     support_force=-handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
-    num_threads=2,
+    num_threads=8,
     swing_apex=0.15,
     x_translation=0.0,
     y_translation=0,
     T_fly=T_ss,
     T_contact=T_ds,
-    T=nsteps,
+    T=T,
 )
 
 mpc = MPC()
@@ -207,6 +204,7 @@ for s in range(total_steps):
         + [contact_phase_right] * T_ss
         + [contact_phase_double] * T_ds
     )
+contact_phases += [contact_phase_double] * T * 2
 
 Tmpc = len(contact_phases)
 mpc.generateFullHorizon(contact_phases)
@@ -266,8 +264,10 @@ for t in range(Tmpc):
         str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
         str(land_LF),
     )
-
+    start = time.time()
     mpc.iterate(q_current, v_current)
+    end = time.time()
+    print("MPC iterate = " + str(end - start))
     device.moveMarkers(
         mpc.getReferencePose(0, "left_sole_link").translation,
         mpc.getReferencePose(0, "right_sole_link").translation,

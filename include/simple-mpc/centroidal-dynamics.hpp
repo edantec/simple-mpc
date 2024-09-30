@@ -83,7 +83,7 @@ public:
   // Manage terminal cost and constraint
   CostStack createTerminalCost() override;
   void createTerminalConstraint() override;
-  void updateTerminalConstraint() override;
+  void updateTerminalConstraint(const Eigen::Vector3d &com_ref) override;
 
   // Getters and setters for pose not implemented
   void setReferencePose(const std::size_t t, const std::string &ee_name,

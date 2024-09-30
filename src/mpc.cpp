@@ -18,7 +18,7 @@
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/robot-handler.hpp"
-
+#include <chrono>
 namespace simple_mpc {
 using namespace aligator;
 constexpr std::size_t maxiters = 100;
@@ -78,6 +78,8 @@ void MPC::initialize(const MPCSettings &settings,
   K0_ = solver_->results_.getCtrlFeedbacks()[0];
 
   solver_->max_iters = settings_.max_iters;
+
+  com0_ = problem_->getHandler().getComPosition();
 }
 
 void MPC::generateFullHorizon(
@@ -147,10 +149,19 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   us_.erase(us_.begin());
   us_.push_back(us_.back());
+
   problem_->getProblem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
+  std::chrono::steady_clock::time_point begin5 =
+      std::chrono::steady_clock::now();
   solver_->run(*problem_->getProblem(), xs_, us_);
+  std::chrono::steady_clock::time_point end5 = std::chrono::steady_clock::now();
+  std::cout << "solve = "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
+                                                                     begin5)
+                   .count()
+            << "[ms]" << std::endl;
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -159,10 +170,28 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
 void MPC::recedeWithCycle() {
   if (horizon_iteration_ < full_horizon_.size()) {
+    std::chrono::steady_clock::time_point begin5 =
+        std::chrono::steady_clock::now();
     problem_->getProblem()->replaceStageCircular(
         full_horizon_[horizon_iteration_]);
+    std::chrono::steady_clock::time_point end5 =
+        std::chrono::steady_clock::now();
+    std::cout << "replace stage = "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
+                                                                       begin5)
+                     .count()
+              << "[ms]" << std::endl;
+    std::chrono::steady_clock::time_point begin =
+        std::chrono::steady_clock::now();
     solver_->cycleProblem(*problem_->getProblem(),
                           full_horizon_data_[horizon_iteration_]);
+    std::chrono::steady_clock::time_point end =
+        std::chrono::steady_clock::now();
+    std::cout << "cycle problem = "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                       begin)
+                     .count()
+              << "[ms]" << std::endl;
     horizon_iteration_++;
   } else {
     problem_->getProblem()->replaceStageCircular(
@@ -209,10 +238,15 @@ void MPC::updateStepTrackerReferences() {
       pose.translation() = foot_trajectories_.getReference(name)[time];
       setReferencePose(time, name, pose);
     }
-    pinocchio::SE3 pose = pinocchio::SE3::Identity();
-    pose.translation() = foot_trajectories_.getReference(
-        name)[problem_->getProblem()->stages_.size() - 1];
-    // setTerminalReferencePose(name, pose);
+    Eigen::Vector3d com_ref;
+    com_ref << 0, 0, 0;
+    for (auto const &name : ee_names_) {
+      com_ref += foot_trajectories_.getReference(name).back();
+    }
+    com_ref /= (double)ee_names_.size();
+    com_ref[2] += com0_[2];
+
+    problem_->updateTerminalConstraint(com0_);
   }
 }
 

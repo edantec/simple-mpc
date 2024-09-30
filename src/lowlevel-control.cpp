@@ -41,6 +41,7 @@ void IDSolver::initialize(const IDSettings &settings,
   S_.resize(model_.nv, model_.nv - 6);
   S_.setZero();
   S_.bottomRows(model_.nv - 6).diagonal().setOnes();
+
   Cmin_.resize(9, settings.force_size);
   if (settings.force_size == 3) {
     Cmin_ << -1, 0, settings.mu, 1, 0, settings.mu, -1, 0, settings.mu, 1, 0,
@@ -101,6 +102,7 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
   l_.setZero();
   C_.setZero();
   for (long i = 0; i < nk_; i++) {
+    Jdot_.setZero();
     if (contact_state[(size_t)i]) {
       Jvel_ = getFrameVelocity(model_, data, settings_.contact_ids[(size_t)i],
                                pinocchio::LOCAL_WORLD_ALIGNED);
@@ -113,9 +115,8 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
               .topRows(settings_.force_size);
       gamma_.segment(i * settings_.force_size, settings_.force_size) =
           Jdot_.topRows(settings_.force_size) * v;
-
-      gamma_.segment(i * settings_.force_size, 3) +=
-          baum_gains_ * Jvel_.linear() + baum_gains_ * Jvel_.angular();
+      /* gamma_.segment(i * settings_.force_size, 3) +=
+          baum_gains_ * Jvel_.linear() + baum_gains_ * Jvel_.angular(); */
 
       l_.segment(i * 9, 9) << forces[i * settings_.force_size] -
                                   forces[i * settings_.force_size + 2] *

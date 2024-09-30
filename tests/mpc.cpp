@@ -25,10 +25,8 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
       std::make_shared<FullDynamicsProblem>(fdproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.totalSteps = 4;
   mpc_settings.ddpIteration = 1;
 
-  mpc_settings.min_force = 150;
   mpc_settings.support_force = -handler.getMass() * settings.gravity[2];
 
   mpc_settings.TOL = 1e-6;
@@ -122,10 +120,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
       std::make_shared<KinodynamicsProblem>(kinoproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.totalSteps = 4;
   mpc_settings.ddpIteration = 1;
 
-  mpc_settings.min_force = 150;
   mpc_settings.support_force = support_force;
 
   mpc_settings.TOL = 1e-6;
@@ -207,10 +203,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
       std::make_shared<CentroidalProblem>(centproblem);
 
   MPCSettings mpc_settings;
-  mpc_settings.totalSteps = 4;
   mpc_settings.ddpIteration = 1;
 
-  mpc_settings.min_force = 150;
   mpc_settings.support_force = support_force;
 
   mpc_settings.TOL = 1e-6;

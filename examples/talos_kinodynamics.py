@@ -3,7 +3,6 @@ import example_robot_data
 from bullet_robot import BulletRobot
 import time
 from simple_mpc import RobotHandler, KinodynamicsProblem, MPC, IDSolver
-from QP_utils import IDSolverPython
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -11,8 +10,8 @@ SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
 URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
 
 modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-# ####### CONFIGURATION  ############
-# ### RobotWrapper
+
+""" Define robot model through handler"""
 design_conf = dict(
     urdf_path=modelPath + URDF_SUBPATH,
     srdf_path=modelPath + SRDF_SUBPATH,
@@ -54,11 +53,11 @@ handler.initialize(design_conf)
 
 nq = handler.getModel().nq
 nv = handler.getModel().nv
-T = 100
 
 x0 = handler.getState()
 nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
 
+""" Define kinodynamics problem """
 gravity = np.array([0, 0, -9.81])
 fref = np.zeros(6)
 fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
@@ -169,24 +168,25 @@ problem = KinodynamicsProblem(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getState(), T, 6, gravity[2])
 
+""" Define MPC object """
+
 T_ds = 20
 T_ss = 80
+T = 100
 
 mpc_conf = dict(
-    totalSteps=3,
     ddpIteration=1,
-    min_force=150,
     support_force=-handler.getMass() * gravity[2],
-    TOL=1e-5,
+    TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
     num_threads=8,
     swing_apex=0.15,
+    x_translation=0.0,
+    y_translation=0,
     T_fly=T_ss,
     T_contact=T_ds,
-    T=100,
-    x_translation=0.0,
-    y_translation=0.0,
+    T=T,
 )
 
 mpc = MPC()
@@ -215,7 +215,10 @@ for s in range(total_steps):
         + [contact_phase_double] * T_ds
     )
 
+contact_phases += [contact_phase_double] * T * 2
 mpc.generateFullHorizon(contact_phases)
+
+""" Initialize whole-body inverse dynamics QP"""
 contact_ids = handler.getFeetIds()
 id_conf = dict(
     contact_ids=contact_ids,
@@ -233,17 +236,6 @@ id_conf = dict(
 qp = IDSolver()
 qp.initialize(id_conf, handler.getModel())
 
-weights_ID = [1, 10000]  # Acceleration, forces
-mu = 0.8
-Lfoot = 0.1
-Wfoot = 0.075
-force_size = 6
-ID_solver = IDSolverPython(
-    handler.getModel(), weights_ID, 2, mu, Lfoot, Wfoot, contact_ids, force_size, False
-)
-
-print(mpc.getSolver().results)
-# exit()
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
@@ -271,17 +263,20 @@ for t in range(Tmpc):
     LF_lands = mpc.getFootLandTimings("left_sole_link")
     RF_lands = mpc.getFootLandTimings("right_sole_link")
 
-    LF_land = -1 if LF_lands == [] else LF_lands[0]
-    RF_land = -1 if RF_lands == [] else RF_lands[0]
-    LF_takeoff = -1 if LF_takeoffs == [] else LF_takeoffs[0]
-    RF_takeoff = -1 if RF_takeoffs == [] else RF_takeoffs[0]
+    LF_land = -1 if LF_lands.tolist() == [] else LF_lands[0]
+    RF_land = -1 if RF_lands.tolist() == [] else RF_lands[0]
+    LF_takeoff = -1 if LF_takeoffs.tolist() == [] else LF_takeoffs[0]
+    RF_takeoff = -1 if RF_takeoffs.tolist() == [] else RF_takeoffs[0]
     print(
         "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
         str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
         str(LF_land),
     )
 
+    start = time.time()
     mpc.iterate(q_current, v_current)
+    end = time.time()
+    print("MPC iterate = " + str(end - start))
     a0 = (
         mpc.getSolver()
         .workspace.problem_data.stage_data[0]
@@ -291,23 +286,22 @@ for t in range(Tmpc):
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
     )
 
-    if t == 70:
+    """ if t == 60:
+        top=mpc.getTrajOptProblem()
+        exit()
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             time.sleep(0.1)
             print("s = " + str(s))
-        exit()
-    # print("Left " + str(contact_states[0]) + ", right " + str(contact_states[1]))
+        exit()  """
     for j in range(10):
         q_current, v_current = device.measureState()
-        x_measured = np.concatenate((q_current, v_current))
-
         x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        state_diff = handler.difference(x_measured, mpc.xs[0])
+        state_diff = mpc.getHandler().difference(x_measured, mpc.xs[0])
         mpc.getHandler().updateState(q_current, v_current, True)
         a0[6:] = (
             mpc.us[0][nk * force_size :]
@@ -322,22 +316,12 @@ for t in range(Tmpc):
             @ state_diff
         )
         qp.solve_qp(
-            handler.getData(),
+            mpc.getHandler().getData(),
             contact_states,
             v_current,
             a0,
             forces,
-            handler.getMassMatrix(),
+            mpc.getHandler().getMassMatrix(),
         )
-        new_acc, new_forces, torque_qp = ID_solver.solve(
-            mpc.getHandler().getData(),
-            contact_states,
-            x_measured[nq:],
-            a0,
-            forces,
-            handler.getMassMatrix(),
-        )
-        solved_acc = qp.solved_acc
-        solved_forces = qp.solved_forces
-        solved_torque = qp.solved_torque
-        device.execute(solved_torque)
+
+        device.execute(qp.solved_torque)

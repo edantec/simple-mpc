@@ -79,6 +79,16 @@ void exposeIDSolver() {
       .def("initialize", &initialize_ID)
       .def("solve_qp", &IDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "v", "a", "forces", "M"))
+      .def("getA", &IDSolver::getA, bp::args("self"))
+      .def("getA", &IDSolver::getA, bp::args("self"))
+      .def("getH", &IDSolver::getH, bp::args("self"))
+      .def("getC", &IDSolver::getC, bp::args("self"))
+      .def("getb", &IDSolver::getb, bp::args("self"))
+      .def("getg", &IDSolver::getg, bp::args("self"))
+      //.def("getQP",
+      //     bp::make_function(
+      //         &IDSolver::getQP,
+      //         bp::return_value_policy<bp::reference_existing_object>()))
       .add_property("solved_acc", &IDSolver::solved_acc_)
       .add_property("solved_forces", &IDSolver::solved_forces_)
       .add_property("solved_torque", &IDSolver::solved_torque_);
@@ -92,6 +102,7 @@ void exposeIKIDSolver() {
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
                     "foot_refs", "foot_refs_next", "dH", "M"))
+      .def("getQP", &IKIDSolver::getQP, bp::args("self"))
       .add_property("solved_acc", &IKIDSolver::solved_acc_)
       .add_property("solved_forces", &IKIDSolver::solved_forces_)
       .add_property("solved_torque", &IKIDSolver::solved_torque_);

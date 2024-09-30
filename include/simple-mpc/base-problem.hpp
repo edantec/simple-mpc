@@ -67,7 +67,7 @@ public:
   // Manage terminal cost and constraint
   virtual CostStack createTerminalCost() = 0;
 
-  virtual void updateTerminalConstraint() = 0;
+  virtual void updateTerminalConstraint(const Eigen::Vector3d &com_ref) = 0;
 
   virtual void createTerminalConstraint() = 0;
 

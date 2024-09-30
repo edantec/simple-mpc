@@ -224,14 +224,13 @@ void KinodynamicsProblem::createTerminalConstraint() {
   terminal_constraint_ = true;
 }
 
-void KinodynamicsProblem::updateTerminalConstraint() {
+void KinodynamicsProblem::updateTerminalConstraint(
+    const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
-    CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
-        ndx_, nu_, handler_.getModel(), handler_.getComPosition());
+    CenterOfMassTranslationResidual *CoMres =
+        problem_->term_cstrs_.getComponent<CenterOfMassTranslationResidual>(0);
 
-    StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
-    problem_->removeTerminalConstraints();
-    problem_->addTerminalConstraint(term_constraint_com);
+    CoMres->setReference(com_ref);
   }
 }
 

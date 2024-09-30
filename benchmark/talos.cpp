@@ -94,8 +94,6 @@ int main() {
       std::make_shared<FullDynamicsProblem>(problem);
 
   MPCSettings mpc_settings;
-  mpc_settings.totalSteps = 4;
-  mpc_settings.min_force = 150;
   mpc_settings.support_force = -problem_settings.gravity[2] * handler.getMass();
   mpc_settings.TOL = 1e-4;
   mpc_settings.mu_init = 1e-8;
