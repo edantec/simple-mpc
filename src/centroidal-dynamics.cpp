@@ -235,7 +235,7 @@ void CentroidalProblem::updateTerminalConstraint(
     const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
     CentroidalCoMResidual *CoMres =
-        problem_->term_cstrs_.getComponent<CentroidalCoMResidual>(0);
+        problem_->term_cstrs_.getConstraint<CentroidalCoMResidual>(0);
 
     CoMres->setReference(com_ref);
   }

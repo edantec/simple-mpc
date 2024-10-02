@@ -228,7 +228,7 @@ void KinodynamicsProblem::updateTerminalConstraint(
     const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
     CenterOfMassTranslationResidual *CoMres =
-        problem_->term_cstrs_.getComponent<CenterOfMassTranslationResidual>(0);
+        problem_->term_cstrs_.getConstraint<CenterOfMassTranslationResidual>(0);
 
     CoMres->setReference(com_ref);
   }
