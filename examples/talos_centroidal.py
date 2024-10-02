@@ -1,15 +1,7 @@
 import numpy as np
 import example_robot_data
 from bullet_robot import BulletRobot
-from QP_utils import IKIDSolver_f6
-import pinocchio as pin
-import copy
 from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
-from aligator import (
-    manifolds,
-    dynamics,
-    constraints,
-)
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -17,75 +9,6 @@ SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
 URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
 
 modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-
-
-def compute_ID_references(
-    space,
-    rmodel,
-    rdata,
-    LF_id,
-    RF_id,
-    base_id,
-    torso_id,
-    x0_multibody,
-    x_measured,
-    foot_refs,
-    foot_refs_next,
-    dt,
-):
-    LF_vel_lin = pin.getFrameVelocity(rmodel, rdata, LF_id, pin.LOCAL).linear
-    RF_vel_lin = pin.getFrameVelocity(rmodel, rdata, RF_id, pin.LOCAL).linear
-    LF_vel_ang = pin.getFrameVelocity(rmodel, rdata, LF_id, pin.LOCAL).angular
-    RF_vel_ang = pin.getFrameVelocity(rmodel, rdata, RF_id, pin.LOCAL).angular
-
-    q_diff = -space.difference(x0_multibody, x_measured)[: rmodel.nv]
-    dq_diff = -space.difference(x0_multibody, x_measured)[rmodel.nv :]
-    LF_diff = np.zeros(6)
-    LF_diff[:3] = foot_refs[0].translation - rdata.oMf[LF_id].translation
-    LF_diff[3:] = -pin.log3(foot_refs[0].rotation.T @ rdata.oMf[LF_id].rotation)
-    RF_diff = np.zeros(6)
-    RF_diff[:3] = foot_refs[1].translation - rdata.oMf[RF_id].translation
-    RF_diff[3:] = -pin.log3(foot_refs[1].rotation.T @ rdata.oMf[RF_id].rotation)
-
-    dLF_diff = np.zeros(6)
-    dLF_diff[:3] = (
-        foot_refs_next[0].translation - foot_refs[0].translation
-    ) / dt - LF_vel_lin
-    dLF_diff[3:] = (
-        pin.log3(foot_refs[0].rotation.T @ foot_refs_next[0].rotation) / dt - LF_vel_ang
-    )
-    dRF_diff = np.zeros(6)
-    dRF_diff[:3] = (
-        foot_refs_next[1].translation - foot_refs[1].translation
-    ) / dt - RF_vel_lin
-    dRF_diff[3:] = (
-        pin.log3(foot_refs[1].rotation.T @ foot_refs_next[1].rotation) / dt - RF_vel_ang
-    )
-
-    base_diff = -pin.log3(foot_refs[1].rotation.T @ rdata.oMf[base_id].rotation)
-    torso_diff = -pin.log3(foot_refs[1].rotation.T @ rdata.oMf[torso_id].rotation)
-    dbase_diff = (
-        pin.log3(foot_refs[1].rotation.T @ foot_refs_next[1].rotation) / dt
-        - pin.getFrameVelocity(rmodel, rdata, base_id, pin.LOCAL).angular
-    )
-    dtorso_diff = (
-        pin.log3(foot_refs[1].rotation.T @ foot_refs_next[1].rotation) / dt
-        - pin.getFrameVelocity(rmodel, rdata, torso_id, pin.LOCAL).angular
-    )
-
-    return (
-        q_diff,
-        dq_diff,
-        LF_diff,
-        dLF_diff,
-        RF_diff,
-        dRF_diff,
-        base_diff,
-        dbase_diff,
-        torso_diff,
-        dtorso_diff,
-    )
-
 
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
@@ -215,6 +138,7 @@ contact_phases += [contact_phase_double] * T * 2
 
 mpc.generateFullHorizon(contact_phases)
 
+""" Initialize inverse dynamics QP """
 g_basepos = [0, 0, 0, 10, 10, 10]
 g_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 g_torsopos = [1, 1]
@@ -250,41 +174,6 @@ ikid_conf = dict(
 
 qp = IKIDSolver()
 qp.initialize(ikid_conf, handler.getModel())
-
-K_gains = []
-K_gains.append([np.diag(g_q), 2 * np.sqrt(np.diag(g_q))])
-K_gains.append([np.diag(g_p), np.eye(6) * 2 * np.sqrt(np.diag(g_p))])
-K_gains.append([np.diag(g_b), np.eye(3) * 2 * np.sqrt(np.diag(g_b))])
-
-weights_IKID = [
-    500,
-    50000,
-    10,
-    1000,
-    100,
-]  # qref, foot_pose, centroidal, base_rot, force
-torso_id = handler.getModel().getFrameId("torso_2_link")
-IKID_solver = IKIDSolver_f6(
-    handler.getModel(),
-    weights_IKID,
-    K_gains,
-    2,
-    0.8,
-    0.1,
-    0.075,
-    contact_ids,
-    handler.getRootId(),
-    torso_id,
-    6,
-    False,
-)
-
-rmodel = handler.getModel().copy()
-rdata = rmodel.createData()
-space_multibody = manifolds.MultibodyPhaseSpace(rmodel)
-LF_id = rmodel.getFrameId("left_sole_link")
-RF_id = rmodel.getFrameId("right_sole_link")
-base_id = rmodel.getFrameId("base_link")
 
 """ Initialize simulation"""
 device = BulletRobot(
