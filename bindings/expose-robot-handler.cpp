@@ -110,6 +110,10 @@ void exposeHandler() {
            bp::make_function(
                &RobotHandler::getControlledJointsIDs,
                bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getRootId",
+           bp::make_function(
+               &RobotHandler::getRootId,
+               bp::return_value_policy<bp::copy_const_reference>()))
       .def("getFootId",
            bp::make_function(
                &RobotHandler::getFootId,

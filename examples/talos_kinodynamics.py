@@ -63,65 +63,24 @@ fref = np.zeros(6)
 fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
 u0 = np.concatenate((fref, fref, np.zeros(nv - 6)))
 
+w_basepos = [0, 0, 1000, 1000, 1000, 1000]
+w_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+w_torsopos = [1, 1000]
+w_armpos = [1, 1, 10, 10]
+
+w_basevel = [0.1, 0.1, 0.1, 1000, 1000, 1000]
+w_legvel = [1, 1, 1, 1, 1, 1]
+w_torsovel = [0.1, 100]
+w_armvel = [10, 10, 10, 10]
 w_x = np.array(
-    [
-        0,
-        0,
-        1000,
-        1000,
-        1000,
-        1000,  # Base pos/ori
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Left leg
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Right leg
-        1,
-        1000,  # Torso
-        1,
-        1,
-        10,
-        10,  # Left arm
-        1,
-        1,
-        10,
-        10,  # Right arm
-        0.1,
-        0.1,
-        0.1,
-        1000,
-        1000,
-        1000,  # Base pos/ori vel
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,  # Left leg vel
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,  # Right leg vel
-        0.1,
-        100,  # Torso vel
-        10,
-        10,
-        10,
-        10,  # Left arm vel
-        10,
-        10,
-        10,
-        10,  # Right arm vel
-    ]
+    w_basepos
+    + w_legpos * 2
+    + w_torsopos
+    + w_armpos * 2
+    + w_basevel
+    + w_legvel * 2
+    + w_torsovel
+    + w_armvel * 2
 )
 w_x = np.diag(w_x) * 10
 w_linforce = np.array([0.001, 0.001, 0.01])
@@ -164,16 +123,15 @@ problem_conf = dict(
     Wfoot=0.075,
 )
 
+T = 100
+
 problem = KinodynamicsProblem(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getState(), T, 6, gravity[2])
 
 """ Define MPC object """
-
 T_ds = 20
 T_ss = 80
-T = 100
-
 mpc_conf = dict(
     ddpIteration=1,
     support_force=-handler.getMass() * gravity[2],

@@ -1,11 +1,11 @@
 #include "simple-mpc/robot-handler.hpp"
 
+#include <iostream>
 #include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/compute-all-terms.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/parsers/srdf.hpp>
 #include <pinocchio/parsers/urdf.hpp>
-
 namespace simple_mpc {
 
 RobotHandler::RobotHandler() {}
@@ -150,9 +150,10 @@ void RobotHandler::updateInternalData(const bool updateJacobians) {
 
 void RobotHandler::updateJacobiansMassMatrix() {
   computeJointJacobians(rmodel_, rdata_);
-  M_ = crba(rmodel_, rdata_, q_);
-  nonLinearEffects(rmodel_, rdata_, q_, v_);
   computeJointJacobiansTimeVariation(rmodel_, rdata_, q_, v_);
+  crba(rmodel_, rdata_, q_);
+  make_symmetric(rdata_.M);
+  nonLinearEffects(rmodel_, rdata_, q_, v_);
   dccrba(rmodel_, rdata_, q_, v_);
 }
 

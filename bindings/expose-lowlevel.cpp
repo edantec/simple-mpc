@@ -10,6 +10,7 @@
 #include <boost/python/enum.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
 #include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
 #include <pinocchio/fwd.hpp>
 
@@ -74,6 +75,10 @@ void initialize_IKID(IKIDSolver &self, const bp::dict &settings,
 }
 
 void exposeIDSolver() {
+  eigenpy::StdVectorPythonVisitor<std::vector<pinocchio::SE3>, true>::expose(
+      "StdVec_SE3"),
+      eigenpy::details::overload_base_get_item_for_std_vector<
+          std::vector<pinocchio::SE3>>();
   bp::class_<IDSolver>("IDSolver", bp::no_init)
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize_ID)
@@ -96,13 +101,20 @@ void exposeIDSolver() {
 }
 
 void exposeIKIDSolver() {
+  eigenpy::StdVectorPythonVisitor<std::vector<pinocchio::SE3>, true>::expose(
+      "StdVec_SE3"),
+      eigenpy::details::overload_base_get_item_for_std_vector<
+          std::vector<pinocchio::SE3>>();
   bp::class_<IKIDSolver>("IKIDSolver", bp::no_init)
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize_IKID)
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
-                    "foot_refs", "foot_refs_next", "dH", "M"))
+                    "dH", "M"))
       .def("getQP", &IKIDSolver::getQP, bp::args("self"))
+      .def(
+          "computeDifferences", &IKIDSolver::computeDifferences,
+          bp::args("self", "data", "x_measured", "foot_refs", "foot_refs_next"))
       .add_property("solved_acc", &IKIDSolver::solved_acc_)
       .add_property("solved_forces", &IKIDSolver::solved_forces_)
       .add_property("solved_torque", &IKIDSolver::solved_torque_);

@@ -125,8 +125,7 @@ public:
     return controlled_joints_ids_;
   }
   const Eigen::Vector3d &getComPosition() { return com_position_; }
-  const Eigen::MatrixXd &getMassMatrix() { return M_; }
-
+  const Eigen::MatrixXd &getMassMatrix() { return rdata_.M; }
   // Compute the total robot mass
   void computeMass();
 };

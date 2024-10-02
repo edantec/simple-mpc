@@ -135,15 +135,15 @@ protected:
   Eigen::VectorXd u_box_;
   Motion Jvel_;
 
-  Eigen::MatrixXd Jfoot_;
-  Eigen::MatrixXd dJfoot_;
+  std::vector<Eigen::MatrixXd> Jfoots_;
+  std::vector<Eigen::MatrixXd> dJfoots_;
   Eigen::MatrixXd Jframe_;
   Eigen::MatrixXd dJframe_;
 
-  Eigen::VectorXd foot_diff_;
-  Eigen::VectorXd dfoot_diff_;
-  Eigen::VectorXd frame_diff_;
-  Eigen::VectorXd dframe_diff_;
+  std::vector<Eigen::VectorXd> foot_diffs_;
+  std::vector<Eigen::VectorXd> dfoot_diffs_;
+  std::vector<Eigen::Vector3d> frame_diffs_;
+  std::vector<Eigen::Vector3d> dframe_diffs_;
   Eigen::VectorXd q_diff_;
   Eigen::VectorXd dq_diff_;
 
@@ -151,22 +151,23 @@ protected:
   void computeMatrice(pinocchio::Data &data,
                       const std::vector<bool> &contact_state,
                       const Eigen::VectorXd &x_measured,
-                      const Eigen::VectorXd &forces,
-                      const std::vector<pinocchio::SE3> foot_refs,
-                      const std::vector<pinocchio::SE3> foot_refs_next,
-                      const Eigen::VectorXd &dH, const Eigen::MatrixXd &M);
+                      const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
+                      const Eigen::MatrixXd &M);
 
 public:
   IKIDSolver();
   IKIDSolver(const IKIDSettings &settings, const pinocchio::Model &model);
   void initialize(const IKIDSettings &settings, const pinocchio::Model &model);
 
+  void computeDifferences(pinocchio::Data &data,
+                          const Eigen::VectorXd &x_measured,
+                          const std::vector<pinocchio::SE3> foot_refs,
+                          const std::vector<pinocchio::SE3> foot_refs_next);
+
   void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
                 const Eigen::VectorXd &x_measured,
-                const Eigen::VectorXd &forces,
-                const std::vector<pinocchio::SE3> foot_refs,
-                const std::vector<pinocchio::SE3> foot_refs_next,
-                const Eigen::VectorXd &dH, const Eigen::MatrixXd &M);
+                const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
+                const Eigen::MatrixXd &M);
   proxqp::dense::Model<double> getQP() { return qp_->model; }
   // QP results
   Eigen::VectorXd solved_forces_;

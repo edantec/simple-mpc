@@ -106,8 +106,9 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
 
   Eigen::MatrixXd M = handler.getMassMatrix();
   pinocchio::Data rdata = handler.getData();
-  IKID_solver.solve_qp(rdata, contact_states, xm, forces, foot_refs,
-                       foot_refs_next, dH, M);
+
+  IKID_solver.computeDifferences(rdata, xm, foot_refs, foot_refs_next);
+  IKID_solver.solve_qp(rdata, contact_states, dv, forces, dH, M);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
