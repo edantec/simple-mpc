@@ -67,6 +67,7 @@ protected:
   std::shared_ptr<proxqp::dense::QP<double>> qp_;
   pinocchio::Model model_;
   int force_dim_;
+  int nforcein_;
   int nk_;
 
   Eigen::MatrixXd H_;
@@ -119,6 +120,7 @@ protected:
   std::shared_ptr<proxqp::dense::QP<double>> qp_;
   pinocchio::Model model_;
   int force_dim_;
+  int nforcein_;
   int nk_;
   int fs_;
 
@@ -135,8 +137,8 @@ protected:
   Eigen::VectorXd u_box_;
   Motion Jvel_;
 
-  std::vector<Eigen::MatrixXd> Jfoots_;
-  std::vector<Eigen::MatrixXd> dJfoots_;
+  Eigen::MatrixXd Jfoot_;
+  Eigen::MatrixXd dJfoot_;
   Eigen::MatrixXd Jframe_;
   Eigen::MatrixXd dJframe_;
 

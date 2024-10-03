@@ -39,6 +39,8 @@ void initialize(RobotHandler &self, bp::dict settings) {
                         conf.controlled_joints_names);
   py_list_to_std_vector(settings["end_effector_names"],
                         conf.end_effector_names);
+  conf.vector_configuration =
+      bp::extract<Eigen::VectorXd>(settings["vector_configuration"]);
 
   self.initialize(conf);
 }
@@ -51,6 +53,7 @@ bp::dict getSettings(RobotHandler &self) {
   settings["robot_description"] = conf.robot_description;
   settings["root_name"] = conf.root_name;
   settings["base_configuration"] = conf.base_configuration;
+  settings["vector_configuration"] = conf.vector_configuration;
 
   return settings;
 }

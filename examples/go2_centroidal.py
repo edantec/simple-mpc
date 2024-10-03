@@ -3,63 +3,73 @@ import example_robot_data
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
 
-URDF_FILENAME = "talos_reduced.urdf"
-SRDF_FILENAME = "talos.srdf"
-SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
-URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
-
-modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-
+urdfPath = "/home/edantec/Documents/git/unitree_ros/robots/go2_description/urdf/go2_description.urdf"
+modelPath = "/home/edantec/Documents/git/unitree_ros/robots/go2_description"
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
 design_conf = dict(
-    urdf_path=modelPath + URDF_SUBPATH,
-    srdf_path=modelPath + SRDF_SUBPATH,
+    urdf_path=urdfPath,
+    srdf_path="",
     robot_description="",
     root_name="root_joint",
-    base_configuration="half_sitting",
-    vector_configuration=np.array([0]),
+    base_configuration="",
+    vector_configuration=np.array(
+        [
+            0,
+            0,
+            0.335,
+            0,
+            0,
+            0,
+            1,
+            0.068,
+            0.785,
+            -1.440,
+            -0.068,
+            0.785,
+            -1.440,
+            0.068,
+            0.785,
+            -1.440,
+            -0.068,
+            0.785,
+            -1.440,
+        ]
+    ),
     controlled_joints_names=[
         "root_joint",
-        "leg_left_1_joint",
-        "leg_left_2_joint",
-        "leg_left_3_joint",
-        "leg_left_4_joint",
-        "leg_left_5_joint",
-        "leg_left_6_joint",
-        "leg_right_1_joint",
-        "leg_right_2_joint",
-        "leg_right_3_joint",
-        "leg_right_4_joint",
-        "leg_right_5_joint",
-        "leg_right_6_joint",
-        "torso_1_joint",
-        "torso_2_joint",
-        "arm_left_1_joint",
-        "arm_left_2_joint",
-        "arm_left_3_joint",
-        "arm_left_4_joint",
-        "arm_right_1_joint",
-        "arm_right_2_joint",
-        "arm_right_3_joint",
-        "arm_right_4_joint",
+        "FL_hip_joint",
+        "FL_thigh_joint",
+        "FL_calf_joint",
+        "FR_hip_joint",
+        "FR_thigh_joint",
+        "FR_calf_joint",
+        "RL_hip_joint",
+        "RL_thigh_joint",
+        "RL_calf_joint",
+        "RR_hip_joint",
+        "RR_thigh_joint",
+        "RR_calf_joint",
     ],
     end_effector_names=[
-        "left_sole_link",
-        "right_sole_link",
+        "FL_foot",
+        "FR_foot",
+        "RL_foot",
+        "RR_foot",
     ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
 
+
 x0 = np.zeros(9)
 x0[:3] = handler.getComPosition()
-nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
-
+force_size = 3
+nk = len(handler.getFeetNames())
 gravity = np.array([0, 0, -9.81])
-fref = np.zeros(6)
-fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
-u0 = np.concatenate((fref, fref))
+fref = np.zeros(force_size)
+fref[2] = -handler.getMass() / nk * gravity[2]
+u0 = np.concatenate((fref, fref, fref, fref))
 
 w_control_linear = np.ones(3) * 0.001
 w_control_angular = np.ones(3) * 0.1
@@ -68,10 +78,10 @@ w_u = np.diag(
         (w_control_linear, w_control_angular, w_control_linear, w_control_angular)
     )
 )
-w_linear_mom = np.diag(np.array([0.01, 0.01, 100]))
-w_linear_acc = 0.01 * np.eye(3)
-w_angular_mom = np.diag(np.array([0.1, 0.1, 1000]))
-w_angular_acc = 0.01 * np.eye(3)
+w_linear_mom = np.diag(np.array([1, 1, 1]))
+w_linear_acc = 1 * np.eye(3)
+w_angular_mom = np.diag(np.array([1, 1, 1]))
+w_angular_acc = 1 * np.eye(3)
 
 problem_conf = dict(
     x0=x0,
@@ -83,13 +93,13 @@ problem_conf = dict(
     w_linear_acc=w_linear_acc,
     w_angular_acc=w_angular_acc,
     gravity=gravity,
-    force_size=6,
+    force_size=force_size,
 )
 T = 100
 
 problem = CentroidalProblem(handler)
 problem.initialize(problem_conf)
-problem.createProblem(handler.getCentroidalState(), T, 6, gravity[2])
+problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2])
 
 T_ds = 20
 T_ss = 80
@@ -113,47 +123,52 @@ mpc = MPC()
 mpc.initialize(mpc_conf, problem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 3
-contact_phase_double = {
-    "left_sole_link": True,
-    "right_sole_link": True,
+total_steps = 1
+contact_phase_quadru = {
+    "FL_foot": True,
+    "FR_foot": True,
+    "RL_foot": True,
+    "RR_foot": True,
 }
-contact_phase_left = {
-    "left_sole_link": True,
-    "right_sole_link": False,
+contact_phase_lift_FL = {
+    "FL_foot": False,
+    "FR_foot": True,
+    "RL_foot": True,
+    "RR_foot": True,
 }
-contact_phase_right = {
-    "left_sole_link": False,
-    "right_sole_link": True,
+contact_phase_lift_FR = {
+    "FL_foot": True,
+    "FR_foot": False,
+    "RL_foot": True,
+    "RR_foot": True,
 }
-contact_phases = [contact_phase_double] * T_ds
-for s in range(total_steps):
+contact_phases = [contact_phase_quadru] * T_ds * 4
+""" for s in range(total_steps):
     contact_phases += (
-        [contact_phase_left] * T_ss
-        + [contact_phase_double] * T_ds
-        + [contact_phase_right] * T_ss
-        + [contact_phase_double] * T_ds
-    )
+        [contact_phase_lift_FL] * T_ss
+        + [contact_phase_quadru] * T_ds
+        + [contact_phase_lift_FR] * T_ss
+        + [contact_phase_quadru] * T_ds
+    ) """
 
-contact_phases += [contact_phase_double] * T * 2
+contact_phases += [contact_phase_quadru] * T * 2
 
 mpc.generateFullHorizon(contact_phases)
 
 """ Initialize inverse dynamics QP """
 g_basepos = [0, 0, 0, 10, 10, 10]
-g_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-g_torsopos = [1, 1]
-g_armpos = [10, 10, 100, 10]
+g_legpos = [1, 1, 1, 1, 1, 1]
+g_legpos = [1, 1, 1, 1, 1, 1]
 
-g_q = np.array(g_basepos + g_legpos * 2 + g_torsopos + g_armpos * 2) * 10
+g_q = np.array(g_basepos + g_legpos * 2) * 1
 
-g_p = np.array([400, 400, 400, 400, 400, 400])
+g_p = np.array([10, 10, 10])
 g_b = np.array([10, 10, 10])
 
 Kp_gains = [g_q, g_p, g_b]
 Kd_gains = [2 * np.sqrt(g_q), 2 * np.sqrt(g_p), 2 * np.sqrt(g_b)]
 contact_ids = handler.getFeetIds()
-fixed_frame_ids = [handler.getRootId(), handler.getModel().getFrameId("torso_2_link")]
+fixed_frame_ids = [handler.getRootId()]
 ikid_conf = dict(
     Kp_gains=Kp_gains,
     Kd_gains=Kd_gains,
@@ -164,9 +179,9 @@ ikid_conf = dict(
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
-    force_size=6,
+    force_size=force_size,
     w_qref=500,
-    w_footpose=50000,
+    w_footpose=1000,
     w_centroidal=10,
     w_baserot=1000,
     w_force=100,
@@ -179,12 +194,13 @@ qp.initialize(ikid_conf, handler.getModel())
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
-    modelPath + "/talos_data/robots/",
-    URDF_FILENAME,
+    modelPath,
+    "/urdf/go2_description.urdf",
     1e-3,
-    handler.getCompleteModel(),
+    handler.getModel(),
+    handler.getState()[:3],
 )
-device.initializeJoints(handler.getCompleteConfiguration())
+device.initializeJoints(handler.getConfiguration())
 device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
 q_current, v_current = device.measureState()
 nq = mpc.getHandler().getModel().nq
@@ -195,15 +211,14 @@ q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
 Tmpc = len(contact_phases)
-nk = 2
-force_size = 6
 x_centroidal = mpc.getHandler().getCentroidalState()
+exit()
 for t in range(Tmpc):
     # print("Time " + str(t))
-    LF_takeoffs = mpc.getFootTakeoffTimings("left_sole_link")
-    RF_takeoffs = mpc.getFootTakeoffTimings("right_sole_link")
-    LF_lands = mpc.getFootLandTimings("left_sole_link")
-    RF_lands = mpc.getFootLandTimings("right_sole_link")
+    LF_takeoffs = mpc.getFootTakeoffTimings("FL_foot")
+    RF_takeoffs = mpc.getFootTakeoffTimings("FR_foot")
+    LF_lands = mpc.getFootLandTimings("FL_foot")
+    RF_lands = mpc.getFootLandTimings("FR_foot")
 
     LF_land = -1 if LF_lands.tolist() == [] else LF_lands[0]
     RF_land = -1 if RF_lands.tolist() == [] else RF_lands[0]

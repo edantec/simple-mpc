@@ -24,6 +24,7 @@ design_conf = dict(
     robot_description="",
     root_name="root_joint",
     base_configuration="half_sitting",
+    vector_configuration=np.array([0]),
     controlled_joints_names=[
         "root_joint",
         "leg_left_1_joint",
@@ -213,7 +214,7 @@ problem = mpc.getTrajOptProblem()
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
-    modelPath,
+    modelPath + "/talos_data/robots/",
     URDF_FILENAME,
     1e-3,
     handler.getCompleteModel(),

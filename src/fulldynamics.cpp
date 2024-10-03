@@ -36,14 +36,25 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
     auto joint_ids = handler_.getModel().frames[frame_ids].parentJoint;
     pinocchio::SE3 pl1 = handler_.getModel().frames[frame_ids].placement;
     pinocchio::SE3 pl2 = handler_.getFootPose(name);
-    pinocchio::RigidConstraintModel constraint_model =
-        pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
-                                        handler_.getModel(), joint_ids, pl1, 0,
-                                        pl2, pinocchio::LOCAL);
-    constraint_model.corrector.Kp << 1, 1, 10, 1, 1, 1;
-    constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
-    constraint_model.name = name;
-    constraint_models_.push_back(constraint_model);
+    if (settings_.force_size == 6) {
+      pinocchio::RigidConstraintModel constraint_model =
+          pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
+                                          handler_.getModel(), joint_ids, pl1,
+                                          0, pl2, pinocchio::LOCAL);
+      constraint_model.corrector.Kp << 1, 1, 10, 1, 1, 1;
+      constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
+      constraint_model.name = name;
+      constraint_models_.push_back(constraint_model);
+    } else {
+      pinocchio::RigidConstraintModel constraint_model =
+          pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_3D,
+                                          handler_.getModel(), joint_ids, pl1,
+                                          0, pl2, pinocchio::LOCAL);
+      constraint_model.corrector.Kp << 1, 1, 10;
+      constraint_model.corrector.Kd << 50, 50, 50;
+      constraint_model.name = name;
+      constraint_models_.push_back(constraint_model);
+    }
   }
 }
 
@@ -69,21 +80,36 @@ StageModel FullDynamicsProblem::createStage(
 
   size_t c_id = 0;
   for (auto const &name : handler_.getFeetNames()) {
-    FramePlacementResidual frame_residual =
-        FramePlacementResidual(space.ndx(), nu_, handler_.getModel(),
-                               contact_pose.at(name), handler_.getFootId(name));
+    if (settings_.force_size == 6) {
+      FramePlacementResidual frame_residual = FramePlacementResidual(
+          space.ndx(), nu_, handler_.getModel(), contact_pose.at(name),
+          handler_.getFootId(name));
+
+      rcost.addCost(
+          name + "_pose_cost",
+          QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+    } else {
+      FrameTranslationResidual frame_residual = FrameTranslationResidual(
+          space.ndx(), nu_, handler_.getModel(),
+          contact_pose.at(name).translation(), handler_.getFootId(name));
+
+      rcost.addCost(
+          name + "_pose_cost",
+          QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+    }
 
     if (contact_phase.at(name))
       cms.push_back(constraint_models_[c_id]);
 
-    rcost.addCost(
-        name + "_pose_cost",
-        QuadraticResidualCost(space, frame_residual, settings_.w_frame));
     c_id++;
   }
 
   for (auto const &name : handler_.getFeetNames()) {
     std::shared_ptr<ContactForceResidual> frame_force;
+    if (contact_force.at(name).size() != settings_.force_size) {
+      throw std::runtime_error(
+          "Reference forces do not have the right dimension");
+    }
     int is_active = 0;
     if (contact_phase.at(name)) {
       frame_force = std::make_shared<ContactForceResidual>(
@@ -121,7 +147,7 @@ StageModel FullDynamicsProblem::createStage(
                     BoxConstraint(-settings_.qmax, -settings_.qmin));
 
   for (auto const &name : handler_.getFeetNames()) {
-    if (contact_phase.at(name)) {
+    if (settings_.force_size == 6 and contact_phase.at(name)) {
       MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
           prox_settings_, name, settings_.mu, settings_.Lfoot, settings_.Wfoot);
@@ -144,8 +170,15 @@ void FullDynamicsProblem::setReferencePoses(
   for (auto ee_name : handler_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-    cfr->setReference(pose_refs.at(ee_name));
+
+    if (settings_.force_size == 6) {
+      FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+      cfr->setReference(pose_refs.at(ee_name));
+    } else {
+      FrameTranslationResidual *cfr =
+          qrc->getResidual<FrameTranslationResidual>();
+      cfr->setReference(pose_refs.at(ee_name).translation());
+    }
   }
 }
 
@@ -155,8 +188,14 @@ void FullDynamicsProblem::setReferencePose(const std::size_t t,
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  cfr->setReference(pose_ref);
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    cfr->setReference(pose_ref);
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    cfr->setReference(pose_ref.translation());
+  }
 }
 
 void FullDynamicsProblem::setTerminalReferencePose(
@@ -164,8 +203,14 @@ void FullDynamicsProblem::setTerminalReferencePose(
   CostStack *cs = getTerminalCostStack();
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  cfr->setReference(pose_ref);
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    cfr->setReference(pose_ref);
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    cfr->setReference(pose_ref.translation());
+  }
 }
 
 void FullDynamicsProblem::setReferenceForces(
@@ -200,8 +245,16 @@ FullDynamicsProblem::getReferencePose(const std::size_t t,
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  return cfr->getReference();
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    return cfr->getReference();
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    SE3 ref = SE3::Identity();
+    ref.translation() = cfr->getReference();
+    return ref;
+  }
 }
 
 const Eigen::VectorXd
@@ -227,9 +280,7 @@ CostStack FullDynamicsProblem::createTerminalCost() {
   term_cost.addCost(
       "state_cost",
       QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
-  term_cost.addCost("control_cost", QuadraticResidualCost(ter_space, cent_mom,
-                                                          settings_.w_cent));
-  for (auto const &name : handler_.getFeetNames()) {
+  /* for (auto const &name : handler_.getFeetNames()) {
     FramePlacementResidual frame_residual = FramePlacementResidual(
         ter_space.ndx(), nu_, handler_.getModel(), handler_.getFootPose(name),
         handler_.getFootId(name));
@@ -237,7 +288,7 @@ CostStack FullDynamicsProblem::createTerminalCost() {
     term_cost.addCost(
         name + "_pose_cost",
         QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
-  }
+  } */
 
   return term_cost;
 }

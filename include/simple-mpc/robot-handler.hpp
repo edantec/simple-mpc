@@ -44,6 +44,7 @@ public:
   // Useful names
   std::string root_name = "";
   std::string base_configuration = "";
+  Eigen::VectorXd vector_configuration;
 
   // Wether to use rotor parameters in joint dynamics
   bool load_rotor = false;

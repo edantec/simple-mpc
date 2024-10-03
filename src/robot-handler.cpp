@@ -31,14 +31,17 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     throw std::invalid_argument(
         "the urdf file, or robotDescription must be specified.");
   }
-
-  srdf::loadReferenceConfigurations(rmodel_complete_, settings_.srdf_path,
-                                    false);
-  if (settings.load_rotor) {
-    srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path, false);
+  if (settings_.srdf_path.size() > 0) {
+    srdf::loadReferenceConfigurations(rmodel_complete_, settings_.srdf_path,
+                                      false);
+    if (settings.load_rotor) {
+      srdf::loadRotorParameters(rmodel_complete_, settings_.srdf_path, false);
+    }
+    q_complete_ =
+        rmodel_complete_.referenceConfigurations[settings.base_configuration];
+  } else {
+    q_complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nq);
   }
-  q_complete_ =
-      rmodel_complete_.referenceConfigurations[settings.base_configuration];
   v_complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
 
   // REDUCED MODEL //
@@ -82,11 +85,15 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   root_ids_ = rmodel_.getFrameId(settings_.root_name);
   rdata_ = Data(rmodel_);
 
-  srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path, false);
-  if (settings.load_rotor) {
-    srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
+  if (settings_.srdf_path.size() > 0) {
+    srdf::loadReferenceConfigurations(rmodel_, settings_.srdf_path, false);
+    if (settings.load_rotor) {
+      srdf::loadRotorParameters(rmodel_, settings_.srdf_path, false);
+    }
+    q_ = rmodel_.referenceConfigurations[settings_.base_configuration];
+  } else {
+    q_ = settings_.vector_configuration;
   }
-  q_ = rmodel_.referenceConfigurations[settings_.base_configuration];
   v_ = Eigen::VectorXd::Zero(rmodel_.nv);
   x_.resize(rmodel_.nq + rmodel_.nv);
   x_centroidal_.resize(9);

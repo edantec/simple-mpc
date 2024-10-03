@@ -26,7 +26,11 @@ void IDSolver::initialize(const IDSettings &settings,
 
   int n = 2 * model_.nv - 6 + force_dim_;
   int neq = model_.nv + force_dim_;
-  int nin = 9 * nk_;
+  if (settings.force_size == 6)
+    nforcein_ = 9;
+  else
+    nforcein_ = 5;
+  int nin = nforcein_ * nk_;
 
   baum_gains_.setZero();
   baum_gains_.diagonal() << settings_.kd, settings_.kd, settings_.kd;
@@ -42,10 +46,10 @@ void IDSolver::initialize(const IDSettings &settings,
   S_.setZero();
   S_.bottomRows(model_.nv - 6).diagonal().setOnes();
 
-  Cmin_.resize(9, settings.force_size);
+  Cmin_.resize(nforcein_, settings.force_size);
   if (settings.force_size == 3) {
     Cmin_ << -1, 0, settings.mu, 1, 0, settings.mu, -1, 0, settings.mu, 1, 0,
-        settings.mu, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1;
+        settings.mu, 0, 0, 1;
   } else {
     Cmin_ << -1, 0, settings.mu, 0, 0, 0, 1, 0, settings.mu, 0, 0, 0, -1, 0,
         settings.mu, 0, 0, 0, 1, 0, settings.mu, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
@@ -54,7 +58,7 @@ void IDSolver::initialize(const IDSettings &settings,
   }
 
   for (long i = 0; i < nk_; i++) {
-    C_.block(i * 9, model_.nv + i * settings_.force_size, 9,
+    C_.block(i * nforcein_, model_.nv + i * settings_.force_size, nforcein_,
              settings_.force_size) = Cmin_;
   }
   Jc_.resize(force_dim_, model_.nv);
@@ -64,7 +68,7 @@ void IDSolver::initialize(const IDSettings &settings,
   Jdot_.resize(6, model_.nv);
   Jdot_.setZero();
 
-  u_ = Eigen::VectorXd::Ones(9 * nk_) * 100000;
+  u_ = Eigen::VectorXd::Ones(nin) * 100000;
   g_ = Eigen::VectorXd::Zero(n);
   H_ = Eigen::MatrixXd::Zero(n, n);
   H_.topLeftCorner(model_.nv, model_.nv).diagonal() =
@@ -118,26 +122,30 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
       gamma_.segment(i * settings_.force_size, 3) +=
           baum_gains_ * Jvel_.linear() + baum_gains_ * Jvel_.angular();
 
-      l_.segment(i * 9, 9) << forces[i * settings_.force_size] -
-                                  forces[i * settings_.force_size + 2] *
-                                      settings_.mu,
+      // Friction cone inequality
+      l_.segment(i * nforcein_, 5)
+          << forces[i * settings_.force_size] -
+                 forces[i * settings_.force_size + 2] * settings_.mu,
           -forces[i * settings_.force_size] -
               forces[i * settings_.force_size + 2] * settings_.mu,
           forces[i * settings_.force_size + 1] -
               forces[i * settings_.force_size + 2] * settings_.mu,
           -forces[i * settings_.force_size + 1] -
               forces[i * settings_.force_size + 2] * settings_.mu,
-          -forces[i * settings_.force_size + 2],
-          forces[i * settings_.force_size + 3] -
-              forces[i * settings_.force_size + 2] * settings_.Wfoot,
-          -forces[i * settings_.force_size + 3] -
-              forces[i * settings_.force_size + 2] * settings_.Wfoot,
-          forces[i * settings_.force_size + 4] -
-              forces[i * settings_.force_size + 2] * settings_.Lfoot,
-          -forces[i * settings_.force_size + 4] -
-              forces[i * settings_.force_size + 2] * settings_.Lfoot;
+          -forces[i * settings_.force_size + 2];
+      if (nforcein_ == 9) {
+        l_.segment(i * nforcein_ + 5, 4)
+            << forces[i * settings_.force_size + 3] -
+                   forces[i * settings_.force_size + 2] * settings_.Wfoot,
+            -forces[i * settings_.force_size + 3] -
+                forces[i * settings_.force_size + 2] * settings_.Wfoot,
+            forces[i * settings_.force_size + 4] -
+                forces[i * settings_.force_size + 2] * settings_.Lfoot,
+            -forces[i * settings_.force_size + 4] -
+                forces[i * settings_.force_size + 2] * settings_.Lfoot;
+      }
 
-      C_.block(i * 9, model_.nv + i * settings_.force_size, 9,
+      C_.block(i * nforcein_, model_.nv + i * settings_.force_size, nforcein_,
                settings_.force_size) = Cmin_;
     }
   }
@@ -178,6 +186,12 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   settings_ = settings;
   model_ = model;
 
+  Jfoot_.resize(6, model_.nv);
+  Jfoot_.setZero();
+
+  dJfoot_.resize(6, model_.nv);
+  dJfoot_.setZero();
+
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {
     Eigen::VectorXd foot_diff(6);
     foot_diff.setZero();
@@ -186,14 +200,6 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
     Eigen::VectorXd dfoot_diff(6);
     dfoot_diff.setZero();
     dfoot_diffs_.push_back(dfoot_diff);
-
-    Eigen::MatrixXd Jfoot(6, model_.nv);
-    Jfoot.setZero();
-    Jfoots_.push_back(Jfoot);
-
-    Eigen::MatrixXd dJfoot(6, model_.nv);
-    dJfoot.setZero();
-    dJfoots_.push_back(dJfoot);
   }
 
   for (size_t i = 0; i < settings_.fixed_frame_ids.size(); i++) {
@@ -216,7 +222,11 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
 
   int n = 2 * model_.nv - 6 + force_dim_;
   int neq = model_.nv + force_dim_;
-  int nin = 9 * nk_;
+  if (settings.force_size == 6)
+    nforcein_ = 9;
+  else
+    nforcein_ = 5;
+  int nin = nforcein_ * nk_;
 
   A_.resize(neq, n);
   A_.setZero();
@@ -238,10 +248,10 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   u_box_ *= 100000;
   u_box_.tail(model.nv - 6) = model.effortLimit.tail(model.nv - 6);
 
-  Cmin_.resize(9, settings.force_size);
+  Cmin_.resize(nforcein_, settings.force_size);
   if (settings.force_size == 3) {
     Cmin_ << -1, 0, settings.mu, 1, 0, settings.mu, -1, 0, settings.mu, 1, 0,
-        settings.mu, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1;
+        settings.mu, 0, 0, 1;
   } else {
     Cmin_ << -1, 0, settings.mu, 0, 0, 0, 1, 0, settings.mu, 0, 0, 0, -1, 0,
         settings.mu, 0, 0, 0, 1, 0, settings.mu, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
@@ -250,7 +260,7 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   }
 
   for (long i = 0; i < nk_; i++) {
-    C_.block(i * 9, model_.nv + i * settings_.force_size, 9,
+    C_.block(i * nforcein_, model_.nv + i * settings_.force_size, nforcein_,
              settings_.force_size) = Cmin_;
   }
   Jframe_.resize(3, model_.nv);
@@ -258,7 +268,7 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   dJframe_.resize(6, model_.nv);
   dJframe_.setZero();
 
-  u_ = Eigen::VectorXd::Ones(9 * nk_) * 100000;
+  u_ = Eigen::VectorXd::Ones(nforcein_ * nk_) * 100000;
   g_ = Eigen::VectorXd::Zero(n);
   H_ = Eigen::MatrixXd::Zero(n, n);
   H_.block(model_.nv, model_.nv, force_dim_, force_dim_).diagonal() =
@@ -342,46 +352,50 @@ void IKIDSolver::computeMatrice(pinocchio::Data &data,
   C_.setZero();
 
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {
-    dJfoots_[i].setZero();
-    Jfoots_[i].setZero();
+    dJfoot_.setZero();
     FrameIndex id = settings_.contact_ids[i];
-    Jfoots_[i] = getFrameJacobian(model_, data, id, LOCAL);
-    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJfoots_[i]);
+    Jfoot_ = getFrameJacobian(model_, data, id, LOCAL);
+    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJfoot_);
 
-    H_.topLeftCorner(model_.nv, model_.nv) +=
-        settings_.w_footpose * Jfoots_[i].transpose() * Jfoots_[i];
+    H_.topLeftCorner(model_.nv, model_.nv) += settings_.w_footpose *
+                                              Jfoot_.topRows(fs_).transpose() *
+                                              Jfoot_.topRows(fs_);
 
-    g_.head(model_.nv) += settings_.w_footpose *
-                          (dJfoots_[i] * v_current -
-                           settings_.Kp_gains[1].cwiseProduct(foot_diffs_[i]) -
-                           settings_.Kd_gains[1].cwiseProduct(dfoot_diffs_[i]))
-                              .transpose() *
-                          Jfoots_[i];
+    g_.head(model_.nv) +=
+        settings_.w_footpose *
+        (dJfoot_.topRows(fs_) * v_current -
+         settings_.Kp_gains[1].cwiseProduct(foot_diffs_[i].topRows(fs_)) -
+         settings_.Kd_gains[1].cwiseProduct(dfoot_diffs_[i].topRows(fs_)))
+            .transpose() *
+        Jfoot_.topRows(fs_);
 
     long il = (long)i;
     if (contact_state[i]) {
       A_.block(0, model_.nv + il * fs_, model_.nv, fs_) =
-          -Jfoots_[i].transpose();
-      A_.block(model_.nv + il * fs_, 0, 6, model_.nv) = Jfoots_[i];
+          -Jfoot_.topRows(fs_).transpose();
+      A_.block(model_.nv + il * fs_, 0, fs_, model_.nv) = Jfoot_.topRows(fs_);
       b_.head(model_.nv) +=
-          Jfoots_[i].transpose() * forces.segment(il * fs_, fs_);
-      b_.segment(model_.nv + il * fs_, fs_) = -dJfoots_[i] * v_current;
+          Jfoot_.topRows(fs_).transpose() * forces.segment(il * fs_, fs_);
+      b_.segment(model_.nv + il * fs_, fs_) = -dJfoot_.topRows(fs_) * v_current;
 
-      l_.segment(il * 9, 9)
+      l_.segment(il * nforcein_, 5)
           << forces[il * fs_] - forces[il * fs_ + 2] * settings_.mu,
           -forces[il * fs_] - forces[il * fs_ + 2] * settings_.mu,
           forces[il * fs_ + 1] - forces[il * fs_ + 2] * settings_.mu,
           -forces[il * fs_ + 1] - forces[il * fs_ + 2] * settings_.mu,
-          -forces[il * fs_ + 2],
-          forces[il * fs_ + 3] - forces[il * fs_ + 2] * settings_.Wfoot,
-          -forces[il * fs_ + 3] - forces[il * fs_ + 2] * settings_.Wfoot,
-          forces[il * fs_ + 4] - forces[il * fs_ + 2] * settings_.Lfoot,
-          -forces[il * fs_ + 4] - forces[il * fs_ + 2] * settings_.Lfoot;
+          -forces[il * fs_ + 2];
+      if (nforcein_ == 9) {
+        l_.segment(il * nforcein_ + 5, 4)
+            << forces[il * fs_ + 3] - forces[il * fs_ + 2] * settings_.Wfoot,
+            -forces[il * fs_ + 3] - forces[il * fs_ + 2] * settings_.Wfoot,
+            forces[il * fs_ + 4] - forces[il * fs_ + 2] * settings_.Lfoot,
+            -forces[il * fs_ + 4] - forces[il * fs_ + 2] * settings_.Lfoot;
+      }
 
-      C_.block(il * 9, model_.nv + il * fs_, 9, fs_) = Cmin_;
+      C_.block(il * nforcein_, model_.nv + il * fs_, nforcein_, fs_) = Cmin_;
     } else {
       A_.block(0, model_.nv + il * fs_, model_.nv, fs_).setZero();
-      A_.block(model_.nv + il * fs_, 0, 6, model_.nv).setZero();
+      A_.block(model_.nv + il * fs_, 0, fs_, model_.nv).setZero();
     }
   }
 

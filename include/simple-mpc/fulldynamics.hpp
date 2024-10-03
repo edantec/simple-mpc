@@ -12,6 +12,7 @@
 #include <aligator/modelling/multibody/center-of-mass-translation.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/frame-translation.hpp>
 #include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
@@ -29,6 +30,7 @@ using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 using MultibodyConstraintFwdDynamics =
     dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
 using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;

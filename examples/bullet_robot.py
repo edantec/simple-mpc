@@ -23,19 +23,15 @@ class BulletRobot:
         rmodelComplete,
         robotPose=[0.0, 0.0, 1.01927],
         inertiaOffset=True,
-        talos=True,
     ):
         p.connect(p.GUI)  # Start the client for PyBullet
         p.setTimeStep(simuStep)
         p.setGravity(0, 0, -9.81)  # Set gravity (disabled by default)
 
-        # place CoM of root link ## TODO: check placement
+        # place CoM of root link
         robotStartPosition = robotPose
         robotStartOrientation = p.getQuaternionFromEuler([0, 0, 0])
-        if talos:
-            p.setAdditionalSearchPath(modelPath + "/talos_data/robots/")
-        else:
-            p.setAdditionalSearchPath(modelPath + "/solo_description/robots/")
+        p.setAdditionalSearchPath(modelPath)
 
         self.robotId = p.loadURDF(
             URDF_filename,
