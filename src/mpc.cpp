@@ -51,7 +51,7 @@ void MPC::initialize(const MPCSettings &settings,
   x0_ = problem_->getProblemState();
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
-                                            0., maxiters, aligator::QUIET);
+                                            maxiters, aligator::QUIET);
   solver_->rollout_type_ = aligator::RolloutType::LINEAR;
 
   if (settings_.num_threads > 1) {

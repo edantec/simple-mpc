@@ -62,10 +62,7 @@ find_package(pinocchio REQUIRED)
 find_package(aligator REQUIRED)
 find_package(Threads REQUIRED)
 find_package(example-robot-data 4.0.9 REQUIRED)
-find_package(Tracy REQUIRED)
 find_package(ndcurves REQUIRED)
-set_target_properties(Tracy::TracyClient PROPERTIES POSITION_INDEPENDENT_CODE
-                                                    True)
 add_project_dependency(OpenMP REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES

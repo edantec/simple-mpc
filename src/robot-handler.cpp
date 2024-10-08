@@ -92,7 +92,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     }
     q_ = rmodel_.referenceConfigurations[settings_.base_configuration];
   } else {
-    q_ = settings_.vector_configuration;
+    q_ = Eigen::VectorXd::Zero(rmodel_.nq);
   }
   v_ = Eigen::VectorXd::Zero(rmodel_.nv);
   x_.resize(rmodel_.nq + rmodel_.nv);

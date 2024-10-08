@@ -2,40 +2,20 @@ import numpy as np
 import example_robot_data
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
+import example_robot_data
 
-urdfPath = "/home/edantec/Documents/git/unitree_ros/robots/go2_description/urdf/go2_description.urdf"
-modelPath = "/home/edantec/Documents/git/unitree_ros/robots/go2_description"
+SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
+URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
+
+modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
 design_conf = dict(
-    urdf_path=urdfPath,
-    srdf_path="",
+    urdf_path=modelPath + URDF_SUBPATH,
+    srdf_path=modelPath + SRDF_SUBPATH,
     robot_description="",
     root_name="root_joint",
-    base_configuration="",
-    vector_configuration=np.array(
-        [
-            0,
-            0,
-            0.335,
-            0,
-            0,
-            0,
-            1,
-            0.068,
-            0.785,
-            -1.440,
-            -0.068,
-            0.785,
-            -1.440,
-            0.068,
-            0.785,
-            -1.440,
-            -0.068,
-            0.785,
-            -1.440,
-        ]
-    ),
+    base_configuration="standing",
     controlled_joints_names=[
         "root_joint",
         "FL_hip_joint",
@@ -134,14 +114,14 @@ problem_conf = dict(
     Lfoot=0.1,
     Wfoot=0.075,
 )
-T = 100
+T = 50
 
 dynproblem = FullDynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
 
-T_ds = 20
-T_ss = 80
+T_ds = 10
+T_ss = 40
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -162,7 +142,7 @@ mpc = MPC()
 mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 1
+total_steps = 2
 contact_phase_quadru = {
     "FL_foot": True,
     "FR_foot": True,
@@ -198,7 +178,7 @@ mpc.generateFullHorizon(contact_phases)
 device = BulletRobot(
     design_conf["controlled_joints_names"],
     modelPath,
-    "/urdf/go2_description.urdf",
+    URDF_SUBPATH,
     1e-3,
     handler.getModel(),
     handler.getState()[:3],
