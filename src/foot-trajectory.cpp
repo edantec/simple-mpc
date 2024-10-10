@@ -93,7 +93,7 @@ FootTrajectory::createTrajectory(int time_to_land, point3_t &initial_trans,
 void FootTrajectory::updateTrajectory(int takeoff_time, int landing_time,
                                       const point3_t &ee_trans,
                                       const std::string &ee_name) {
-  if (landing_time < 0) {
+  if (landing_time <= 0) {
     initial_poses_.at(ee_name) = ee_trans;
     final_poses_.at(ee_name) = ee_trans;
   }

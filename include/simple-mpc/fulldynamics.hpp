@@ -35,7 +35,6 @@ using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
-using StageConstraint = StageConstraintTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using MultibodyWrenchConeResidual =

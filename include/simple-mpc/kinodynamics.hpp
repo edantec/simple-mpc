@@ -35,7 +35,6 @@ using CentroidalMomentumDerivativeResidual =
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
-using StageConstraint = StageConstraintTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;

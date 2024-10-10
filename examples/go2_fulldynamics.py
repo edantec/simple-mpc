@@ -41,7 +41,6 @@ design_conf = dict(
 handler = RobotHandler()
 handler.initialize(design_conf)
 
-
 x0 = np.zeros(9)
 x0[:3] = handler.getComPosition()
 force_size = 3
@@ -129,7 +128,7 @@ mpc_conf = dict(
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
-    num_threads=8,
+    num_threads=1,
     swing_apex=0.15,
     T_fly=T_ss,
     T_contact=T_ds,

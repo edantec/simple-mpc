@@ -153,15 +153,15 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getProblem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
-  std::chrono::steady_clock::time_point begin5 =
-      std::chrono::steady_clock::now();
+  // std::chrono::steady_clock::time_point begin5 =
+  //    std::chrono::steady_clock::now();
   solver_->run(*problem_->getProblem(), xs_, us_);
-  std::chrono::steady_clock::time_point end5 = std::chrono::steady_clock::now();
-  std::cout << "solve = "
+  /* std::chrono::steady_clock::time_point end5 =
+  std::chrono::steady_clock::now(); std::cout << "solve = "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
                                                                      begin5)
                    .count()
-            << "[ms]" << std::endl;
+            << "[ms]" << std::endl; */
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -170,28 +170,28 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
 void MPC::recedeWithCycle() {
   if (horizon_iteration_ < full_horizon_.size()) {
-    std::chrono::steady_clock::time_point begin5 =
-        std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point begin5 =
+    //     std::chrono::steady_clock::now();
     problem_->getProblem()->replaceStageCircular(
         full_horizon_[horizon_iteration_]);
-    std::chrono::steady_clock::time_point end5 =
+    /* std::chrono::steady_clock::time_point end5 =
         std::chrono::steady_clock::now();
     std::cout << "replace stage = "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
                                                                        begin5)
                      .count()
-              << "[ms]" << std::endl;
-    std::chrono::steady_clock::time_point begin =
-        std::chrono::steady_clock::now();
+              << "[ms]" << std::endl; */
+    /* std::chrono::steady_clock::time_point begin =
+        std::chrono::steady_clock::now(); */
     solver_->cycleProblem(*problem_->getProblem(),
                           full_horizon_data_[horizon_iteration_]);
-    std::chrono::steady_clock::time_point end =
+    /* std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
     std::cout << "cycle problem = "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end -
                                                                        begin)
                      .count()
-              << "[ms]" << std::endl;
+              << "[ms]" << std::endl; */
     horizon_iteration_++;
   } else {
     problem_->getProblem()->replaceStageCircular(
@@ -203,19 +203,17 @@ void MPC::recedeWithCycle() {
 }
 
 void MPC::updateSupportTiming() {
-  RobotHandler handler = problem_->getHandler();
   for (auto const &name : ee_names_) {
-    for (size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
+    for (size_t i = 0; i < foot_land_times_.at(name).size(); i++)
       foot_land_times_.at(name)[i] -= 1;
-      if (foot_land_times_.at(name)[0] < 0)
-        foot_land_times_.at(name).erase(foot_land_times_.at(name).begin());
-    }
-    for (size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++) {
+    if (!foot_land_times_.at(name).empty() and foot_land_times_.at(name)[0] < 0)
+      foot_land_times_.at(name).erase(foot_land_times_.at(name).begin());
+
+    for (size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++)
       foot_takeoff_times_.at(name)[i] -= 1;
-      if (foot_takeoff_times_.at(name)[0] < 0)
-        foot_takeoff_times_.at(name).erase(
-            foot_takeoff_times_.at(name).begin());
-    }
+    if (!foot_takeoff_times_.at(name).empty() and
+        foot_takeoff_times_.at(name)[0] < 0)
+      foot_takeoff_times_.at(name).erase(foot_takeoff_times_.at(name).begin());
   }
 }
 

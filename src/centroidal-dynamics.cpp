@@ -226,8 +226,7 @@ void CentroidalProblem::createTerminalConstraint() {
   CentroidalCoMResidual com_cstr =
       CentroidalCoMResidual(ndx_, nu_, handler_.getComPosition());
 
-  StageConstraint term_constraint_com = {com_cstr, EqualityConstraint()};
-  // problem_->addTerminalConstraint(term_constraint_com);
+  // problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
   terminal_constraint_ = false;
 }
 

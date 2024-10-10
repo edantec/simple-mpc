@@ -28,7 +28,6 @@ using AngularAccelerationResidual = AngularAccelerationResidualTpl<double>;
 using LinearMomentumResidual = LinearMomentumResidualTpl<double>;
 using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
-using StageConstraint = StageConstraintTpl<double>;
 using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
 using ContactMap = ContactMapTpl<double>;
 
