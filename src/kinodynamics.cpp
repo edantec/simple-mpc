@@ -188,6 +188,20 @@ const Eigen::VectorXd KinodynamicsProblem::getProblemState() {
   return handler_.getState();
 }
 
+size_t KinodynamicsProblem::getContactSupport(const std::size_t t) {
+  KinodynamicsFwdDynamics *ode = problem_->stages_[t]
+                                     ->getDynamics<IntegratorSemiImplEuler>()
+                                     ->getDynamics<KinodynamicsFwdDynamics>();
+
+  size_t active_contacts = 0;
+  for (auto const contact : ode->contact_states_) {
+    if (contact) {
+      active_contacts += 1;
+    }
+  }
+  return active_contacts;
+}
+
 CostStack KinodynamicsProblem::createTerminalCost() {
   auto ter_space = MultibodyPhaseSpace(handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);

@@ -107,6 +107,8 @@ public:
       const std::map<std::string, Eigen::VectorXd> &force_refs);
 
   const Eigen::VectorXd getProblemState() override;
+  size_t getContactSupport(const std::size_t t) override;
+
   CentroidalSettings getSettings() { return settings_; }
 
 protected:

@@ -92,6 +92,7 @@ public:
   virtual const Eigen::VectorXd
   getReferenceForce(const std::size_t t, const std::string &ee_name) = 0;
   virtual const Eigen::VectorXd getProblemState() = 0;
+  virtual size_t getContactSupport(const std::size_t t) = 0;
 
   /// Common functions for all problems
 

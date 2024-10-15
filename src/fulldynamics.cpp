@@ -271,6 +271,15 @@ const Eigen::VectorXd FullDynamicsProblem::getProblemState() {
   return handler_.getState();
 }
 
+size_t FullDynamicsProblem::getContactSupport(const std::size_t t) {
+  MultibodyConstraintFwdDynamics *ode =
+      problem_->stages_[t]
+          ->getDynamics<IntegratorSemiImplEuler>()
+          ->getDynamics<MultibodyConstraintFwdDynamics>();
+
+  return ode->constraint_models_.size();
+}
+
 CostStack FullDynamicsProblem::createTerminalCost() {
   auto ter_space = MultibodyPhaseSpace(handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);

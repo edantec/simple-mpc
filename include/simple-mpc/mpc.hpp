@@ -73,10 +73,14 @@ public:
 class MPC {
 
 protected:
+  enum LocomotionType { WALKING, STANDING };
+
   MPCSettings settings_;
   std::shared_ptr<Problem> problem_;
   std::vector<StageModel> full_horizon_;
+  std::vector<StageModel> standing_horizon_;
   std::vector<std::shared_ptr<StageData>> full_horizon_data_;
+  std::vector<std::shared_ptr<StageData>> standing_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
   std::map<std::string, Eigen::Vector3d> relative_translations_;
@@ -90,6 +94,7 @@ protected:
   Eigen::VectorXd x_internal_;
   bool time_to_solve_ddp_ = false;
   Eigen::Vector3d com0_;
+  LocomotionType now_;
 
 public:
   MPC();
@@ -110,6 +115,8 @@ public:
 
   // Recede the horizon
   void recedeWithCycle();
+
+  void recedeWithHorizon();
 
   // Getters and setters
   void setReferencePose(const std::size_t t, const std::string &ee_name,

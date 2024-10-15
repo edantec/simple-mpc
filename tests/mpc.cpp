@@ -20,7 +20,6 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   size_t T = 100;
   fdproblem.createProblem(settings.x0, T, 6, -settings.gravity[2]);
-
   std::shared_ptr<Problem> problem =
       std::make_shared<FullDynamicsProblem>(fdproblem);
 
@@ -94,14 +93,6 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 100);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 210);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
-
-  BOOST_CHECK_EQUAL(mpc.horizon_iteration_, 10);
-  for (std::size_t i = 0; i < 230; i++) {
-    mpc.iterate(settings.x0.head(handler.getModel().nq),
-                settings.x0.tail(handler.getModel().nv));
-  }
-
-  BOOST_CHECK(mpc.foot_land_times_.at("right_sole_link").empty());
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {

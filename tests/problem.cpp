@@ -56,6 +56,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
       csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
   BOOST_CHECK_EQUAL(fdproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(fdproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
@@ -138,6 +139,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   QuadraticResidualCost *cpc =
       csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
+  BOOST_CHECK_EQUAL(knproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
@@ -221,6 +223,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   QuadraticResidualCost *cpc =
       csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
+  BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
@@ -314,6 +317,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   QuadraticResidualCost *cpc =
       csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
+  BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 4);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);

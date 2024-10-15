@@ -134,6 +134,10 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", );
   }
 
+  std::size_t getContactSupport(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(std::size_t, "getContactSupport", t);
+  }
+
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref) {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, Problem, setReferenceControl, t, u_ref);
   }
@@ -220,6 +224,11 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
                                getProblemState, );
   }
+
+  std::size_t getContactSupport(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(std::size_t, FullDynamicsProblem,
+                               getContactSupport, t);
+  }
 };
 
 struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
@@ -296,6 +305,11 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
                                getProblemState, );
+  }
+
+  std::size_t getContactSupport(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(std::size_t, CentroidalProblem,
+                               getContactSupport, t);
   }
 };
 
@@ -374,6 +388,11 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
                                getProblemState, );
+  }
+
+  std::size_t getContactSupport(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(std::size_t, KinodynamicsProblem,
+                               getContactSupport, t);
   }
 };
 

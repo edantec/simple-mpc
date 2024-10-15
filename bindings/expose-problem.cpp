@@ -58,6 +58,8 @@ void exposeBaseProblem() {
            bp::args("self", "t", "ee_name"))
       .def("getProblemState", bp::pure_virtual(&Problem::getProblemState),
            bp::args("self"))
+      .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
+           bp::args("self", "t"))
       .def("createProblem", &Problem::createProblem,
            bp::args("self", "x0", "horizon", "force_size", "gravity"))
       .def("setReferenceControl", &Problem::setReferenceControl,

@@ -124,6 +124,7 @@ public:
   const Eigen::VectorXd
   getReferenceForce(const std::size_t t, const std::string &cost_name) override;
   const Eigen::VectorXd getProblemState() override;
+  size_t getContactSupport(const std::size_t t) override;
   FullDynamicsSettings getSettings() { return settings_; }
 
 protected:

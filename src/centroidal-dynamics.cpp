@@ -100,10 +100,9 @@ void CentroidalProblem::setReferencePoses(
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
-  IntegratorEuler *dyn =
-      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
-  CentroidalFwdDynamics *cent_dyn =
-      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+  CentroidalFwdDynamics *cent_dyn = problem_->stages_[t]
+                                        ->getDynamics<IntegratorEuler>()
+                                        ->getDynamics<CentroidalFwdDynamics>();
 
   for (auto const &pose : pose_refs) {
     cent_dyn->contact_map_.setContactPose(pose.first,
@@ -133,10 +132,9 @@ void CentroidalProblem::setReferencePose(const std::size_t t,
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  IntegratorEuler *dyn =
-      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
-  CentroidalFwdDynamics *cent_dyn =
-      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+  CentroidalFwdDynamics *cent_dyn = problem_->stages_[t]
+                                        ->getDynamics<IntegratorEuler>()
+                                        ->getDynamics<CentroidalFwdDynamics>();
   cent_dyn->contact_map_.setContactPose(ee_name, pose_ref.translation());
 
   CostStack *cs = getCostStack(t);
@@ -158,10 +156,9 @@ CentroidalProblem::getReferencePose(const std::size_t t,
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  IntegratorEuler *dyn =
-      dynamic_cast<IntegratorEuler *>(&*problem_->stages_[t]->dynamics_);
-  CentroidalFwdDynamics *cent_dyn =
-      dynamic_cast<CentroidalFwdDynamics *>(&*dyn->ode_);
+  CentroidalFwdDynamics *cent_dyn = problem_->stages_[t]
+                                        ->getDynamics<IntegratorEuler>()
+                                        ->getDynamics<CentroidalFwdDynamics>();
 
   pinocchio::SE3 pose = pinocchio::SE3::Identity();
   pose.translation() = cent_dyn->contact_map_.getContactPose(ee_name);
@@ -202,6 +199,20 @@ CentroidalProblem::getReferenceForce(const std::size_t t,
 
 const Eigen::VectorXd CentroidalProblem::getProblemState() {
   return handler_.getCentroidalState();
+}
+
+size_t CentroidalProblem::getContactSupport(const std::size_t t) {
+  CentroidalFwdDynamics *ode = problem_->stages_[t]
+                                   ->getDynamics<IntegratorEuler>()
+                                   ->getDynamics<CentroidalFwdDynamics>();
+
+  size_t active_contacts = 0;
+  for (auto name : handler_.getFeetNames()) {
+    if (ode->contact_map_.getContactState(name)) {
+      active_contacts += 1;
+    }
+  }
+  return active_contacts;
 }
 
 CostStack CentroidalProblem::createTerminalCost() {

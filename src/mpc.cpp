@@ -63,10 +63,27 @@ void MPC::initialize(const MPCSettings &settings,
   // solver_->reg_min = 1e-6;
 
   ee_names_ = problem_->getHandler().getFeetNames();
+  Eigen::VectorXd force_ref(
+      problem_->getReferenceForce(0, problem_->getHandler().getFootName(0)));
+
+  std::map<std::string, bool> contact_states;
+  std::map<std::string, pinocchio::SE3> contact_poses;
+  std::map<std::string, Eigen::VectorXd> force_map;
+
+  for (auto const &name : ee_names_) {
+    contact_states.insert({name, true});
+    contact_poses.insert({name, problem_->getHandler().getFootPose(name)});
+    force_map.insert({name, force_ref});
+  }
 
   for (std::size_t i = 0; i < problem_->getProblem()->numSteps(); i++) {
     xs_.push_back(x0_);
     us_.push_back(problem_->getReferenceControl(0));
+
+    StageModel sm =
+        problem_->createStage(contact_states, contact_poses, force_map);
+    standing_horizon_.push_back(sm);
+    standing_horizon_data_.push_back(sm.createData());
   }
   xs_.push_back(x0_);
 
@@ -80,6 +97,7 @@ void MPC::initialize(const MPCSettings &settings,
   solver_->max_iters = settings_.max_iters;
 
   com0_ = problem_->getHandler().getComPosition();
+  now_ = WALKING;
 }
 
 void MPC::generateFullHorizon(
@@ -136,7 +154,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getHandler().updateState(q_current, v_current, false);
 
   // ~~TIMING~~ //
-  recedeWithCycle();
+  recedeWithHorizon();
   updateSupportTiming();
 
   // ~~REFERENCES~~ //
@@ -168,7 +186,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   K0_ = solver_->results_.getCtrlFeedbacks()[0];
 }
 
-void MPC::recedeWithCycle() {
+void MPC::recedeWithHorizon() {
   if (horizon_iteration_ < full_horizon_.size()) {
     // std::chrono::steady_clock::time_point begin5 =
     //     std::chrono::steady_clock::now();
@@ -199,6 +217,23 @@ void MPC::recedeWithCycle() {
     std::shared_ptr<StageDataTpl<double>> data =
         problem_->getProblem()->stages_[0]->createData();
     solver_->cycleProblem(*problem_->getProblem(), data);
+  }
+}
+
+void MPC::recedeWithCycle() {
+  if (now_ == WALKING or
+      problem_->getContactSupport(settings_.T - 1) < ee_names_.size()) {
+    problem_->getProblem()->replaceStageCircular(full_horizon_[0]);
+    solver_->cycleProblem(*problem_->getProblem(), full_horizon_data_[0]);
+
+    rotate_vec_left(full_horizon_);
+    rotate_vec_left(full_horizon_data_);
+  } else {
+    problem_->getProblem()->replaceStageCircular(standing_horizon_[0]);
+    solver_->cycleProblem(*problem_->getProblem(), standing_horizon_data_[0]);
+
+    rotate_vec_left(standing_horizon_);
+    rotate_vec_left(standing_horizon_data_);
   }
 }
 
