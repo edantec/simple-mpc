@@ -15,7 +15,6 @@
 #include <pinocchio/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
-#include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/robot-handler.hpp"
 #include <chrono>
@@ -33,7 +32,6 @@ void MPC::initialize(const MPCSettings &settings,
                      std::shared_ptr<Problem> problem) {
   settings_ = settings;
   problem_ = problem;
-  horizon_iteration_ = 0;
 
   std::map<std::string, Eigen::Vector3d> initial_poses;
   Eigen::Vector3d rel_trans;
@@ -80,10 +78,10 @@ void MPC::initialize(const MPCSettings &settings,
     xs_.push_back(x0_);
     us_.push_back(problem_->getReferenceControl(0));
 
-    StageModel sm =
-        problem_->createStage(contact_states, contact_poses, force_map);
+    std::shared_ptr<StageModel> sm = std::make_shared<StageModel>(
+        problem_->createStage(contact_states, contact_poses, force_map));
     standing_horizon_.push_back(sm);
-    standing_horizon_data_.push_back(sm.createData());
+    standing_horizon_data_.push_back(sm->createData());
   }
   xs_.push_back(x0_);
 
@@ -100,21 +98,24 @@ void MPC::initialize(const MPCSettings &settings,
   now_ = WALKING;
 }
 
-void MPC::generateFullHorizon(
+void MPC::generateCycleHorizon(
     const std::vector<std::map<std::string, bool>> &contact_states) {
+  contact_states_ = contact_states;
   for (auto const &name : ee_names_) {
-    foot_takeoff_times_.insert({name, std::vector<int>()});
-    foot_land_times_.insert({name, std::vector<int>()});
-  }
-  for (size_t i = 1; i < contact_states.size(); i++) {
-    for (auto const &name : ee_names_) {
-      if (!contact_states[i].at(name) && contact_states[i - 1].at(name)) {
-        foot_takeoff_times_.at(name).push_back((int)(i + problem_->getSize()));
-      }
-      if (contact_states[i].at(name) && !contact_states[i - 1].at(name)) {
-        foot_land_times_.at(name).push_back((int)(i + problem_->getSize()));
-      }
+    foot_takeoff_cycle_times_.insert({name, -1});
+    foot_land_cycle_times_.insert({name, -1});
+    for (size_t i = 1; i < contact_states.size(); i++) {
+      if (!contact_states[i].at(name) and contact_states[i - 1].at(name))
+        foot_takeoff_cycle_times_.at(name) = (int)(i + problem_->getSize());
+      if (contact_states[i].at(name) and !contact_states[i - 1].at(name))
+        foot_land_cycle_times_.at(name) = (int)(i + problem_->getSize());
     }
+    if (contact_states.back().at(name) and !contact_states[0].at(name))
+      foot_takeoff_cycle_times_.at(name) =
+          (int)(contact_states.size() - 1 + problem_->getSize());
+    if (!contact_states.back().at(name) and contact_states[0].at(name))
+      foot_land_cycle_times_.at(name) =
+          (int)(contact_states.size() - 1 + problem_->getSize());
   }
   for (auto const &state : contact_states) {
     int active_contacts = 0;
@@ -142,9 +143,10 @@ void MPC::generateFullHorizon(
         force_map.insert({name, force_zero});
     }
 
-    StageModel sm = problem_->createStage(state, contact_poses, force_map);
-    full_horizon_.push_back(sm);
-    full_horizon_data_.push_back(sm.createData());
+    std::shared_ptr<StageModel> sm = std::make_shared<StageModel>(
+        problem_->createStage(state, contact_poses, force_map));
+    cycle_horizon_.push_back(sm);
+    cycle_horizon_data_.push_back(sm->createData());
   }
 }
 
@@ -154,8 +156,16 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getHandler().updateState(q_current, v_current, false);
 
   // ~~TIMING~~ //
-  recedeWithHorizon();
-  updateSupportTiming();
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+  recedeWithCycle();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "recedeCycle = "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                     begin)
+                   .count()
+            << "[ms]" << std::endl;
+  updateCycleTiming();
 
   // ~~REFERENCES~~ //
   updateStepTrackerReferences();
@@ -171,65 +181,33 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getProblem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
-  // std::chrono::steady_clock::time_point begin5 =
-  //    std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point begin5 =
+      std::chrono::steady_clock::now();
   solver_->run(*problem_->getProblem(), xs_, us_);
-  /* std::chrono::steady_clock::time_point end5 =
-  std::chrono::steady_clock::now(); std::cout << "solve = "
+  std::chrono::steady_clock::time_point end5 = std::chrono::steady_clock::now();
+  std::cout << "solve = "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
                                                                      begin5)
                    .count()
-            << "[ms]" << std::endl; */
+            << "[ms]" << std::endl;
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
   K0_ = solver_->results_.getCtrlFeedbacks()[0];
 }
 
-void MPC::recedeWithHorizon() {
-  if (horizon_iteration_ < full_horizon_.size()) {
-    // std::chrono::steady_clock::time_point begin5 =
-    //     std::chrono::steady_clock::now();
-    problem_->getProblem()->replaceStageCircular(
-        full_horizon_[horizon_iteration_]);
-    /* std::chrono::steady_clock::time_point end5 =
-        std::chrono::steady_clock::now();
-    std::cout << "replace stage = "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
-                                                                       begin5)
-                     .count()
-              << "[ms]" << std::endl; */
-    /* std::chrono::steady_clock::time_point begin =
-        std::chrono::steady_clock::now(); */
-    solver_->cycleProblem(*problem_->getProblem(),
-                          full_horizon_data_[horizon_iteration_]);
-    /* std::chrono::steady_clock::time_point end =
-        std::chrono::steady_clock::now();
-    std::cout << "cycle problem = "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                       begin)
-                     .count()
-              << "[ms]" << std::endl; */
-    horizon_iteration_++;
-  } else {
-    problem_->getProblem()->replaceStageCircular(
-        problem_->getProblem()->stages_[0]);
-    std::shared_ptr<StageDataTpl<double>> data =
-        problem_->getProblem()->stages_[0]->createData();
-    solver_->cycleProblem(*problem_->getProblem(), data);
-  }
-}
-
 void MPC::recedeWithCycle() {
   if (now_ == WALKING or
       problem_->getContactSupport(settings_.T - 1) < ee_names_.size()) {
-    problem_->getProblem()->replaceStageCircular(full_horizon_[0]);
-    solver_->cycleProblem(*problem_->getProblem(), full_horizon_data_[0]);
 
-    rotate_vec_left(full_horizon_);
-    rotate_vec_left(full_horizon_data_);
+    problem_->getProblem()->replaceStageCircular(*cycle_horizon_[0]);
+    solver_->cycleProblem(*problem_->getProblem(), cycle_horizon_data_[0]);
+
+    rotate_vec_left(cycle_horizon_);
+    rotate_vec_left(cycle_horizon_data_);
+    rotate_vec_left(contact_states_);
   } else {
-    problem_->getProblem()->replaceStageCircular(standing_horizon_[0]);
+    problem_->getProblem()->replaceStageCircular(*standing_horizon_[0]);
     solver_->cycleProblem(*problem_->getProblem(), standing_horizon_data_[0]);
 
     rotate_vec_left(standing_horizon_);
@@ -237,32 +215,24 @@ void MPC::recedeWithCycle() {
   }
 }
 
-void MPC::updateSupportTiming() {
+void MPC::updateCycleTiming() {
   for (auto const &name : ee_names_) {
-    for (size_t i = 0; i < foot_land_times_.at(name).size(); i++)
-      foot_land_times_.at(name)[i] -= 1;
-    if (!foot_land_times_.at(name).empty() and foot_land_times_.at(name)[0] < 0)
-      foot_land_times_.at(name).erase(foot_land_times_.at(name).begin());
+    if (foot_land_cycle_times_.at(name) >= 0)
+      foot_land_cycle_times_.at(name) -= 1;
+    if (foot_land_cycle_times_.at(name) < 0 and now_ == WALKING)
+      foot_land_cycle_times_.at(name) = (int)cycle_horizon_.size() - 1;
 
-    for (size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++)
-      foot_takeoff_times_.at(name)[i] -= 1;
-    if (!foot_takeoff_times_.at(name).empty() and
-        foot_takeoff_times_.at(name)[0] < 0)
-      foot_takeoff_times_.at(name).erase(foot_takeoff_times_.at(name).begin());
+    if (foot_takeoff_cycle_times_.at(name) >= 0)
+      foot_takeoff_cycle_times_.at(name) -= 1;
+    if (foot_takeoff_cycle_times_.at(name) < 0 and now_ == WALKING)
+      foot_takeoff_cycle_times_.at(name) = (int)cycle_horizon_.size() - 1;
   }
 }
 
 void MPC::updateStepTrackerReferences() {
   for (auto const &name : ee_names_) {
-    int foot_land_time = -1;
-    int foot_takeoff_time = -1;
-    if (!foot_land_times_.at(name).empty())
-      foot_land_time = foot_land_times_.at(name)[0];
-    if (!foot_takeoff_times_.at(name).empty())
-      foot_takeoff_time = foot_takeoff_times_.at(name)[0];
-
     foot_trajectories_.updateTrajectory(
-        foot_takeoff_time, foot_land_time,
+        foot_takeoff_cycle_times_.at(name), foot_land_cycle_times_.at(name),
         problem_->getHandler().getFootPose(name).translation(), name);
 
     for (unsigned long time = 0; time < problem_->getProblem()->stages_.size();
@@ -303,6 +273,34 @@ void MPC::setRelativeTranslation(
     const double swing_apex) {
   relative_translations_ = relative_translations;
   foot_trajectories_.updateForward(relative_translations_, swing_apex);
+}
+
+void MPC::switchToWalk() {
+  now_ = WALKING;
+  for (auto const &name : ee_names_) {
+    for (size_t i = 1; i < contact_states_.size(); i++) {
+      if (!contact_states_[i].at(name) and contact_states_[i - 1].at(name))
+        foot_takeoff_cycle_times_.at(name) = (int)(i + problem_->getSize());
+      if (contact_states_[i].at(name) and !contact_states_[i - 1].at(name))
+        foot_land_cycle_times_.at(name) = (int)(i + problem_->getSize());
+    }
+    if (contact_states_.back().at(name) and !contact_states_[0].at(name))
+      foot_takeoff_cycle_times_.at(name) =
+          (int)(contact_states_.size() - 1 + problem_->getSize());
+    if (!contact_states_.back().at(name) and contact_states_[0].at(name))
+      foot_land_cycle_times_.at(name) =
+          (int)(contact_states_.size() - 1 + problem_->getSize());
+  }
+}
+
+void MPC::switchToStand() {
+  now_ = STANDING;
+  for (auto const &name : ee_names_) {
+    if (foot_land_cycle_times_.at(name) > (int)problem_->getSize())
+      foot_land_cycle_times_.at(name) = -1;
+    if (foot_takeoff_cycle_times_.at(name) > (int)problem_->getSize())
+      foot_takeoff_cycle_times_.at(name) = -1;
+  }
 }
 
 } // namespace simple_mpc

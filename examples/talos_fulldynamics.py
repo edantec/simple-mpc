@@ -157,7 +157,7 @@ dynproblem.createProblem(x0, T, 6, gravity[2])
 """ Define feet trajectory """
 T_ss = 80
 T_ds = 20
-totalSteps = 2
+totalSteps = 1
 mpc_conf = dict(
     ddpIteration=1,
     support_force=-handler.getMass() * gravity[2],
@@ -177,7 +177,6 @@ mpc = MPC()
 mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = totalSteps
 contact_phase_double = {
     "left_sole_link": True,
     "right_sole_link": True,
@@ -191,17 +190,12 @@ contact_phase_right = {
     "right_sole_link": True,
 }
 contact_phases = [contact_phase_double] * T_ds
-for s in range(total_steps):
-    contact_phases += (
-        [contact_phase_left] * T_ss
-        + [contact_phase_double] * T_ds
-        + [contact_phase_right] * T_ss
-        + [contact_phase_double] * T_ds
-    )
-contact_phases += [contact_phase_double] * T * 2
+contact_phases += [contact_phase_left] * T_ss
+contact_phases += [contact_phase_double] * T_ds
+contact_phases += [contact_phase_right] * T_ss
 
 Tmpc = len(contact_phases)
-mpc.generateFullHorizon(contact_phases)
+mpc.generateCycleHorizon(contact_phases)
 problem = mpc.getTrajOptProblem()
 
 """ Initialize simulation"""
@@ -219,34 +213,6 @@ q_current, v_current = device.measureState()
 
 x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
-""" Define feet trajectory """
-swing_apex = 0.15
-x_forward = 0.1
-y_forward = 0.0
-foot_yaw = 0
-y_gap = 0.18
-x_depth = 0.0
-LF_id = handler.getModel().getFrameId("left_sole_link")
-RF_id = handler.getModel().getFrameId("right_sole_link")
-foottraj = footTrajectory(
-    mpc.getHandler().getData().oMf[LF_id].copy(),
-    mpc.getHandler().getData().oMf[RF_id].copy(),
-    T_ss,
-    T_ds,
-    100,
-    swing_apex,
-    x_forward,
-    y_forward,
-    foot_yaw,
-    y_gap,
-    x_depth,
-)
-
-land_LFs2 = mpc.getFootLandTimings("left_sole_link").tolist()
-land_RFs2 = mpc.getFootLandTimings("right_sole_link").tolist()
-takeoff_LFs2 = mpc.getFootTakeoffTimings("left_sole_link").tolist()
-takeoff_RFs2 = mpc.getFootTakeoffTimings("right_sole_link").tolist()
-
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
@@ -258,50 +224,24 @@ device.showTargetToTrack(
     mpc.getHandler().getFootPose("left_sole_link"),
     mpc.getHandler().getFootPose("right_sole_link"),
 )
-for t in range(Tmpc):
+for t in range(Tmpc + 800):
     # print("Time " + str(t))
-    land_LFs = mpc.getFootLandTimings("left_sole_link")
-    land_RFs = mpc.getFootLandTimings("right_sole_link")
-    takeoff_LFs = mpc.getFootTakeoffTimings("left_sole_link")
-    takeoff_RFs = mpc.getFootTakeoffTimings("right_sole_link")
+    land_LF = mpc.getFootLandCycle("left_sole_link")
+    land_RF = mpc.getFootLandCycle("right_sole_link")
+    takeoff_LF = mpc.getFootTakeoffCycle("left_sole_link")
+    takeoff_RF = mpc.getFootTakeoffCycle("right_sole_link")
 
-    if len(land_LFs) > 0:
-        land_LF = land_LFs[0]
-    else:
-        land_LF == -1
-    if len(land_RFs) > 0:
-        land_RF = land_RFs[0]
-    else:
-        land_RF == -1
-    if len(takeoff_LFs) > 0:
-        takeoff_LF = takeoff_LFs[0]
-    else:
-        takeoff_LF == -1
-    if len(takeoff_RFs) > 0:
-        takeoff_RF = takeoff_RFs[0]
-    else:
-        takeoff_RF == -1
-
-    takeoff_RF2, takeoff_LF2, land_RF2, land_LF2 = update_timings(
-        land_LFs2, land_RFs2, takeoff_LFs2, takeoff_RFs2
-    )
-
-    if land_RF2 == -1:
-        foottraj.updateForward(0, 0, y_gap, y_forward, 0, 0, swing_apex)
-
-    LF_refs, RF_refs = foottraj.updateTrajectory(
-        takeoff_RF2,
-        takeoff_LF2,
-        land_RF2,
-        land_LF2,
-        mpc.getHandler().getData().oMf[LF_id].copy(),
-        mpc.getHandler().getData().oMf[RF_id].copy(),
-    )
+    if t == 300:
+        print("SWITCH TO STAND")
+        mpc.switchToStand()
+    if t == 600:
+        print("SWITCH TO WALK")
+        mpc.switchToWalk()
 
     print(
-        "takeoff_RF = " + str(takeoff_RF2) + ", landing_RF = ",
-        str(land_RF2) + ", takeoff_LF = " + str(takeoff_LF2) + ", landing_LF = ",
-        str(land_LF2),
+        "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
+        str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
+        str(land_LF),
     )
     start = time.time()
     mpc.iterate(q_current, v_current)
@@ -310,13 +250,7 @@ for t in range(Tmpc):
     device.moveMarkers(
         mpc.getReferencePose(0, "left_sole_link").translation,
         mpc.getReferencePose(0, "right_sole_link").translation,
-        # LF_refs[0].translation,
-        # RF_refs[0].translation,
     )
-
-    """ for j in range(100):
-        mpc.setReferencePose(j, "left_sole_link", LF_refs[j])
-        mpc.setReferencePose(j, "right_sole_link", RF_refs[j]) """
 
     for j in range(10):
         q_current, v_current = device.measureState()

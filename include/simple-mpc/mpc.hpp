@@ -73,13 +73,16 @@ public:
 class MPC {
 
 protected:
-  enum LocomotionType { WALKING, STANDING };
+  enum LocomotionType { WALKING, STANDING, MOTION };
 
   MPCSettings settings_;
   std::shared_ptr<Problem> problem_;
-  std::vector<StageModel> full_horizon_;
-  std::vector<StageModel> standing_horizon_;
-  std::vector<std::shared_ptr<StageData>> full_horizon_data_;
+  std::vector<std::map<std::string, bool>> contact_states_;
+  std::vector<std::shared_ptr<StageModel>> cycle_horizon_;
+  std::vector<std::shared_ptr<StageData>> cycle_horizon_data_;
+  std::vector<std::shared_ptr<StageModel>> one_horizon_;
+  std::vector<std::shared_ptr<StageData>> one_horizon_data_;
+  std::vector<std::shared_ptr<StageModel>> standing_horizon_;
   std::vector<std::shared_ptr<StageData>> standing_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
@@ -102,21 +105,19 @@ public:
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<Problem> problem);
 
-  // Generate the full walking problem along which we will iterate
+  // Generate the cycle walking problem along which we will iterate
   // the receding horizon
-  void generateFullHorizon(
+  void generateCycleHorizon(
       const std::vector<std::map<std::string, bool>> &contact_states);
 
   // Perform one iteration of MPC
   void iterate(const Eigen::VectorXd &q_current,
                const Eigen::VectorXd &v_current);
 
-  void updateSupportTiming();
+  void updateCycleTiming();
 
   // Recede the horizon
   void recedeWithCycle();
-
-  void recedeWithHorizon();
 
   // Getters and setters
   void setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -135,25 +136,23 @@ public:
   // getters and setters
   MPCSettings &getSettings() { return settings_; }
 
-  std::vector<StageModel> &getFullHorizon() { return full_horizon_; }
-  std::vector<std::shared_ptr<StageData>> &getFullHorizonData() {
-    return full_horizon_data_;
-  }
-
   std::shared_ptr<Problem> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
   RobotHandler &getHandler() { return problem_->getHandler(); }
-  std::vector<int> &getFootTakeoffTimings(const std::string &ee_name) {
-    return foot_takeoff_times_.at(ee_name);
+  int getFootTakeoffCycle(const std::string &ee_name) {
+    return foot_takeoff_cycle_times_.at(ee_name);
   }
-  std::vector<int> &getFootLandTimings(const std::string &ee_name) {
-    return foot_land_times_.at(ee_name);
+  int getFootLandCycle(const std::string &ee_name) {
+    return foot_land_cycle_times_.at(ee_name);
   }
 
+  void switchToWalk();
+
+  void switchToStand();
+
   // Footstep timings for each end effector
-  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
-  std::size_t horizon_iteration_;
+  std::map<std::string, int> foot_takeoff_cycle_times_, foot_land_cycle_times_;
 
   // Solution vectors for state and control
   std::vector<Eigen::VectorXd> xs_;

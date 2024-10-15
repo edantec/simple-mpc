@@ -141,7 +141,6 @@ mpc = MPC()
 mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 2
 contact_phase_quadru = {
     "FL_foot": True,
     "FR_foot": True,
@@ -161,17 +160,11 @@ contact_phase_lift_FR = {
     "RR_foot": True,
 }
 contact_phases = [contact_phase_quadru] * T_ds
-for s in range(total_steps):
-    contact_phases += (
-        [contact_phase_lift_FL] * T_ss
-        + [contact_phase_quadru] * T_ds
-        + [contact_phase_lift_FR] * T_ss
-        + [contact_phase_quadru] * T_ds
-    )
+contact_phases += [contact_phase_lift_FL] * T_ss
+contact_phases += [contact_phase_quadru] * T_ds
+contact_phases += [contact_phase_lift_FR] * T_ss
 
-contact_phases += [contact_phase_quadru] * T * 2
-
-mpc.generateFullHorizon(contact_phases)
+mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize simulation"""
 device = BulletRobot(
@@ -193,21 +186,16 @@ q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
 Tmpc = len(contact_phases)
-for t in range(Tmpc):
+for t in range(500):
     # print("Time " + str(t))
-    LF_takeoffs = mpc.getFootTakeoffTimings("FL_foot")
-    RF_takeoffs = mpc.getFootTakeoffTimings("FR_foot")
-    LF_lands = mpc.getFootLandTimings("FL_foot")
-    RF_lands = mpc.getFootLandTimings("FR_foot")
-
-    LF_land = -1 if LF_lands.tolist() == [] else LF_lands[0]
-    RF_land = -1 if RF_lands.tolist() == [] else RF_lands[0]
-    LF_takeoff = -1 if LF_takeoffs.tolist() == [] else LF_takeoffs[0]
-    RF_takeoff = -1 if RF_takeoffs.tolist() == [] else RF_takeoffs[0]
+    land_LF = mpc.getFootLandCycle("FL_foot")
+    land_RF = mpc.getFootLandCycle("RL_foot")
+    takeoff_LF = mpc.getFootTakeoffCycle("FL_foot")
+    takeoff_RF = mpc.getFootTakeoffCycle("RL_foot")
     print(
-        "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
-        str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
-        str(LF_land),
+        "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
+        str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
+        str(land_LF),
     )
 
     mpc.iterate(q_current, v_current)

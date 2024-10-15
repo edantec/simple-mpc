@@ -83,7 +83,7 @@ void exposeMPC() {
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize)
       .def("getSettings", &getSettings)
-      .def("generateFullHorizon", &MPC::generateFullHorizon,
+      .def("generateCycleHorizon", &MPC::generateCycleHorizon,
            bp::args("self", "contact_states"))
       .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
       .def("setReferencePose", &MPC::setReferencePose,
@@ -92,16 +92,12 @@ void exposeMPC() {
            bp::args("self", "t", "ee_name"))
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("getFullHorizon", &MPC::getFullHorizon, bp::args("self"),
-           bp::return_internal_reference<>(), "Get the full horizon.")
-      .def("getFullHorizonData", &MPC::getFullHorizonData, bp::args("self"),
-           bp::return_internal_reference<>(), "Get the full horizon data.")
-      .def("getFootTakeoffTimings", &MPC::getFootTakeoffTimings,
-           bp::args("self", "ee_name"), bp::return_internal_reference<>(),
-           "Get the takeoff timings.")
-      .def("getFootLandTimings", &MPC::getFootLandTimings,
-           bp::args("self", "ee_name"), bp::return_internal_reference<>(),
-           "Get the land timings.")
+      .def("switchToWalk", &MPC::switchToWalk, bp::args("self"))
+      .def("switchToStand", &MPC::switchToStand, bp::args("self"))
+      .def("getFootTakeoffCycle", &MPC::getFootTakeoffCycle,
+           bp::args("self", "ee_name"))
+      .def("getFootLandCycle", &MPC::getFootLandCycle,
+           bp::args("self", "ee_name"))
       .def("getHandler", &MPC::getHandler, bp::args("self"),
            bp::return_internal_reference<>(), "Get the robot handler.")
       .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
@@ -111,10 +107,7 @@ void exposeMPC() {
            bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
-      .add_property("foot_takeoff_times", &MPC::foot_takeoff_times_)
-      .add_property("foot_land_times", &MPC::foot_land_times_)
-      .add_property("K0", &MPC::K0_)
-      .add_property("horizon_iteration", &MPC::horizon_iteration_);
+      .add_property("K0", &MPC::K0_);
 }
 
 } // namespace python

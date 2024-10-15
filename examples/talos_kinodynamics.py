@@ -165,16 +165,11 @@ contact_phase_right = {
     "right_sole_link": True,
 }
 contact_phases = [contact_phase_double] * T_ds
-for s in range(total_steps):
-    contact_phases += (
-        [contact_phase_left] * T_ss
-        + [contact_phase_double] * T_ds
-        + [contact_phase_right] * T_ss
-        + [contact_phase_double] * T_ds
-    )
+contact_phases += [contact_phase_left] * T_ss
+contact_phases += [contact_phase_double] * T_ds
+contact_phases += [contact_phase_right] * T_ss
 
-contact_phases += [contact_phase_double] * T * 2
-mpc.generateFullHorizon(contact_phases)
+mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize whole-body inverse dynamics QP"""
 contact_ids = handler.getFeetIds()
@@ -214,21 +209,25 @@ v_current = x_measured[nq:]
 Tmpc = len(contact_phases)
 nk = 2
 force_size = 6
-for t in range(Tmpc):
-    # print("Time " + str(t))
-    LF_takeoffs = mpc.getFootTakeoffTimings("left_sole_link")
-    RF_takeoffs = mpc.getFootTakeoffTimings("right_sole_link")
-    LF_lands = mpc.getFootLandTimings("left_sole_link")
-    RF_lands = mpc.getFootLandTimings("right_sole_link")
 
-    LF_land = -1 if LF_lands.tolist() == [] else LF_lands[0]
-    RF_land = -1 if RF_lands.tolist() == [] else RF_lands[0]
-    LF_takeoff = -1 if LF_takeoffs.tolist() == [] else LF_takeoffs[0]
-    RF_takeoff = -1 if RF_takeoffs.tolist() == [] else RF_takeoffs[0]
+device.showTargetToTrack(
+    mpc.getHandler().getFootPose("left_sole_link"),
+    mpc.getHandler().getFootPose("right_sole_link"),
+)
+for t in range(600):
+    # print("Time " + str(t))
+    if t == 400:
+        print("SWITCH TO STAND")
+        mpc.switchToStand()
+
+    land_LF = mpc.getFootLandCycle("left_sole_link")
+    land_RF = mpc.getFootLandCycle("right_sole_link")
+    takeoff_LF = mpc.getFootTakeoffCycle("left_sole_link")
+    takeoff_RF = mpc.getFootTakeoffCycle("right_sole_link")
     print(
-        "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
-        str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
-        str(LF_land),
+        "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
+        str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
+        str(land_LF),
     )
 
     start = time.time()
@@ -242,6 +241,11 @@ for t in range(Tmpc):
     )
     contact_states = (
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
+    )
+
+    device.moveMarkers(
+        mpc.getReferencePose(0, "left_sole_link").translation,
+        mpc.getReferencePose(0, "right_sole_link").translation,
     )
 
     """ if t == 60:

@@ -217,6 +217,8 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getProblemState", &FullDynamicsProblem::getProblemState,
            bp::args("self"))
+      .def("getContactSupport", &FullDynamicsProblem::getContactSupport,
+           bp::args("self", "t"))
       .def("createTerminalCost", &FullDynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("updateTerminalConstraint",
@@ -355,6 +357,8 @@ void exposeCentroidalProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getProblemState", &CentroidalProblem::getProblemState,
            bp::args("self"))
+      .def("getContactSupport", &CentroidalProblem::getContactSupport,
+           bp::args("self", "t"))
       .def("createTerminalCost", &CentroidalProblem::createTerminalCost,
            bp::args("self"))
       .def("createTerminalConstraint",
@@ -509,6 +513,8 @@ void exposeKinodynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getProblemState", &KinodynamicsProblem::getProblemState,
            bp::args("self"))
+      .def("getContactSupport", &KinodynamicsProblem::getContactSupport,
+           bp::args("self", "t"))
       .def("createTerminalCost", &KinodynamicsProblem::createTerminalCost,
            bp::args("self"))
       .def("createTerminalConstraint",
