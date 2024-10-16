@@ -147,6 +147,7 @@ StageModel FullDynamicsProblem::createStage(
                     BoxConstraint(-settings_.qmax, -settings_.qmin));
 
   for (auto const &name : handler_.getFeetNames()) {
+    // TODO: add friction cone constraint for case force_size = 3
     if (settings_.force_size == 6 and contact_phase.at(name)) {
       MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,

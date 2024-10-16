@@ -243,6 +243,10 @@ void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
 
+  conf.mu = bp::extract<double>(settings["mu"]);
+  conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
+  conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
+
   self.initialize(conf);
 }
 
@@ -295,6 +299,9 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
   settings["w_linear_acc"] = conf.w_linear_acc;
   settings["w_angular_acc"] = conf.w_angular_acc;
   settings["gravity"] = conf.gravity;
+  settings["mu"] = conf.mu;
+  settings["Lfoot"] = conf.Lfoot;
+  settings["Wfoot"] = conf.Wfoot;
   settings["force_size"] = conf.force_size;
 
   return settings;

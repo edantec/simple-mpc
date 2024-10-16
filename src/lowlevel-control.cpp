@@ -268,7 +268,7 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   dJframe_.resize(6, model_.nv);
   dJframe_.setZero();
 
-  u_ = Eigen::VectorXd::Ones(nforcein_ * nk_) * 100000;
+  u_ = Eigen::VectorXd::Ones(nin) * 100000;
   g_ = Eigen::VectorXd::Zero(n);
   H_ = Eigen::MatrixXd::Zero(n, n);
   H_.block(model_.nv, model_.nv, force_dim_, force_dim_).diagonal() =

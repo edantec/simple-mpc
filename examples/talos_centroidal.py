@@ -299,6 +299,9 @@ problem_conf = dict(
     w_linear_acc=w_linear_acc,
     w_angular_acc=w_angular_acc,
     gravity=gravity,
+    mu=0.8,
+    Lfoot=0.1,
+    Wfoot=0.075,
     force_size=6,
 )
 T = 100
@@ -467,9 +470,7 @@ for t in range(600):
 
         forces = (
             mpc.us[0][: nk * force_size]
-            - 1
-            * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
-            @ state_diff
+            - 1 * mpc.getSolver().results.controlFeedbacks()[0] @ state_diff
         )
 
         qp.solve_qp(

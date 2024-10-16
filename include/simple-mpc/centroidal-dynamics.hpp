@@ -11,8 +11,11 @@
 #include <aligator/modelling/centroidal/angular-momentum.hpp>
 #include <aligator/modelling/centroidal/centroidal-acceleration.hpp>
 #include <aligator/modelling/centroidal/centroidal-translation.hxx>
+#include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
+#include <aligator/modelling/centroidal/friction-cone.hpp>
 #include <aligator/modelling/centroidal/linear-momentum.hpp>
 #include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+#include <aligator/modelling/function-xpr-slice.hpp>
 #include <proxsuite-nlp/modelling/constraints/equality-constraint.hpp>
 
 #include "simple-mpc/base-problem.hpp"
@@ -30,6 +33,10 @@ using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
 using ContactMap = ContactMapTpl<double>;
+using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
+using FrictionConeResidual = FrictionConeResidualTpl<double>;
+using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
+using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
 /**
  * @brief Build a centroidal dynamics problem based on
@@ -56,6 +63,9 @@ struct CentroidalSettings {
 
   // Physics parameters
   Eigen::Vector3d gravity;
+  double mu;
+  double Lfoot;
+  double Wfoot;
   int force_size;
 };
 

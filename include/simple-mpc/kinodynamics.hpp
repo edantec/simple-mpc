@@ -8,12 +8,14 @@
 #pragma once
 
 #include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
+#include <aligator/modelling/centroidal/friction-cone.hpp>
 #include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
 #include <aligator/modelling/function-xpr-slice.hpp>
 #include <aligator/modelling/multibody/center-of-mass-translation.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
 #include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/frame-translation.hpp>
 #include <aligator/modelling/multibody/frame-velocity.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
 #include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
@@ -29,6 +31,7 @@ using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
 using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
 using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using CentroidalMomentumDerivativeResidual =
     CentroidalMomentumDerivativeResidualTpl<double>;
@@ -39,6 +42,7 @@ using StateErrorResidual = StateErrorResidualTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
+using FrictionConeResidual = FrictionConeResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;

@@ -75,7 +75,25 @@ StageModel CentroidalProblem::createStage(
                             contact_map, settings_.force_size);
   IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
-  return StageModel(rcost, dyn_model);
+  StageModel stm = StageModel(rcost, dyn_model);
+
+  int i = 0;
+  for (auto const &name : handler_.getFeetNames()) {
+    if (contact_phase.at(name)) {
+      if (settings_.force_size == 6) {
+        CentroidalWrenchConeResidual wrench_residual =
+            CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                         settings_.Lfoot, settings_.Wfoot);
+        stm.addConstraint(wrench_residual, NegativeOrthant());
+      } else {
+        FrictionConeResidual friction_residual =
+            FrictionConeResidual(space.ndx(), nu_, i, settings_.mu, 1e-4);
+        stm.addConstraint(friction_residual, NegativeOrthant());
+      }
+    }
+    i++;
+  }
+  return stm;
 }
 
 void CentroidalProblem::computeControlFromForces(

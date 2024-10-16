@@ -31,13 +31,14 @@ StageModel KinodynamicsProblem::createStage(
   for (auto const &x : contact_phase) {
     contact_states.push_back(x.second);
   }
+
   computeControlFromForces(contact_force);
 
   auto cent_mom = CentroidalMomentumResidual(
       space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
   auto centder_mom = CentroidalMomentumDerivativeResidual(
       space.ndx(), handler_.getModel(), settings_.gravity, contact_states,
-      handler_.getFeetIds(), 6);
+      handler_.getFeetIds(), settings_.force_size);
   rcost.addCost("state_cost",
                 QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
   rcost.addCost("control_cost",
@@ -48,13 +49,23 @@ StageModel KinodynamicsProblem::createStage(
                 QuadraticResidualCost(space, centder_mom, settings_.w_centder));
 
   for (auto const &name : handler_.getFeetNames()) {
-    FramePlacementResidual frame_residual =
-        FramePlacementResidual(space.ndx(), nu_, handler_.getModel(),
-                               contact_pose.at(name), handler_.getFootId(name));
+    if (settings_.force_size == 6) {
+      FramePlacementResidual frame_residual = FramePlacementResidual(
+          space.ndx(), nu_, handler_.getModel(), contact_pose.at(name),
+          handler_.getFootId(name));
 
-    rcost.addCost(
-        name + "_pose_cost",
-        QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+      rcost.addCost(
+          name + "_pose_cost",
+          QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+    } else {
+      FrameTranslationResidual frame_residual = FrameTranslationResidual(
+          space.ndx(), nu_, handler_.getModel(),
+          contact_pose.at(name).translation(), handler_.getFootId(name));
+
+      rcost.addCost(
+          name + "_pose_cost",
+          QuadraticResidualCost(space, frame_residual, settings_.w_frame));
+    }
   }
 
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
@@ -64,7 +75,6 @@ StageModel KinodynamicsProblem::createStage(
       IntegratorSemiImplEuler(ode, settings_.DT);
 
   StageModel stm = StageModel(rcost, dyn_model);
-
   StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
   std::vector<int> state_id;
   for (int i = 6; i < nv_; i++) {
@@ -81,13 +91,23 @@ StageModel KinodynamicsProblem::createStage(
       CentroidalWrenchConeResidual wrench_residual =
           CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
                                        settings_.Lfoot, settings_.Wfoot);
-      stm.addConstraint(wrench_residual, NegativeOrthant());
 
       FrameVelocityResidual frame_vel =
           FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), v_ref,
                                 handler_.getFootId(name), pinocchio::LOCAL);
+      if (settings_.force_size == 6) {
+        stm.addConstraint(wrench_residual, NegativeOrthant());
+        stm.addConstraint(frame_vel, EqualityConstraint());
+      } else {
+        FrictionConeResidual friction_residual =
+            FrictionConeResidual(space.ndx(), nu_, i, settings_.mu, 1e-4);
+        stm.addConstraint(friction_residual, NegativeOrthant());
 
-      stm.addConstraint(frame_vel, EqualityConstraint());
+        std::vector<int> vel_id = {0, 1, 2};
+
+        FunctionSliceXpr vel_slice = FunctionSliceXpr(frame_vel, vel_id);
+        stm.addConstraint(vel_slice, EqualityConstraint());
+      }
     }
     i++;
   }
@@ -101,8 +121,14 @@ void KinodynamicsProblem::setReferencePose(const std::size_t t,
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  cfr->setReference(pose_ref);
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    cfr->setReference(pose_ref);
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    cfr->setReference(pose_ref.translation());
+  }
 }
 
 void KinodynamicsProblem::setReferencePoses(
@@ -117,8 +143,14 @@ void KinodynamicsProblem::setReferencePoses(
   for (auto ee_name : handler_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-    cfr->setReference(pose_refs.at(ee_name));
+    if (settings_.force_size == 6) {
+      FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+      cfr->setReference(pose_refs.at(ee_name));
+    } else {
+      FrameTranslationResidual *cfr =
+          qrc->getResidual<FrameTranslationResidual>();
+      cfr->setReference(pose_refs.at(ee_name).translation());
+    }
   }
 }
 
@@ -127,8 +159,14 @@ void KinodynamicsProblem::setTerminalReferencePose(
   CostStack *cs = getTerminalCostStack();
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  cfr->setReference(pose_ref);
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    cfr->setReference(pose_ref);
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    cfr->setReference(pose_ref.translation());
+  }
 }
 
 const pinocchio::SE3
@@ -137,8 +175,16 @@ KinodynamicsProblem::getReferencePose(const std::size_t t,
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
-  FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
-  return cfr->getReference();
+  if (settings_.force_size == 6) {
+    FramePlacementResidual *cfr = qrc->getResidual<FramePlacementResidual>();
+    return cfr->getReference();
+  } else {
+    FrameTranslationResidual *cfr =
+        qrc->getResidual<FrameTranslationResidual>();
+    SE3 ref = SE3::Identity();
+    ref.translation() = cfr->getReference();
+    return ref;
+  }
 }
 
 void KinodynamicsProblem::computeControlFromForces(
@@ -208,20 +254,10 @@ CostStack KinodynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  /* term_cost.addCost(
-      "state_cost",
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
-  term_cost.addCost("control_cost", QuadraticResidualCost(ter_space, cent_mom,
-                                                          settings_.w_cent));
-  for (auto const &name : handler_.getFeetNames()) {
-    FramePlacementResidual frame_residual = FramePlacementResidual(
-        ter_space.ndx(), nu_, handler_.getModel(), handler_.getFootPose(name),
-        handler_.getFootId(name));
-
-    term_cost.addCost(
-        name + "_pose_cost",
-        QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
-  } */
+  /* term_cost.addCost("state_cost",
+    QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x)); */
+  /* term_cost.addCost("centroidal_cost",
+      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent)); */
 
   return term_cost;
 }

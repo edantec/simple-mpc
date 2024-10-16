@@ -266,6 +266,63 @@ class BulletRobot:
             useMaximalCoordinates=True,
         )
 
+    def showQuadrupedFeet(self, FL_pose, FR_pose, RL_pose, RR_pose):
+        visualShapeTarget = p.createVisualShape(
+            shapeType=p.GEOM_BOX,
+            halfExtents=[0.03, 0.03, 0.001],
+            rgbaColor=[0.0, 0.0, 1.0, 1.0],
+            specularColor=[0.4, 0.4, 0],
+            visualFramePosition=[0.0, 0.0, 0.0],
+        )
+
+        self.sphereIdFL = p.createMultiBody(
+            baseMass=0.0,
+            baseInertialFramePosition=[0, 0, 0],
+            baseVisualShapeIndex=visualShapeTarget,
+            basePosition=[
+                FL_pose.translation[0],
+                FL_pose.translation[1],
+                FL_pose.translation[2],
+            ],
+            useMaximalCoordinates=True,
+        )
+
+        self.sphereIdFR = p.createMultiBody(
+            baseMass=0.0,
+            baseInertialFramePosition=[0, 0, 0],
+            baseVisualShapeIndex=visualShapeTarget,
+            basePosition=[
+                FR_pose.translation[0],
+                FR_pose.translation[1],
+                FR_pose.translation[2],
+            ],
+            useMaximalCoordinates=True,
+        )
+
+        self.sphereIdRL = p.createMultiBody(
+            baseMass=0.0,
+            baseInertialFramePosition=[0, 0, 0],
+            baseVisualShapeIndex=visualShapeTarget,
+            basePosition=[
+                RL_pose.translation[0],
+                RL_pose.translation[1],
+                RL_pose.translation[2],
+            ],
+            useMaximalCoordinates=True,
+        )
+
+        self.sphereIdRR = p.createMultiBody(
+            baseMass=0.0,
+            baseInertialFramePosition=[0, 0, 0],
+            baseVisualShapeIndex=visualShapeTarget,
+            basePosition=[
+                RR_pose.translation[0],
+                RR_pose.translation[1],
+                RR_pose.translation[2],
+            ],
+            useMaximalCoordinates=True,
+        )
+
     def createStairs(self, pose_stairs, height_step):
         visualShapeTarget = p.createVisualShape(
             shapeType=p.GEOM_BOX,
@@ -343,63 +400,6 @@ class BulletRobot:
             useMaximalCoordinates=True,
         )
 
-    def showSoloFeet(self, FL_pose, FR_pose, HL_pose, HR_pose):
-        visualShapeTarget = p.createVisualShape(
-            shapeType=p.GEOM_BOX,
-            halfExtents=[0.03, 0.03, 0.001],
-            rgbaColor=[0.0, 0.0, 1.0, 1.0],
-            specularColor=[0.4, 0.4, 0],
-            visualFramePosition=[0.0, 0.0, 0.0],
-        )
-
-        self.sphereIdFL = p.createMultiBody(
-            baseMass=0.0,
-            baseInertialFramePosition=[0, 0, 0],
-            baseVisualShapeIndex=visualShapeTarget,
-            basePosition=[
-                FL_pose.translation[0],
-                FL_pose.translation[1],
-                FL_pose.translation[2],
-            ],
-            useMaximalCoordinates=True,
-        )
-
-        self.sphereIdFR = p.createMultiBody(
-            baseMass=0.0,
-            baseInertialFramePosition=[0, 0, 0],
-            baseVisualShapeIndex=visualShapeTarget,
-            basePosition=[
-                FR_pose.translation[0],
-                FR_pose.translation[1],
-                FR_pose.translation[2],
-            ],
-            useMaximalCoordinates=True,
-        )
-
-        self.sphereIdHL = p.createMultiBody(
-            baseMass=0.0,
-            baseInertialFramePosition=[0, 0, 0],
-            baseVisualShapeIndex=visualShapeTarget,
-            basePosition=[
-                HL_pose.translation[0],
-                HL_pose.translation[1],
-                HL_pose.translation[2],
-            ],
-            useMaximalCoordinates=True,
-        )
-
-        self.sphereIdHR = p.createMultiBody(
-            baseMass=0.0,
-            baseInertialFramePosition=[0, 0, 0],
-            baseVisualShapeIndex=visualShapeTarget,
-            basePosition=[
-                HR_pose.translation[0],
-                HR_pose.translation[1],
-                HR_pose.translation[2],
-            ],
-            useMaximalCoordinates=True,
-        )
-
     def moveMarkers(self, LF_trans, RF_trans):
 
         p.resetBasePositionAndOrientation(
@@ -421,7 +421,7 @@ class BulletRobot:
             ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
         )
 
-    def moveSoloFeet(self, FL_pose, FR_pose, HL_pose, HR_pose):
+    def moveQuadrupedFeet(self, FL_pose, FR_pose, RL_pose, RR_pose):
 
         p.resetBasePositionAndOrientation(
             self.sphereIdFL,
@@ -442,20 +442,20 @@ class BulletRobot:
             ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
         )
         p.resetBasePositionAndOrientation(
-            self.sphereIdHL,
+            self.sphereIdRL,
             posObj=[
-                HL_pose[0],
-                HL_pose[1],
-                HL_pose[2],
+                RL_pose[0],
+                RL_pose[1],
+                RL_pose[2],
             ],
             ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
         )
         p.resetBasePositionAndOrientation(
-            self.sphereIdHR,
+            self.sphereIdRR,
             posObj=[
-                HR_pose[0],
-                HR_pose[1],
-                HR_pose[2],
+                RR_pose[0],
+                RR_pose[1],
+                RR_pose[2],
             ],
             ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
         )

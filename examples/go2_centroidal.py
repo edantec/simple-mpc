@@ -3,6 +3,7 @@ import example_robot_data
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
 import example_robot_data
+import time
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -50,11 +51,10 @@ fref = np.zeros(force_size)
 fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.concatenate((fref, fref, fref, fref))
 
-w_control_linear = np.ones(3) * 0.001
-w_control_angular = np.ones(3) * 0.1
+w_control_linear = np.ones(3) * 0.0001
 w_u = np.diag(
     np.concatenate(
-        (w_control_linear, w_control_angular, w_control_linear, w_control_angular)
+        (w_control_linear, w_control_linear, w_control_linear, w_control_linear)
     )
 )
 w_linear_mom = np.diag(np.array([1, 1, 1]))
@@ -72,6 +72,9 @@ problem_conf = dict(
     w_linear_acc=w_linear_acc,
     w_angular_acc=w_angular_acc,
     gravity=gravity,
+    mu=0.8,
+    Lfoot=0.01,
+    Wfoot=0.01,
     force_size=force_size,
 )
 T = 100
@@ -81,7 +84,7 @@ problem.initialize(problem_conf)
 problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2])
 
 T_ds = 20
-T_ss = 80
+T_ss = 500
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -102,7 +105,6 @@ mpc = MPC()
 mpc.initialize(mpc_conf, problem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 1
 contact_phase_quadru = {
     "FL_foot": True,
     "FR_foot": True,
@@ -117,29 +119,25 @@ contact_phase_lift_FL = {
 }
 contact_phase_lift_FR = {
     "FL_foot": True,
-    "FR_foot": False,
+    "FR_foot": True,
     "RL_foot": True,
     "RR_foot": True,
 }
-contact_phases = [contact_phase_quadru] * T_ds * 4
-""" for s in range(total_steps):
-    contact_phases += (
-        [contact_phase_lift_FL] * T_ss
-        + [contact_phase_quadru] * T_ds
-        + [contact_phase_lift_FR] * T_ss
-        + [contact_phase_quadru] * T_ds
-    ) """
 
-contact_phases += [contact_phase_quadru] * T * 2
+contact_phases = (
+    [contact_phase_quadru] * T_ds
+    + [contact_phase_lift_FL] * T_ss
+    + [contact_phase_quadru] * T_ds
+    + [contact_phase_lift_FR] * T_ss
+)
 
-mpc.generateFullHorizon(contact_phases)
+mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize inverse dynamics QP """
-g_basepos = [0, 0, 0, 10, 10, 10]
-g_legpos = [1, 1, 1, 1, 1, 1]
+g_basepos = [0, 0, 0, 1, 1, 1]
 g_legpos = [1, 1, 1, 1, 1, 1]
 
-g_q = np.array(g_basepos + g_legpos * 2) * 1
+g_q = np.array(g_basepos + g_legpos * 2) * 1000
 
 g_p = np.array([10, 10, 10])
 g_b = np.array([10, 10, 10])
@@ -156,14 +154,14 @@ ikid_conf = dict(
     x0=handler.getState(),
     dt=0.01,
     mu=0.8,
-    Lfoot=0.1,
-    Wfoot=0.075,
+    Lfoot=0.01,
+    Wfoot=0.01,
     force_size=force_size,
-    w_qref=500,
-    w_footpose=1000,
-    w_centroidal=10,
-    w_baserot=1000,
-    w_force=100,
+    w_qref=1000,
+    w_footpose=0,
+    w_centroidal=100,
+    w_baserot=10,
+    w_force=10,
     verbose=False,
 )
 
@@ -174,13 +172,14 @@ qp.initialize(ikid_conf, handler.getModel())
 device = BulletRobot(
     design_conf["controlled_joints_names"],
     modelPath,
-    "/urdf/go2_description.urdf",
+    URDF_SUBPATH,
     1e-3,
     handler.getModel(),
     handler.getState()[:3],
 )
+
 device.initializeJoints(handler.getConfiguration())
-device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
 nq = mpc.getHandler().getModel().nq
 nv = mpc.getHandler().getModel().nv
@@ -189,24 +188,22 @@ x_measured = mpc.getHandler().shapeState(q_current, v_current)
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
-Tmpc = len(contact_phases)
-x_centroidal = mpc.getHandler().getCentroidalState()
-exit()
-for t in range(Tmpc):
+device.showQuadrupedFeet(
+    mpc.getHandler().getFootPose("FL_foot"),
+    mpc.getHandler().getFootPose("FR_foot"),
+    mpc.getHandler().getFootPose("RL_foot"),
+    mpc.getHandler().getFootPose("RR_foot"),
+)
+for t in range(10000):
     # print("Time " + str(t))
-    LF_takeoffs = mpc.getFootTakeoffTimings("FL_foot")
-    RF_takeoffs = mpc.getFootTakeoffTimings("FR_foot")
-    LF_lands = mpc.getFootLandTimings("FL_foot")
-    RF_lands = mpc.getFootLandTimings("FR_foot")
-
-    LF_land = -1 if LF_lands.tolist() == [] else LF_lands[0]
-    RF_land = -1 if RF_lands.tolist() == [] else RF_lands[0]
-    LF_takeoff = -1 if LF_takeoffs.tolist() == [] else LF_takeoffs[0]
-    RF_takeoff = -1 if RF_takeoffs.tolist() == [] else RF_takeoffs[0]
+    land_LF = mpc.getFootLandCycle("FL_foot")
+    land_RF = mpc.getFootLandCycle("RL_foot")
+    takeoff_LF = mpc.getFootTakeoffCycle("FL_foot")
+    takeoff_RF = mpc.getFootTakeoffCycle("RL_foot")
     print(
-        "takeoff_RF = " + str(RF_takeoff) + ", landing_RF = ",
-        str(RF_land) + ", takeoff_LF = " + str(LF_takeoff) + ", landing_LF = ",
-        str(LF_land),
+        "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
+        str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
+        str(land_LF),
     )
 
     mpc.iterate(q_current, v_current)
@@ -216,6 +213,7 @@ for t in range(Tmpc):
         .stages[0]
         .dynamics.differential_dynamics.contact_map.contact_states.tolist()
     )
+    print(contact_states)
     foot_ref = [mpc.getReferencePose(0, name) for name in handler.getFeetNames()]
     foot_ref_next = [mpc.getReferencePose(1, name) for name in handler.getFeetNames()]
     dH = (
@@ -226,7 +224,16 @@ for t in range(Tmpc):
     qp.computeDifferences(
         mpc.getHandler().getData(), x_measured, foot_ref, foot_ref_next
     )
+
+    device.moveQuadrupedFeet(
+        mpc.getReferencePose(0, "FL_foot").translation,
+        mpc.getReferencePose(0, "FR_foot").translation,
+        mpc.getReferencePose(0, "RL_foot").translation,
+        mpc.getReferencePose(0, "RR_foot").translation,
+    )
+
     for j in range(10):
+        time.sleep(0.001)
         q_current, v_current = device.measureState()
         x_measured = mpc.getHandler().shapeState(q_current, v_current)
 
@@ -238,7 +245,7 @@ for t in range(Tmpc):
         state_diff = mpc.xs[0] - x_centroidal
 
         forces = (
-            mpc.us[0][: nk * force_size]
+            mpc.us[0]
             - 1
             * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
             @ state_diff
@@ -252,5 +259,10 @@ for t in range(Tmpc):
             dH,
             mpc.getHandler().getMassMatrix(),
         )
+
+        """ print(qp.solved_torque)
+
+        if (not(contact_states[0])):
+            exit() """
 
         device.execute(qp.solved_torque)
