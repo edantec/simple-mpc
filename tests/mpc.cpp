@@ -72,19 +72,19 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 
   mpc.generateCycleHorizon(contact_states);
 
-  BOOST_CHECK_EQUAL(mpc.foot_takeoff_cycle_times_.at("left_sole_link"), 170);
-  BOOST_CHECK_EQUAL(mpc.foot_takeoff_cycle_times_.at("right_sole_link"), 110);
-  BOOST_CHECK_EQUAL(mpc.foot_land_cycle_times_.at("left_sole_link"), 219);
-  BOOST_CHECK_EQUAL(mpc.foot_land_cycle_times_.at("right_sole_link"), 160);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 170);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 110);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 219);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
   for (std::size_t i = 0; i < 10; i++) {
     mpc.iterate(settings.x0.head(handler.getModel().nq),
                 settings.x0.tail(handler.getModel().nv));
   }
 
-  BOOST_CHECK_EQUAL(mpc.foot_takeoff_cycle_times_.at("left_sole_link"), 160);
-  BOOST_CHECK_EQUAL(mpc.foot_takeoff_cycle_times_.at("right_sole_link"), 100);
-  BOOST_CHECK_EQUAL(mpc.foot_land_cycle_times_.at("left_sole_link"), 209);
-  BOOST_CHECK_EQUAL(mpc.foot_land_cycle_times_.at("right_sole_link"), 150);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 160);
+  BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 100);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 209);
+  BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {

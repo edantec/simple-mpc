@@ -8,15 +8,10 @@
 #pragma once
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
-#include <aligator/modelling/function-xpr-slice.hpp>
-#include <aligator/modelling/multibody/center-of-mass-translation.hpp>
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
-#include <aligator/modelling/multibody/frame-placement.hpp>
-#include <aligator/modelling/multibody/frame-translation.hpp>
+#include <aligator/modelling/multibody/multibody-friction-cone.hpp>
 #include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
-#include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
-#include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 #include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/base-problem.hpp"
@@ -29,19 +24,10 @@ using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 using MultibodyConstraintFwdDynamics =
     dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
-using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
-using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
-using StateErrorResidual = StateErrorResidualTpl<double>;
-using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
-using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
-using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using MultibodyWrenchConeResidual =
     aligator::MultibodyWrenchConeResidualTpl<double>;
-using CenterOfMassTranslationResidual =
-    CenterOfMassTranslationResidualTpl<double>;
-using FunctionSliceXpr = FunctionSliceXprTpl<double>;
+using MultibodyFrictionConeResidual = MultibodyFrictionConeResidualTpl<double>;
 
 /**
  * @brief Build a full dynamics problem based on the

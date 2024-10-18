@@ -2,6 +2,7 @@ import numpy as np
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
 import example_robot_data
+import time
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -49,15 +50,15 @@ fref = np.zeros(force_size)
 fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.zeros(handler.getModel().nv - 6)
 
-w_basepos = [0, 0, 0, 0, 0, 0]
+w_basepos = [0, 0, 0, 100, 100, 100]
 w_legpos = [1, 1, 1]
 
 w_basevel = [1, 1, 1, 1, 1, 1]
 w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
-w_cent_lin = np.array([0.0, 0.0, 10])
-w_cent_ang = np.array([0.0, 0.0, 10])
-w_forces_lin = np.array([0.0001, 0.0001, 0.0001])
+w_cent_lin = np.array([0.1, 0.1, 10])
+w_cent_ang = np.array([0.1, 0.1, 1])
+w_forces_lin = np.array([0.001, 0.001, 0.001])
 
 problem_conf = dict(
     x0=handler.getState(),
@@ -69,7 +70,7 @@ problem_conf = dict(
     gravity=gravity,
     force_size=3,
     w_forces=np.diag(w_forces_lin),
-    w_frame=np.eye(3) * 20000,
+    w_frame=np.eye(3) * 1000,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -93,7 +94,7 @@ mpc_conf = dict(
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
-    num_threads=1,
+    num_threads=8,
     swing_apex=0.15,
     T_fly=T_ss,
     T_contact=T_ds,
@@ -141,7 +142,7 @@ device = BulletRobot(
     handler.getState()[:3],
 )
 device.initializeJoints(handler.getConfiguration())
-device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
 nq = mpc.getHandler().getModel().nq
 nv = mpc.getHandler().getModel().nv
@@ -157,8 +158,8 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RR_foot"),
 )
 Tmpc = len(contact_phases)
-for t in range(1000):
-    # print("Time " + str(t))
+for t in range(10000):
+    print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
     takeoff_LF = mpc.getFootTakeoffCycle("FL_foot")
@@ -177,6 +178,19 @@ for t in range(1000):
     )
 
     mpc.iterate(q_current, v_current)
+
+    """ if t == 390:
+        for s in range(T):
+            device.resetState(mpc.xs[s][:handler.getModel().nq])
+            time.sleep(0.1)
+            print("s = " + str(s))
+            device.moveQuadrupedFeet(
+                mpc.getReferencePose(s, "FL_foot").translation,
+                mpc.getReferencePose(s, "FR_foot").translation,
+                mpc.getReferencePose(s, "RL_foot").translation,
+                mpc.getReferencePose(s, "RR_foot").translation,
+            )
+        exit()  """
 
     for j in range(10):
         q_current, v_current = device.measureState()

@@ -50,8 +50,8 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
           pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_3D,
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
-      constraint_model.corrector.Kp << 1, 1, 10;
-      constraint_model.corrector.Kd << 50, 50, 50;
+      constraint_model.corrector.Kp << 0, 0, 0;
+      constraint_model.corrector.Kd << 100, 100, 100;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }
@@ -110,20 +110,15 @@ StageModel FullDynamicsProblem::createStage(
       throw std::runtime_error(
           "Reference forces do not have the right dimension");
     }
-    int is_active = 0;
     if (contact_phase.at(name)) {
       frame_force = std::make_shared<ContactForceResidual>(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
           prox_settings_, contact_force.at(name), name);
-      is_active = 1;
-    } else {
-      frame_force = std::make_shared<ContactForceResidual>(
-          space.ndx(), handler_.getModel(), actuation_matrix_,
-          constraint_models_, prox_settings_, contact_force.at(name), name);
+
+      rcost.addCost(
+          name + "_force_cost",
+          QuadraticResidualCost(space, *frame_force, settings_.w_forces));
     }
-    rcost.addCost(name + "_force_cost",
-                  QuadraticResidualCost(space, *frame_force,
-                                        settings_.w_forces * is_active));
   }
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
@@ -147,12 +142,17 @@ StageModel FullDynamicsProblem::createStage(
                     BoxConstraint(-settings_.qmax, -settings_.qmin));
 
   for (auto const &name : handler_.getFeetNames()) {
-    // TODO: add friction cone constraint for case force_size = 3
     if (settings_.force_size == 6 and contact_phase.at(name)) {
       MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
           prox_settings_, name, settings_.mu, settings_.Lfoot, settings_.Wfoot);
       stm.addConstraint(wrench_residual, NegativeOrthant());
+    } else if (settings_.force_size == 3 and contact_phase.at(name)) {
+      MultibodyFrictionConeResidual friction_residual =
+          MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
+                                        actuation_matrix_, cms, prox_settings_,
+                                        name, settings_.mu);
+      stm.addConstraint(friction_residual, NegativeOrthant());
     }
   }
 
@@ -289,16 +289,10 @@ CostStack FullDynamicsProblem::createTerminalCost() {
 
   term_cost.addCost(
       "state_cost",
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
-  /* for (auto const &name : handler_.getFeetNames()) {
-    FramePlacementResidual frame_residual = FramePlacementResidual(
-        ter_space.ndx(), nu_, handler_.getModel(), handler_.getFootPose(name),
-        handler_.getFootId(name));
-
-    term_cost.addCost(
-        name + "_pose_cost",
-        QuadraticResidualCost(ter_space, frame_residual, settings_.w_frame));
-  } */
+      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x * 100));
+  term_cost.addCost(
+      "centroidal_cost",
+      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent * 100));
 
   return term_cost;
 }
@@ -310,7 +304,26 @@ void FullDynamicsProblem::createTerminalConstraint() {
   CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
       ndx_, nu_, handler_.getModel(), handler_.getComPosition());
 
-  problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
+  double tau = sqrt(handler_.getComPosition()[2] / 9.81);
+  DCMPositionResidual dcm_cstr = DCMPositionResidual(
+      ndx_, nu_, handler_.getModel(), handler_.getComPosition(), tau);
+
+  problem_->addTerminalConstraint(dcm_cstr, EqualityConstraint());
+
+  Motion v_ref = Motion::Zero();
+  for (auto const &name : handler_.getFeetNames()) {
+    FrameVelocityResidual frame_vel =
+        FrameVelocityResidual(ndx_, nu_, handler_.getModel(), v_ref,
+                              handler_.getFootId(name), pinocchio::LOCAL);
+    if (settings_.force_size == 6)
+      problem_->addTerminalConstraint(frame_vel, EqualityConstraint());
+    else {
+      std::vector<int> vel_id = {0, 1, 2};
+
+      FunctionSliceXpr vel_slice = FunctionSliceXpr(frame_vel, vel_id);
+      problem_->addTerminalConstraint(vel_slice, EqualityConstraint());
+    }
+  }
 
   terminal_constraint_ = true;
 }
@@ -318,8 +331,8 @@ void FullDynamicsProblem::createTerminalConstraint() {
 void FullDynamicsProblem::updateTerminalConstraint(
     const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
-    CenterOfMassTranslationResidual *CoMres =
-        problem_->term_cstrs_.getConstraint<CenterOfMassTranslationResidual>(0);
+    DCMPositionResidual *CoMres =
+        problem_->term_cstrs_.getConstraint<DCMPositionResidual>(0);
 
     CoMres->setReference(com_ref);
   }

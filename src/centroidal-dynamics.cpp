@@ -86,8 +86,9 @@ StageModel CentroidalProblem::createStage(
                                          settings_.Lfoot, settings_.Wfoot);
         stm.addConstraint(wrench_residual, NegativeOrthant());
       } else {
-        FrictionConeResidual friction_residual =
-            FrictionConeResidual(space.ndx(), nu_, i, settings_.mu, 1e-4);
+        CentroidalFrictionConeResidual friction_residual =
+            CentroidalFrictionConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                           1e-4);
         stm.addConstraint(friction_residual, NegativeOrthant());
       }
     }

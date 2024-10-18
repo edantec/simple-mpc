@@ -2,6 +2,7 @@ import numpy as np
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, KinodynamicsProblem, MPC, IDSolver
 import example_robot_data
+import time
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -93,14 +94,14 @@ problem_conf = dict(
     Lfoot=0.01,
     Wfoot=0.01,
 )
-T = 40
+T = 100
 
 dynproblem = KinodynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
 
 T_ds = 10
-T_ss = 30
+T_ss = 40
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -108,12 +109,12 @@ mpc_conf = dict(
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
-    num_threads=1,
+    num_threads=8,
     swing_apex=0.15,
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    x_translation=0.2,
+    x_translation=0.1,
     y_translation=0.0,
 )
 
@@ -174,7 +175,7 @@ device = BulletRobot(
     handler.getState()[:3],
 )
 device.initializeJoints(handler.getConfiguration())
-device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
 nq = mpc.getHandler().getModel().nq
 nv = mpc.getHandler().getModel().nv
@@ -189,7 +190,8 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
 )
-for t in range(10000):
+
+for t in range(5000):
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -201,9 +203,9 @@ for t in range(10000):
         str(land_LF),
     )
 
-    if t == 1000:
+    if t == 500:
         mpc.switchToStand()
-    if t == 2000:
+    if t == 1000:
         mpc.switchToWalk()
 
     mpc.iterate(q_current, v_current)
@@ -224,7 +226,21 @@ for t in range(10000):
         mpc.getReferencePose(0, "RR_foot").translation,
     )
 
+    """ if t == 590:
+        for s in range(T):
+            device.resetState(mpc.xs[s][:handler.getModel().nq])
+            time.sleep(0.1)
+            print("s = " + str(s))
+            device.moveQuadrupedFeet(
+                mpc.getReferencePose(s, "FL_foot").translation,
+                mpc.getReferencePose(s, "FR_foot").translation,
+                mpc.getReferencePose(s, "RL_foot").translation,
+                mpc.getReferencePose(s, "RR_foot").translation,
+            )
+        exit()  """
+
     for j in range(10):
+        # time.sleep(0.01)
         q_current, v_current = device.measureState()
 
         x_measured = np.concatenate((q_current, v_current))
@@ -244,6 +260,8 @@ for t in range(10000):
             * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
             @ state_diff
         )
+        # a0[6:] = mpc.us[0][nk * force_size :]
+        # forces = mpc.us[0][: nk * force_size]
 
         qp.solve_qp(
             mpc.getHandler().getData(),

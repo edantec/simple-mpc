@@ -99,8 +99,9 @@ StageModel KinodynamicsProblem::createStage(
         stm.addConstraint(wrench_residual, NegativeOrthant());
         stm.addConstraint(frame_vel, EqualityConstraint());
       } else {
-        FrictionConeResidual friction_residual =
-            FrictionConeResidual(space.ndx(), nu_, i, settings_.mu, 1e-4);
+        CentroidalFrictionConeResidual friction_residual =
+            CentroidalFrictionConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                           1e-4);
         stm.addConstraint(friction_residual, NegativeOrthant());
 
         std::vector<int> vel_id = {0, 1, 2};
@@ -254,10 +255,12 @@ CostStack KinodynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  /* term_cost.addCost("state_cost",
-    QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x)); */
-  /* term_cost.addCost("centroidal_cost",
-      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent)); */
+  term_cost.addCost(
+      "state_cost",
+      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+  term_cost.addCost(
+      "centroidal_cost",
+      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent * 10));
 
   return term_cost;
 }

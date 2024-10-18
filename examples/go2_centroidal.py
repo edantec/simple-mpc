@@ -4,6 +4,75 @@ from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
 import example_robot_data
 import time
+from QP_utils import IKIDSolver_f3
+import pinocchio as pin
+from aligator import manifolds
+
+
+def compute_ID_references(
+    space,
+    rmodel,
+    rdata,
+    FL_id,
+    FR_id,
+    RL_id,
+    RR_id,
+    base_id,
+    x0_multibody,
+    x_measured,
+    FL_refs,
+    FR_refs,
+    RL_refs,
+    RR_refs,
+    dt,
+):
+    FL_vel_lin = pin.getFrameVelocity(rmodel, rdata, FL_id, pin.LOCAL).linear
+    FR_vel_lin = pin.getFrameVelocity(rmodel, rdata, FR_id, pin.LOCAL).linear
+    RL_vel_lin = pin.getFrameVelocity(rmodel, rdata, RL_id, pin.LOCAL).linear
+    RR_vel_lin = pin.getFrameVelocity(rmodel, rdata, RR_id, pin.LOCAL).linear
+    FL_vel_ang = pin.getFrameVelocity(rmodel, rdata, FL_id, pin.LOCAL).angular
+    FR_vel_ang = pin.getFrameVelocity(rmodel, rdata, FR_id, pin.LOCAL).angular
+    RL_vel_ang = pin.getFrameVelocity(rmodel, rdata, RL_id, pin.LOCAL).angular
+    RR_vel_ang = pin.getFrameVelocity(rmodel, rdata, RR_id, pin.LOCAL).angular
+
+    q_diff = -space.difference(x0_multibody, x_measured)[: rmodel.nv]
+    dq_diff = -space.difference(x0_multibody, x_measured)[rmodel.nv :]
+    FL_diff = np.zeros(3)
+    FL_diff = FL_refs[0].translation - rdata.oMf[FL_id].translation
+    FR_diff = np.zeros(3)
+    FR_diff = FR_refs[0].translation - rdata.oMf[FR_id].translation
+    RL_diff = np.zeros(3)
+    RL_diff = RL_refs[0].translation - rdata.oMf[RL_id].translation
+    RR_diff = np.zeros(3)
+    RR_diff = RR_refs[0].translation - rdata.oMf[RR_id].translation
+
+    dFL_diff = np.zeros(3)
+    dFL_diff = (FL_refs[1].translation - FL_refs[0].translation) / dt - FL_vel_lin
+    dFR_diff = np.zeros(3)
+    dFR_diff = (FR_refs[1].translation - FR_refs[0].translation) / dt - FR_vel_lin
+    dRL_diff = np.zeros(3)
+    dRL_diff = (RL_refs[1].translation - RL_refs[0].translation) / dt - RL_vel_lin
+    dRR_diff = np.zeros(3)
+    dRR_diff = (RR_refs[1].translation - RR_refs[0].translation) / dt - RR_vel_lin
+
+    base_diff = -pin.log3(rdata.oMf[base_id].rotation)
+    dbase_diff = -pin.getFrameVelocity(rmodel, rdata, base_id, pin.LOCAL).angular
+
+    return (
+        q_diff,
+        dq_diff,
+        FL_diff,
+        dFL_diff,
+        FR_diff,
+        dFR_diff,
+        RL_diff,
+        dRL_diff,
+        RR_diff,
+        dRR_diff,
+        base_diff,
+        dbase_diff,
+    )
+
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -84,7 +153,7 @@ problem.initialize(problem_conf)
 problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2])
 
 T_ds = 20
-T_ss = 500
+T_ss = 50
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -168,6 +237,37 @@ ikid_conf = dict(
 qp = IKIDSolver()
 qp.initialize(ikid_conf, handler.getModel())
 
+x0_multibody = handler.getState().copy()
+
+g_p = 200
+g_b = 10
+K_gains = []
+g_basepos = [1, 1, 1, 1, 1, 1]
+g_legpos = [1, 1, 1, 1, 1, 1]
+g_q = np.array(g_basepos + g_legpos * 2) * 10000
+
+K_gains.append([g_q, 2 * np.sqrt(g_q)])
+K_gains.append([np.eye(3) * g_p, np.eye(3) * 2 * np.sqrt(g_p)])
+K_gains.append([np.eye(3) * g_b, np.eye(3) * 2 * np.sqrt(g_b)])
+
+weights_IKID = [
+    10,
+    1000,
+    10000,
+    100,
+    10,
+]  # qref, foot_pose, centroidal, base_rot, force
+IKID_solver = IKIDSolver_f3(
+    handler.getModel(),
+    weights_IKID,
+    K_gains,
+    nk,
+    0.8,
+    contact_ids,
+    handler.getRootId(),
+    False,
+)
+
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
@@ -194,7 +294,9 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
 )
-for t in range(10000):
+space_multibody = manifolds.MultibodyPhaseSpace(handler.getModel())
+for t in range(1000):
+    # mpc.switchToStand()
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -232,6 +334,42 @@ for t in range(10000):
         mpc.getReferencePose(0, "RR_foot").translation,
     )
 
+    FL_refs = [mpc.getReferencePose(0, "FL_foot"), mpc.getReferencePose(1, "FL_foot")]
+    FR_refs = [mpc.getReferencePose(0, "FR_foot"), mpc.getReferencePose(1, "FR_foot")]
+    RL_refs = [mpc.getReferencePose(0, "RL_foot"), mpc.getReferencePose(1, "RL_foot")]
+    RR_refs = [mpc.getReferencePose(0, "RR_foot"), mpc.getReferencePose(1, "RR_foot")]
+
+    (
+        q_diff,
+        dq_diff,
+        FL_diff,
+        dFL_diff,
+        FR_diff,
+        dFR_diff,
+        RL_diff,
+        dRL_diff,
+        RR_diff,
+        dRR_diff,
+        base_diff,
+        dbase_diff,
+    ) = compute_ID_references(
+        space_multibody,
+        handler.getModel(),
+        mpc.getHandler().getData(),
+        contact_ids[0],
+        contact_ids[1],
+        contact_ids[2],
+        contact_ids[3],
+        handler.getRootId(),
+        x0_multibody,
+        x_measured,
+        FL_refs,
+        FR_refs,
+        RL_refs,
+        RR_refs,
+        0.01,
+    )
+
     for j in range(10):
         time.sleep(0.001)
         q_current, v_current = device.measureState()
@@ -251,10 +389,31 @@ for t in range(10000):
             @ state_diff
         )
 
-        qp.solve_qp(
+        """ qp.solve_qp(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
+            forces,
+            dH,
+            mpc.getHandler().getMassMatrix(),
+        ) """
+
+        new_acc, new_forces, torque = IKID_solver.solve(
+            mpc.getHandler().getData(),
+            contact_states,
+            v_current,
+            q_diff,
+            dq_diff,
+            FL_diff,
+            dFL_diff,
+            FR_diff,
+            dFR_diff,
+            RL_diff,
+            dRL_diff,
+            RR_diff,
+            dRR_diff,
+            base_diff,
+            dbase_diff,
             forces,
             dH,
             mpc.getHandler().getMassMatrix(),
@@ -265,4 +424,4 @@ for t in range(10000):
         if (not(contact_states[0])):
             exit() """
 
-        device.execute(qp.solved_torque)
+        device.execute(torque)

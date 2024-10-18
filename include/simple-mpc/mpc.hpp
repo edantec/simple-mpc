@@ -114,7 +114,7 @@ public:
   void iterate(const Eigen::VectorXd &q_current,
                const Eigen::VectorXd &v_current);
 
-  void updateCycleTiming();
+  void updateCycleTiming(const bool updateOnlyHorizon);
 
   // Recede the horizon
   void recedeWithCycle();
@@ -141,10 +141,18 @@ public:
   SolverProxDDP &getSolver() { return *solver_; }
   RobotHandler &getHandler() { return problem_->getHandler(); }
   int getFootTakeoffCycle(const std::string &ee_name) {
-    return foot_takeoff_cycle_times_.at(ee_name);
+    if (foot_takeoff_times_.at(ee_name).empty()) {
+      return -1;
+    } else {
+      return foot_takeoff_times_.at(ee_name)[0];
+    }
   }
   int getFootLandCycle(const std::string &ee_name) {
-    return foot_land_cycle_times_.at(ee_name);
+    if (foot_land_times_.at(ee_name).empty()) {
+      return -1;
+    } else {
+      return foot_land_times_.at(ee_name)[0];
+    }
   }
 
   void switchToWalk();
@@ -152,7 +160,7 @@ public:
   void switchToStand();
 
   // Footstep timings for each end effector
-  std::map<std::string, int> foot_takeoff_cycle_times_, foot_land_cycle_times_;
+  std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
 
   // Solution vectors for state and control
   std::vector<Eigen::VectorXd> xs_;

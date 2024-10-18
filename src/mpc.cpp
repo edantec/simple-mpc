@@ -18,6 +18,7 @@
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/robot-handler.hpp"
 #include <chrono>
+
 namespace simple_mpc {
 using namespace aligator;
 constexpr std::size_t maxiters = 100;
@@ -102,20 +103,22 @@ void MPC::generateCycleHorizon(
     const std::vector<std::map<std::string, bool>> &contact_states) {
   contact_states_ = contact_states;
   for (auto const &name : ee_names_) {
-    foot_takeoff_cycle_times_.insert({name, -1});
-    foot_land_cycle_times_.insert({name, -1});
+    foot_takeoff_times_.insert({name, std::vector<int>()});
+    foot_land_times_.insert({name, std::vector<int>()});
     for (size_t i = 1; i < contact_states.size(); i++) {
-      if (!contact_states[i].at(name) and contact_states[i - 1].at(name))
-        foot_takeoff_cycle_times_.at(name) = (int)(i + problem_->getSize());
-      if (contact_states[i].at(name) and !contact_states[i - 1].at(name))
-        foot_land_cycle_times_.at(name) = (int)(i + problem_->getSize());
+      if (!contact_states[i].at(name) and contact_states[i - 1].at(name)) {
+        foot_takeoff_times_.at(name).push_back((int)(i + problem_->getSize()));
+      }
+      if (contact_states[i].at(name) and !contact_states[i - 1].at(name)) {
+        foot_land_times_.at(name).push_back((int)(i + problem_->getSize()));
+      }
     }
     if (contact_states.back().at(name) and !contact_states[0].at(name))
-      foot_takeoff_cycle_times_.at(name) =
-          (int)(contact_states.size() - 1 + problem_->getSize());
+      foot_takeoff_times_.at(name).push_back(
+          (int)(contact_states.size() - 1 + problem_->getSize()));
     if (!contact_states.back().at(name) and contact_states[0].at(name))
-      foot_land_cycle_times_.at(name) =
-          (int)(contact_states.size() - 1 + problem_->getSize());
+      foot_land_times_.at(name).push_back(
+          (int)(contact_states.size() - 1 + problem_->getSize()));
   }
   for (auto const &state : contact_states) {
     int active_contacts = 0;
@@ -165,7 +168,6 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
                                                                      begin)
                    .count()
             << "[ms]" << std::endl;
-  updateCycleTiming();
 
   // ~~REFERENCES~~ //
   updateStepTrackerReferences();
@@ -206,41 +208,68 @@ void MPC::recedeWithCycle() {
     rotate_vec_left(cycle_horizon_);
     rotate_vec_left(cycle_horizon_data_);
     rotate_vec_left(contact_states_);
+    for (auto const &name : ee_names_) {
+      if (!contact_states_[contact_states_.size() - 1].at(name) and
+          contact_states_[contact_states_.size() - 2].at(name))
+        foot_takeoff_times_.at(name).push_back(
+            (int)(contact_states_.size() - 1 + problem_->getSize()));
+      if (contact_states_[contact_states_.size() - 1].at(name) and
+          !contact_states_[contact_states_.size() - 2].at(name))
+        foot_land_times_.at(name).push_back(
+            (int)(contact_states_.size() - 1 + problem_->getSize()));
+    }
+    updateCycleTiming(false);
   } else {
     problem_->getProblem()->replaceStageCircular(*standing_horizon_[0]);
     solver_->cycleProblem(*problem_->getProblem(), standing_horizon_data_[0]);
 
     rotate_vec_left(standing_horizon_);
     rotate_vec_left(standing_horizon_data_);
+
+    updateCycleTiming(true);
   }
 }
 
-void MPC::updateCycleTiming() {
+void MPC::updateCycleTiming(const bool updateOnlyHorizon) {
   for (auto const &name : ee_names_) {
-    if (foot_land_cycle_times_.at(name) >= 0)
-      foot_land_cycle_times_.at(name) -= 1;
-    if (foot_land_cycle_times_.at(name) < 0 and now_ == WALKING)
-      foot_land_cycle_times_.at(name) = (int)cycle_horizon_.size() - 1;
+    for (size_t i = 0; i < foot_land_times_.at(name).size(); i++) {
+      if (!updateOnlyHorizon or
+          foot_land_times_.at(name)[i] < (int)problem_->getSize())
+        foot_land_times_.at(name)[i] -= 1;
+    }
+    if (!foot_land_times_.at(name).empty() and foot_land_times_.at(name)[0] < 0)
+      foot_land_times_.at(name).erase(foot_land_times_.at(name).begin());
 
-    if (foot_takeoff_cycle_times_.at(name) >= 0)
-      foot_takeoff_cycle_times_.at(name) -= 1;
-    if (foot_takeoff_cycle_times_.at(name) < 0 and now_ == WALKING)
-      foot_takeoff_cycle_times_.at(name) = (int)cycle_horizon_.size() - 1;
+    for (size_t i = 0; i < foot_takeoff_times_.at(name).size(); i++)
+      if (!updateOnlyHorizon or
+          foot_takeoff_times_.at(name)[i] < (int)problem_->getSize()) {
+        foot_takeoff_times_.at(name)[i] -= 1;
+      }
+    if (!foot_takeoff_times_.at(name).empty() and
+        foot_takeoff_times_.at(name)[0] < 0)
+      foot_takeoff_times_.at(name).erase(foot_takeoff_times_.at(name).begin());
   }
 }
 
 void MPC::updateStepTrackerReferences() {
   for (auto const &name : ee_names_) {
+    int foot_land_time = -1;
+    int foot_takeoff_time = -1;
+    if (!foot_land_times_.at(name).empty())
+      foot_land_time = foot_land_times_.at(name)[0];
+    if (!foot_takeoff_times_.at(name).empty())
+      foot_takeoff_time = foot_takeoff_times_.at(name)[0];
     foot_trajectories_.updateTrajectory(
-        foot_takeoff_cycle_times_.at(name), foot_land_cycle_times_.at(name),
-        problem_->getHandler().getFootPose(name).translation(), name);
-
-    for (unsigned long time = 0; time < problem_->getProblem()->stages_.size();
-         time++) {
-      pinocchio::SE3 pose = pinocchio::SE3::Identity();
+        foot_takeoff_time, foot_land_time,
+        getReferencePose(0, name).translation(),
+        name); // problem_->getHandler().getFootPose(name).translation()
+    // getReferencePose(0, name).translation()
+    pinocchio::SE3 pose = pinocchio::SE3::Identity();
+    for (unsigned long time = 0; time < problem_->getSize(); time++) {
       pose.translation() = foot_trajectories_.getReference(name)[time];
       setReferencePose(time, name, pose);
     }
+
     Eigen::Vector3d com_ref;
     com_ref << 0, 0, 0;
     for (auto const &name : ee_names_) {
@@ -249,7 +278,7 @@ void MPC::updateStepTrackerReferences() {
     com_ref /= (double)ee_names_.size();
     com_ref[2] += com0_[2];
 
-    problem_->updateTerminalConstraint(com0_);
+    // problem_->updateTerminalConstraint(com0_);
   }
 }
 
@@ -275,32 +304,8 @@ void MPC::setRelativeTranslation(
   foot_trajectories_.updateForward(relative_translations_, swing_apex);
 }
 
-void MPC::switchToWalk() {
-  now_ = WALKING;
-  for (auto const &name : ee_names_) {
-    for (size_t i = 1; i < contact_states_.size(); i++) {
-      if (!contact_states_[i].at(name) and contact_states_[i - 1].at(name))
-        foot_takeoff_cycle_times_.at(name) = (int)(i + problem_->getSize());
-      if (contact_states_[i].at(name) and !contact_states_[i - 1].at(name))
-        foot_land_cycle_times_.at(name) = (int)(i + problem_->getSize());
-    }
-    if (contact_states_.back().at(name) and !contact_states_[0].at(name))
-      foot_takeoff_cycle_times_.at(name) =
-          (int)(contact_states_.size() - 1 + problem_->getSize());
-    if (!contact_states_.back().at(name) and contact_states_[0].at(name))
-      foot_land_cycle_times_.at(name) =
-          (int)(contact_states_.size() - 1 + problem_->getSize());
-  }
-}
+void MPC::switchToWalk() { now_ = WALKING; }
 
-void MPC::switchToStand() {
-  now_ = STANDING;
-  for (auto const &name : ee_names_) {
-    if (foot_land_cycle_times_.at(name) > (int)problem_->getSize())
-      foot_land_cycle_times_.at(name) = -1;
-    if (foot_takeoff_cycle_times_.at(name) > (int)problem_->getSize())
-      foot_takeoff_cycle_times_.at(name) = -1;
-  }
-}
+void MPC::switchToStand() { now_ = STANDING; }
 
 } // namespace simple_mpc
