@@ -212,7 +212,7 @@ class BulletRobot:
             useMaximalCoordinates=True,
         )
 
-    def showHandToTrack(self, RH_pose):
+    def showPointTrack(self, pose):
         visualShapeTarget = p.createVisualShape(
             shapeType=p.GEOM_BOX,
             halfExtents=[0.05, 0.05, 0.05],
@@ -221,16 +221,27 @@ class BulletRobot:
             visualFramePosition=[0.0, 0.0, 0.0],
         )
 
-        self.sphereIdHand = p.createMultiBody(
+        self.sphereIdPoint = p.createMultiBody(
             baseMass=0.0,
             baseInertialFramePosition=[0, 0, 0],
             baseVisualShapeIndex=visualShapeTarget,
             basePosition=[
-                RH_pose[0],
-                RH_pose[1],
-                RH_pose[2],
+                pose[0],
+                pose[1],
+                pose[2],
             ],
             useMaximalCoordinates=True,
+        )
+
+    def updatePoint(self, pose):
+        p.resetBasePositionAndOrientation(
+            self.sphereIdPoint,
+            posObj=[
+                pose[0],
+                pose[1],
+                pose[2],
+            ],
+            ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
         )
 
     def showTargetToTrack(self, LF_pose, RF_pose):

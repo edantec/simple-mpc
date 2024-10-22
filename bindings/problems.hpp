@@ -66,13 +66,14 @@ template <class T> bp::list std_vector_to_py_list(const std::vector<T> &v) {
 struct PyProblem : Problem, bp::wrapper<Problem> {
   using Problem::Problem;
 
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override {
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraint) override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::StageModelTpl<double>,
                                     "createStage", contact_phase, contact_pose,
-                                    contact_force);
+                                    contact_force, land_constraint);
   }
 
   CostStack createTerminalCost() override {
@@ -152,13 +153,14 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                bp::wrapper<FullDynamicsProblem> {
   using FullDynamicsProblem::FullDynamicsProblem;
 
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override {
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraint) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
                                FullDynamicsProblem, createStage, contact_phase,
-                               contact_pose, contact_force);
+                               contact_pose, contact_force, land_constraint);
   }
 
   CostStack createTerminalCost() override {
@@ -234,13 +236,14 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
 struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
   using CentroidalProblem::CentroidalProblem;
 
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override {
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraint) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
                                CentroidalProblem, createStage, contact_phase,
-                               contact_pose, contact_force);
+                               contact_pose, contact_force, land_constraint);
   }
 
   CostStack createTerminalCost() override {
@@ -317,13 +320,14 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                                bp::wrapper<KinodynamicsProblem> {
   using KinodynamicsProblem::KinodynamicsProblem;
 
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override {
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraint) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(aligator::StageModelTpl<double>,
                                KinodynamicsProblem, createStage, contact_phase,
-                               contact_pose, contact_force);
+                               contact_pose, contact_force, land_constraint);
   }
 
   CostStack createTerminalCost() override {

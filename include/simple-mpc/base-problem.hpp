@@ -79,7 +79,8 @@ public:
   virtual StageModel
   createStage(const std::map<std::string, bool> &contact_phase,
               const std::map<std::string, pinocchio::SE3> &contact_pose,
-              const std::map<std::string, Eigen::VectorXd> &force_refs) = 0;
+              const std::map<std::string, Eigen::VectorXd> &force_refs,
+              const std::map<std::string, bool> &land_constraint) = 0;
 
   // Create the complete vector of stages from contact_sequence
   virtual std::vector<xyz::polymorphic<StageModel>> createStages(

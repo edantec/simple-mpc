@@ -32,7 +32,7 @@ void exposeBaseProblem() {
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
       .def(bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("createStage", bp::pure_virtual(&Problem::createStage),
-           bp::args("self", "contact_map", "force_refs"))
+           bp::args("self", "contact_map", "force_refs", "land_constraint"))
       .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
            bp::args("self"))
       .def("createTerminalConstraint",
@@ -99,13 +99,16 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
 StageModel createFullStage(FullDynamicsProblem &self,
                            const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
-                           const bp::dict &force_dict) {
+                           const bp::dict &force_dict,
+                           const bp::dict &land_dict) {
   boost::python::list phase_keys = boost::python::list(phase_dict.keys());
   boost::python::list pose_keys = boost::python::list(pose_dict.keys());
   boost::python::list force_keys = boost::python::list(force_dict.keys());
+  boost::python::list land_keys = boost::python::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
+  std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
     boost::python::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
@@ -130,8 +133,17 @@ StageModel createFullStage(FullDynamicsProblem &self,
       force_contact.insert({key, ff});
     }
   }
+  for (int i = 0; i < len(land_keys); ++i) {
+    boost::python::extract<std::string> extractor(land_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(land_dict[key]);
+      land_constraint.insert({key, ff});
+    }
+  }
 
-  return self.createStage(phase_contact, pose_contact, force_contact);
+  return self.createStage(phase_contact, pose_contact, force_contact,
+                          land_constraint);
 }
 
 bp::dict getSettingsFull(FullDynamicsProblem &self) {
@@ -252,13 +264,16 @@ void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
 
 StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
-                           const bp::dict &force_dict) {
+                           const bp::dict &force_dict,
+                           const bp::dict &land_dict) {
   boost::python::list phase_keys = boost::python::list(phase_dict.keys());
   boost::python::list pose_keys = boost::python::list(pose_dict.keys());
   boost::python::list force_keys = boost::python::list(force_dict.keys());
+  boost::python::list land_keys = boost::python::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
+  std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
     boost::python::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
@@ -283,8 +298,17 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
       force_contact.insert({key, ff});
     }
   }
+  for (int i = 0; i < len(land_keys); ++i) {
+    boost::python::extract<std::string> extractor(land_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(land_dict[key]);
+      land_constraint.insert({key, ff});
+    }
+  }
 
-  return self.createStage(phase_contact, pose_contact, force_contact);
+  return self.createStage(phase_contact, pose_contact, force_contact,
+                          land_constraint);
 }
 
 bp::dict getSettingsCent(CentroidalProblem &self) {
@@ -425,13 +449,16 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
 StageModel createKinoStage(KinodynamicsProblem &self,
                            const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
-                           const bp::dict &force_dict) {
+                           const bp::dict &force_dict,
+                           const bp::dict &land_dict) {
   boost::python::list phase_keys = boost::python::list(phase_dict.keys());
   boost::python::list pose_keys = boost::python::list(pose_dict.keys());
   boost::python::list force_keys = boost::python::list(force_dict.keys());
+  boost::python::list land_keys = boost::python::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
+  std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
     boost::python::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
@@ -456,8 +483,17 @@ StageModel createKinoStage(KinodynamicsProblem &self,
       force_contact.insert({key, ff});
     }
   }
+  for (int i = 0; i < len(land_keys); ++i) {
+    boost::python::extract<std::string> extractor(land_keys[i]);
+    if (extractor.check()) {
+      std::string key = extractor();
+      bool ff = bp::extract<bool>(land_dict[key]);
+      land_constraint.insert({key, ff});
+    }
+  }
 
-  return self.createStage(phase_contact, pose_contact, force_contact);
+  return self.createStage(phase_contact, pose_contact, force_contact,
+                          land_constraint);
 }
 
 void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,

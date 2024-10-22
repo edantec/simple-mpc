@@ -27,7 +27,8 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
 StageModel CentroidalProblem::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
-    const std::map<std::string, Eigen::VectorXd> &contact_force) {
+    const std::map<std::string, Eigen::VectorXd> &contact_force,
+    const std::map<std::string, bool> &land_constraint) {
   auto space = VectorSpace(nx_);
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states;

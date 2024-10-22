@@ -66,7 +66,7 @@ bp::dict getSettings(MPC &self) {
 }
 
 void exposeMPC() {
-  using StageVec = std::vector<StageModel>;
+  using StageVec = std::vector<std::shared_ptr<StageModel>>;
   using MapBool = std::map<std::string, bool>;
   StdVectorPythonVisitor<StageVec, true>::expose(
       "StdVec_StageModel",
@@ -103,6 +103,8 @@ void exposeMPC() {
       .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
            bp::return_internal_reference<>(),
            "Get the trajectory optimal problem.")
+      .def("getCycleHorizon", &MPC::getCycleHorizon, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the cycle horizon.")
       .def("getSolver", &MPC::getSolver, bp::args("self"),
            bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)

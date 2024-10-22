@@ -75,10 +75,11 @@ public:
   virtual ~CentroidalProblem() {};
 
   // Create one Centroidal stage
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override;
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraint) override;
 
   // Manage terminal cost and constraint
   CostStack createTerminalCost() override;

@@ -66,11 +66,13 @@ void MPC::initialize(const MPCSettings &settings,
       problem_->getReferenceForce(0, problem_->getHandler().getFootName(0)));
 
   std::map<std::string, bool> contact_states;
+  std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
   std::map<std::string, Eigen::VectorXd> force_map;
 
   for (auto const &name : ee_names_) {
     contact_states.insert({name, true});
+    land_constraint.insert({name, false});
     contact_poses.insert({name, problem_->getHandler().getFootPose(name)});
     force_map.insert({name, force_ref});
   }
@@ -79,8 +81,9 @@ void MPC::initialize(const MPCSettings &settings,
     xs_.push_back(x0_);
     us_.push_back(problem_->getReferenceControl(0));
 
-    std::shared_ptr<StageModel> sm = std::make_shared<StageModel>(
-        problem_->createStage(contact_states, contact_poses, force_map));
+    std::shared_ptr<StageModel> sm =
+        std::make_shared<StageModel>(problem_->createStage(
+            contact_states, contact_poses, force_map, land_constraint));
     standing_horizon_.push_back(sm);
     standing_horizon_data_.push_back(sm->createData());
   }
@@ -120,6 +123,10 @@ void MPC::generateCycleHorizon(
       foot_land_times_.at(name).push_back(
           (int)(contact_states.size() - 1 + problem_->getSize()));
   }
+  std::map<std::string, bool> previous_contacts;
+  for (auto const &name : ee_names_) {
+    previous_contacts.insert({name, true});
+  }
   for (auto const &state : contact_states) {
     int active_contacts = 0;
     for (auto const &contact : state) {
@@ -145,11 +152,20 @@ void MPC::generateCycleHorizon(
       else
         force_map.insert({name, force_zero});
     }
+    std::map<std::string, bool> land_contacts;
+    for (auto const &name : ee_names_) {
+      if (!previous_contacts.at(name) and state.at(name)) {
+        land_contacts.insert({name, true});
+      } else {
+        land_contacts.insert({name, false});
+      }
+    }
 
     std::shared_ptr<StageModel> sm = std::make_shared<StageModel>(
-        problem_->createStage(state, contact_poses, force_map));
+        problem_->createStage(state, contact_poses, force_map, land_contacts));
     cycle_horizon_.push_back(sm);
     cycle_horizon_data_.push_back(sm->createData());
+    previous_contacts = state;
   }
 }
 

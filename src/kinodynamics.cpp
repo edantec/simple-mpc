@@ -24,7 +24,8 @@ void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
 StageModel KinodynamicsProblem::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
-    const std::map<std::string, Eigen::VectorXd> &contact_force) {
+    const std::map<std::string, Eigen::VectorXd> &contact_force,
+    const std::map<std::string, bool> &land_constraints) {
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states;
@@ -88,14 +89,13 @@ StageModel KinodynamicsProblem::createStage(
   int i = 0;
   for (auto const &name : handler_.getFeetNames()) {
     if (contact_phase.at(name)) {
-      CentroidalWrenchConeResidual wrench_residual =
-          CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
-                                       settings_.Lfoot, settings_.Wfoot);
-
       FrameVelocityResidual frame_vel =
           FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), v_ref,
                                 handler_.getFootId(name), pinocchio::LOCAL);
       if (settings_.force_size == 6) {
+        CentroidalWrenchConeResidual wrench_residual =
+            CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                         settings_.Lfoot, settings_.Wfoot);
         stm.addConstraint(wrench_residual, NegativeOrthant());
         stm.addConstraint(frame_vel, EqualityConstraint());
       } else {

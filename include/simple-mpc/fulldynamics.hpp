@@ -9,6 +9,7 @@
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
+#include <aligator/modelling/multibody/gravity-compensation-residual.hpp>
 #include <aligator/modelling/multibody/multibody-friction-cone.hpp>
 #include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
@@ -28,7 +29,9 @@ using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using MultibodyWrenchConeResidual =
     aligator::MultibodyWrenchConeResidualTpl<double>;
 using MultibodyFrictionConeResidual = MultibodyFrictionConeResidualTpl<double>;
-
+using GravityCompensationResidual = GravityCompensationResidualTpl<double>;
+using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
+using ConstraintStack = ConstraintStackTpl<double>;
 /**
  * @brief Build a full dynamics problem based on the
  * MultibodyConstraintFwdDynamics of Aligator.
@@ -82,10 +85,11 @@ public:
   virtual ~FullDynamicsProblem() {}
 
   // Create one FullDynamics stage
-  StageModel createStage(
-      const std::map<std::string, bool> &contact_phase,
-      const std::map<std::string, pinocchio::SE3> &contact_pose,
-      const std::map<std::string, Eigen::VectorXd> &contact_force) override;
+  StageModel
+  createStage(const std::map<std::string, bool> &contact_phase,
+              const std::map<std::string, pinocchio::SE3> &contact_pose,
+              const std::map<std::string, Eigen::VectorXd> &contact_force,
+              const std::map<std::string, bool> &land_constraints) override;
 
   // Manage terminal cost and constraint
   CostStack createTerminalCost() override;

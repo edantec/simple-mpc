@@ -140,6 +140,9 @@ public:
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
   RobotHandler &getHandler() { return problem_->getHandler(); }
+  std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
+    return cycle_horizon_;
+  }
   int getFootTakeoffCycle(const std::string &ee_name) {
     if (foot_takeoff_times_.at(ee_name).empty()) {
       return -1;

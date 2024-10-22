@@ -25,11 +25,23 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
     throw std::runtime_error(
         "Contact phases and forces sequences do not have the same size");
   }
+  std::map<std::string, bool> previous_phases;
+  for (auto const &name : handler_.getFeetNames()) {
+    previous_phases.insert({name, true});
+  }
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (std::size_t i = 0; i < contact_phases.size(); i++) {
-    StageModel stage =
-        createStage(contact_phases[i], contact_poses[i], contact_forces[i]);
+    std::map<std::string, bool> land_constraint;
+    for (auto const &name : handler_.getFeetNames()) {
+      if (!previous_phases.at(name) and contact_phases[i].at(name))
+        land_constraint.insert({name, true});
+      else
+        land_constraint.insert({name, false});
+    }
+    StageModel stage = createStage(contact_phases[i], contact_poses[i],
+                                   contact_forces[i], land_constraint);
     stage_models.push_back(stage);
+    previous_phases = contact_phases[i];
   }
 
   return stage_models;

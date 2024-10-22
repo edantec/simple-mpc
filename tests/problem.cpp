@@ -18,9 +18,13 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
   std::map<std::string, bool> contact_states;
+  std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
   contact_states.insert({contact_names[0], true});
   contact_states.insert({contact_names[1], false});
+
+  land_constraint.insert({contact_names[0], true});
+  land_constraint.insert({contact_names[1], false});
 
   pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
   pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
@@ -37,12 +41,12 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
   FullDynamicsSettings settings = getFullDynamicsSettings(handler);
   FullDynamicsProblem fdproblem(settings, handler);
-  StageModel sm =
-      fdproblem.createStage(contact_states, contact_poses, force_refs);
+  StageModel sm = fdproblem.createStage(contact_states, contact_poses,
+                                        force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
-  BOOST_CHECK_EQUAL(cs->components_.size(), 7);
-  BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
+  BOOST_CHECK_EQUAL(cs->components_.size(), 6);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 4);
 
   fdproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
 
@@ -102,9 +106,13 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
   std::map<std::string, bool> contact_states;
+  std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
   contact_states.insert({contact_names[0], true});
   contact_states.insert({contact_names[1], false});
+
+  land_constraint.insert({contact_names[0], true});
+  land_constraint.insert({contact_names[1], false});
 
   pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
   pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
@@ -121,8 +129,8 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm =
-      knproblem.createStage(contact_states, contact_poses, force_refs);
+  StageModel sm = knproblem.createStage(contact_states, contact_poses,
+                                        force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
@@ -189,9 +197,13 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
   std::map<std::string, bool> contact_states;
+  std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
   contact_states.insert({contact_names[0], true});
   contact_states.insert({contact_names[1], false});
+
+  land_constraint.insert({contact_names[0], true});
+  land_constraint.insert({contact_names[1], false});
 
   pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
   pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
@@ -205,8 +217,8 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm =
-      cproblem.createStage(contact_states, contact_poses, force_refs);
+  StageModel sm = cproblem.createStage(contact_states, contact_poses,
+                                       force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
@@ -299,8 +311,8 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   force_refs.insert({"FL_FOOT", f1});
   force_refs.insert({"HR_FOOT", f1});
   force_refs.insert({"HL_FOOT", Eigen::VectorXd::Zero(3)});
-  StageModel sm =
-      cproblem.createStage(contact_states, contact_poses, force_refs);
+  StageModel sm = cproblem.createStage(contact_states, contact_poses,
+                                       force_refs, contact_states);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);

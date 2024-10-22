@@ -7,6 +7,7 @@
 #include <pinocchio/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
+#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fulldynamics.hpp"
 
 namespace simple_mpc {
@@ -51,7 +52,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
       constraint_model.corrector.Kp << 0, 0, 0;
-      constraint_model.corrector.Kd << 100, 100, 100;
+      constraint_model.corrector.Kd << 50, 50, 50;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }
@@ -61,7 +62,8 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
 StageModel FullDynamicsProblem::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
-    const std::map<std::string, Eigen::VectorXd> &contact_force) {
+    const std::map<std::string, Eigen::VectorXd> &contact_force,
+    const std::map<std::string, bool> &land_constraint) {
 
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
@@ -147,12 +149,31 @@ StageModel FullDynamicsProblem::createStage(
           space.ndx(), handler_.getModel(), actuation_matrix_, cms,
           prox_settings_, name, settings_.mu, settings_.Lfoot, settings_.Wfoot);
       stm.addConstraint(wrench_residual, NegativeOrthant());
+
+      if (land_constraint.at(name)) {
+        Motion vref = Motion::Zero();
+        FrameVelocityResidual velocity_residual =
+            FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), vref,
+                                  handler_.getFootId(name), pinocchio::LOCAL);
+        stm.addConstraint(velocity_residual, EqualityConstraint());
+      }
     } else if (settings_.force_size == 3 and contact_phase.at(name)) {
       MultibodyFrictionConeResidual friction_residual =
           MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
                                         actuation_matrix_, cms, prox_settings_,
                                         name, settings_.mu);
-      stm.addConstraint(friction_residual, NegativeOrthant());
+      // stm.addConstraint(friction_residual, NegativeOrthant());
+
+      if (land_constraint.at(name)) {
+        Motion vref = Motion::Zero();
+        std::vector<int> vel_id = {0, 1, 2};
+        FrameVelocityResidual velocity_residual =
+            FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), vref,
+                                  handler_.getFootId(name), pinocchio::LOCAL);
+        FunctionSliceXpr vel_slice =
+            FunctionSliceXpr(velocity_residual, vel_id);
+        stm.addConstraint(vel_slice, EqualityConstraint());
+      }
     }
   }
 
@@ -289,10 +310,10 @@ CostStack FullDynamicsProblem::createTerminalCost() {
 
   term_cost.addCost(
       "state_cost",
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x * 100));
-  term_cost.addCost(
+      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+  /* term_cost.addCost(
       "centroidal_cost",
-      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent * 100));
+      QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent)); */
 
   return term_cost;
 }
