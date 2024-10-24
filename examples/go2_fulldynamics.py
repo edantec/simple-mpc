@@ -41,8 +41,6 @@ design_conf = dict(
 handler = RobotHandler()
 handler.initialize(design_conf)
 
-x0 = np.zeros(9)
-x0[:3] = handler.getComPosition()
 force_size = 3
 nk = len(handler.getFeetNames())
 gravity = np.array([0, 0, -9.81])

@@ -25,7 +25,7 @@ StageModel KinodynamicsProblem::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
-    const std::map<std::string, bool> &land_constraints) {
+    const std::map<std::string, bool> &land_constraint) {
   auto space = MultibodyPhaseSpace(handler_.getModel());
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states;
@@ -102,12 +102,23 @@ StageModel KinodynamicsProblem::createStage(
         CentroidalFrictionConeResidual friction_residual =
             CentroidalFrictionConeResidual(space.ndx(), nu_, i, settings_.mu,
                                            1e-4);
-        stm.addConstraint(friction_residual, NegativeOrthant());
-
+        // stm.addConstraint(friction_residual, NegativeOrthant());
         std::vector<int> vel_id = {0, 1, 2};
 
         FunctionSliceXpr vel_slice = FunctionSliceXpr(frame_vel, vel_id);
         stm.addConstraint(vel_slice, EqualityConstraint());
+        if (land_constraint.at(name)) {
+          std::vector<int> frame_id = {2};
+
+          FrameTranslationResidual frame_residual = FrameTranslationResidual(
+              space.ndx(), nu_, handler_.getModel(),
+              contact_pose.at(name).translation(), handler_.getFootId(name));
+
+          FunctionSliceXpr frame_slice =
+              FunctionSliceXpr(frame_residual, frame_id);
+
+          stm.addConstraint(frame_slice, EqualityConstraint());
+        }
       }
     }
     i++;

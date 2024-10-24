@@ -173,6 +173,17 @@ StageModel FullDynamicsProblem::createStage(
         FunctionSliceXpr vel_slice =
             FunctionSliceXpr(velocity_residual, vel_id);
         stm.addConstraint(vel_slice, EqualityConstraint());
+
+        std::vector<int> frame_id = {2};
+
+        FrameTranslationResidual frame_residual = FrameTranslationResidual(
+            space.ndx(), nu_, handler_.getModel(),
+            contact_pose.at(name).translation(), handler_.getFootId(name));
+
+        FunctionSliceXpr frame_slice =
+            FunctionSliceXpr(frame_residual, frame_id);
+
+        stm.addConstraint(frame_slice, EqualityConstraint());
       }
     }
   }

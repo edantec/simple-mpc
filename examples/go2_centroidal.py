@@ -126,7 +126,7 @@ w_u = np.diag(
         (w_control_linear, w_control_linear, w_control_linear, w_control_linear)
     )
 )
-w_linear_mom = np.diag(np.array([1, 1, 1]))
+w_linear_mom = np.diag(np.array([0, 0, 0]))
 w_linear_acc = 1 * np.eye(3)
 w_angular_mom = np.diag(np.array([1, 1, 1]))
 w_angular_acc = 1 * np.eye(3)
@@ -152,7 +152,7 @@ problem = CentroidalProblem(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2])
 
-T_ds = 20
+T_ds = 50
 T_ss = 50
 
 mpc_conf = dict(
@@ -197,7 +197,7 @@ contact_phases = (
     [contact_phase_quadru] * T_ds
     + [contact_phase_lift_FL] * T_ss
     + [contact_phase_quadru] * T_ds
-    + [contact_phase_lift_FR] * T_ss
+    # + [contact_phase_lift_FR] * T_ss
 )
 
 mpc.generateCycleHorizon(contact_phases)
@@ -297,7 +297,7 @@ device.showQuadrupedFeet(
 space_multibody = manifolds.MultibodyPhaseSpace(handler.getModel())
 for t in range(1000):
     # mpc.switchToStand()
-    # print("Time " + str(t))
+    print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
     takeoff_LF = mpc.getFootTakeoffCycle("FL_foot")
@@ -369,6 +369,8 @@ for t in range(1000):
         RR_refs,
         0.01,
     )
+    if t == 140:
+        exit()
 
     for j in range(10):
         time.sleep(0.001)
@@ -389,16 +391,16 @@ for t in range(1000):
             @ state_diff
         )
 
-        """ qp.solve_qp(
+        qp.solve_qp(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
             forces,
             dH,
             mpc.getHandler().getMassMatrix(),
-        ) """
+        )
 
-        new_acc, new_forces, torque = IKID_solver.solve(
+        """ new_acc, new_forces, torque = IKID_solver.solve(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
@@ -417,11 +419,11 @@ for t in range(1000):
             forces,
             dH,
             mpc.getHandler().getMassMatrix(),
-        )
+        ) """
 
         """ print(qp.solved_torque)
 
         if (not(contact_states[0])):
             exit() """
 
-        device.execute(torque)
+        device.execute(qp.solved_torque)
