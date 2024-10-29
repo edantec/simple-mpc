@@ -217,6 +217,38 @@ CentroidalProblem::getReferenceForce(const std::size_t t,
                                         settings_.force_size);
 }
 
+const Motion CentroidalProblem::getVelocityBase(const std::size_t t) {
+  CostStack *cs = getCostStack(t);
+  pinocchio::Motion v;
+
+  QuadraticResidualCost *qcm =
+      cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  LinearMomentumResidual *cfm = qcm->getResidual<LinearMomentumResidual>();
+
+  QuadraticResidualCost *qca =
+      cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
+  AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
+
+  v.linear() = cfm->getReference() / handler_.getMass();
+  v.angular() = cfa->getReference() / handler_.getMass();
+  return v;
+}
+
+void CentroidalProblem::setVelocityBase(const std::size_t t,
+                                        const Motion &velocity_base) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qcm =
+      cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  LinearMomentumResidual *cfm = qcm->getResidual<LinearMomentumResidual>();
+
+  QuadraticResidualCost *qca =
+      cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
+  AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
+
+  cfm->setReference(velocity_base.linear() * handler_.getMass());
+  cfa->setReference(velocity_base.angular() * handler_.getMass());
+}
+
 const Eigen::VectorXd CentroidalProblem::getProblemState() {
   return handler_.getCentroidalState();
 }

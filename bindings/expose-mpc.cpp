@@ -37,11 +37,10 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.num_threads = bp::extract<std::size_t>(settings["num_threads"]);
 
   conf.swing_apex = bp::extract<double>(settings["swing_apex"]);
-  conf.x_translation = bp::extract<double>(settings["x_translation"]);
-  conf.y_translation = bp::extract<double>(settings["y_translation"]);
   conf.T_fly = bp::extract<int>(settings["T_fly"]);
   conf.T_contact = bp::extract<int>(settings["T_contact"]);
   conf.T = bp::extract<std::size_t>(settings["T"]);
+  conf.dt = bp::extract<double>(settings["dt"]);
 
   self.initialize(conf, problem);
 }
@@ -56,11 +55,10 @@ bp::dict getSettings(MPC &self) {
   settings["max_iters"] = conf.max_iters;
   settings["num_threads"] = conf.num_threads;
   settings["swing_apex"] = conf.swing_apex;
-  settings["x_translation"] = conf.x_translation;
-  settings["y_translation"] = conf.y_translation;
   settings["T_fly"] = conf.T_fly;
   settings["T_contact"] = conf.T_contact;
   settings["T"] = conf.T;
+  settings["dt"] = conf.dt;
 
   return settings;
 }
@@ -92,7 +90,10 @@ void exposeMPC() {
            bp::args("self", "t", "ee_name"))
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("switchToWalk", &MPC::switchToWalk, bp::args("self"))
+      .def("setVelocityBase", &MPC::setVelocityBase,
+           bp::args("self", "velocity_base"))
+      .def("switchToWalk", &MPC::switchToWalk,
+           bp::args("self", "velocity_base"))
       .def("switchToStand", &MPC::switchToStand, bp::args("self"))
       .def("getFootTakeoffCycle", &MPC::getFootTakeoffCycle,
            bp::args("self", "ee_name"))

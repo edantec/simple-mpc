@@ -52,8 +52,6 @@ struct MPCSettings {
 public:
   // Step-related quantities
   double swing_apex = 0.15;
-  double x_translation = 0.1;
-  double y_translation = 0.;
 
   // Force parameters
   double support_force = 1000;
@@ -69,6 +67,7 @@ public:
   int T_fly = 80;
   int T_contact = 20;
   size_t T = 100;
+  double dt = 0.01;
 };
 class MPC {
 
@@ -86,8 +85,7 @@ protected:
   std::vector<std::shared_ptr<StageData>> standing_horizon_data_;
   std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
-  std::map<std::string, Eigen::Vector3d> relative_translations_;
-
+  std::map<std::string, pinocchio::SE3> relative_feet_poses_;
   // INTERNAL UPDATING function
   void updateStepTrackerReferences();
 
@@ -98,6 +96,7 @@ protected:
   bool time_to_solve_ddp_ = false;
   Eigen::Vector3d com0_;
   LocomotionType now_;
+  Motion velocity_base_;
 
 public:
   MPC();
@@ -129,9 +128,9 @@ public:
   const pinocchio::SE3 getReferencePose(const std::size_t t,
                                         const std::string &ee_name);
 
-  void setRelativeTranslation(
-      const std::map<std::string, Eigen::Vector3d> &relative_translations,
-      const double swing_apex);
+  void setVelocityBase(const Motion &velocity_base) {
+    velocity_base_ = velocity_base;
+  };
 
   // getters and setters
   MPCSettings &getSettings() { return settings_; }
@@ -158,7 +157,7 @@ public:
     }
   }
 
-  void switchToWalk();
+  void switchToWalk(const Motion &velocity_base);
 
   void switchToStand();
 

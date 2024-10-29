@@ -42,7 +42,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
           pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
-      constraint_model.corrector.Kp << 1, 1, 10, 1, 1, 1;
+      constraint_model.corrector.Kp << 0, 0, 10, 0, 0, 0;
       constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
@@ -52,7 +52,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
       constraint_model.corrector.Kp << 0, 0, 0;
-      constraint_model.corrector.Kd << 50, 50, 50;
+      constraint_model.corrector.Kd << 200, 200, 200;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }
@@ -122,6 +122,12 @@ StageModel FullDynamicsProblem::createStage(
           QuadraticResidualCost(space, *frame_force, settings_.w_forces));
     }
   }
+  FrameVelocityResidual velocity_root_residual = FrameVelocityResidual(
+      space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
+      handler_.getRootId(), pinocchio::LOCAL);
+  rcost.addCost(
+      "velocity_base",
+      QuadraticResidualCost(space, velocity_root_residual, settings_.w_vbase));
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
       space, actuation_matrix_, cms, prox_settings_);
@@ -151,10 +157,9 @@ StageModel FullDynamicsProblem::createStage(
       stm.addConstraint(wrench_residual, NegativeOrthant());
 
       if (land_constraint.at(name)) {
-        Motion vref = Motion::Zero();
-        FrameVelocityResidual velocity_residual =
-            FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), vref,
-                                  handler_.getFootId(name), pinocchio::LOCAL);
+        FrameVelocityResidual velocity_residual = FrameVelocityResidual(
+            space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
+            handler_.getFootId(name), pinocchio::LOCAL);
         stm.addConstraint(velocity_residual, EqualityConstraint());
       }
     } else if (settings_.force_size == 3 and contact_phase.at(name)) {
@@ -165,11 +170,10 @@ StageModel FullDynamicsProblem::createStage(
       // stm.addConstraint(friction_residual, NegativeOrthant());
 
       if (land_constraint.at(name)) {
-        Motion vref = Motion::Zero();
         std::vector<int> vel_id = {0, 1, 2};
-        FrameVelocityResidual velocity_residual =
-            FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), vref,
-                                  handler_.getFootId(name), pinocchio::LOCAL);
+        FrameVelocityResidual velocity_residual = FrameVelocityResidual(
+            space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
+            handler_.getFootId(name), pinocchio::LOCAL);
         FunctionSliceXpr vel_slice =
             FunctionSliceXpr(velocity_residual, vel_id);
         stm.addConstraint(vel_slice, EqualityConstraint());
@@ -298,6 +302,23 @@ FullDynamicsProblem::getReferenceForce(const std::size_t t,
       cs->getComponent<QuadraticResidualCost>(ee_name + "_force_cost");
   ContactForceResidual *cfr = qrc->getResidual<ContactForceResidual>();
   return cfr->getReference();
+}
+
+const Motion FullDynamicsProblem::getVelocityBase(const std::size_t t) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qc =
+      cs->getComponent<QuadraticResidualCost>("velocity_base");
+  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
+  return cfr->getReference();
+}
+
+void FullDynamicsProblem::setVelocityBase(const std::size_t t,
+                                          const Motion &velocity_base) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qc =
+      cs->getComponent<QuadraticResidualCost>("velocity_base");
+  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
+  cfr->setReference(velocity_base);
 }
 
 const Eigen::VectorXd FullDynamicsProblem::getProblemState() {

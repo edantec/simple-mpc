@@ -34,10 +34,10 @@ class FootTrajectory {
   /**
    */
 protected:
-  std::map<std::string, point3_t> relative_translations_;
   std::map<std::string, point3_t> initial_poses_;
   std::map<std::string, point3_t> final_poses_;
   std::map<std::string, std::vector<point3_t>> references_;
+  std::map<std::string, piecewise_curve> bezier_curves_;
   double swing_apex_;
   double x_translation_;
   double y_translation_;
@@ -51,16 +51,16 @@ public:
   FootTrajectory(const std::map<std::string, point3_t> &initial_poses,
                  double swing_apex, int T_fly, int T_contact, size_t T);
 
-  void updateForward(std::map<std::string, point3_t> relative_translations,
-                     double swing_apex);
+  void updateForward(double swing_apex);
   piecewise_curve defineTranslationBezier(point3_t &trans_init,
                                           point3_t &trans_final);
   std::vector<point3_t> createTrajectory(int time_to_land,
                                          point3_t &initial_trans,
                                          point3_t &final_trans,
                                          piecewise_curve trajectory_swing);
-  void updateTrajectory(int takeoff_time, int landing_time,
-                        const point3_t &ee_trans, const std::string &ee_name);
+  void updateTrajectory(bool update, int landing_time, const point3_t &ee_trans,
+                        const point3_t &final_trans,
+                        const std::string &ee_name);
   const std::vector<point3_t> &getReference(const std::string &ee_name) {
     return references_.at(ee_name);
   }

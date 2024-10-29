@@ -33,20 +33,20 @@ void MPC::initialize(const MPCSettings &settings,
                      std::shared_ptr<Problem> problem) {
   settings_ = settings;
   problem_ = problem;
-
-  std::map<std::string, Eigen::Vector3d> initial_poses;
-  Eigen::Vector3d rel_trans;
-  rel_trans << settings_.x_translation, settings_.y_translation, 0;
+  std::map<std::string, Eigen::Vector3d> starting_poses;
   for (auto const &name : problem_->getHandler().getFeetNames()) {
-    initial_poses.insert(
+    starting_poses.insert(
         {name, problem_->getHandler().getFootPose(name).translation()});
-    relative_translations_.insert({name, rel_trans});
+
+    relative_feet_poses_.insert(
+        {name, problem_->getHandler().getRootFrame().inverse() *
+                   problem_->getHandler().getFootPose(name)});
   }
   foot_trajectories_ =
-      FootTrajectory(initial_poses, settings_.swing_apex, settings_.T_fly,
+      FootTrajectory(starting_poses, settings_.swing_apex, settings_.T_fly,
                      settings_.T_contact, settings_.T);
 
-  foot_trajectories_.updateForward(relative_translations_, settings.swing_apex);
+  foot_trajectories_.updateForward(settings.swing_apex);
   x0_ = problem_->getProblemState();
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,
@@ -100,6 +100,7 @@ void MPC::initialize(const MPCSettings &settings,
 
   com0_ = problem_->getHandler().getComPosition();
   now_ = WALKING;
+  velocity_base_ = Motion::Zero();
 }
 
 void MPC::generateCycleHorizon(
@@ -268,34 +269,52 @@ void MPC::updateCycleTiming(const bool updateOnlyHorizon) {
 }
 
 void MPC::updateStepTrackerReferences() {
+  bool update = false;
   for (auto const &name : ee_names_) {
-    int foot_land_time = -1;
     int foot_takeoff_time = -1;
-    if (!foot_land_times_.at(name).empty())
-      foot_land_time = foot_land_times_.at(name)[0];
     if (!foot_takeoff_times_.at(name).empty())
       foot_takeoff_time = foot_takeoff_times_.at(name)[0];
+    if (foot_takeoff_time >= 0 and foot_takeoff_time < settings_.T_contact) {
+      update = true;
+      break;
+    }
+  }
+  for (auto const &name : ee_names_) {
+    int foot_land_time = -1;
+    if (!foot_land_times_.at(name).empty())
+      foot_land_time = foot_land_times_.at(name)[0];
+
+    pinocchio::SE3 ref_pose =
+        problem_->getHandler().getRootFrame() * relative_feet_poses_.at(name);
+    ref_pose.translation() += velocity_base_.linear() *
+                              (settings_.T_fly + settings_.T_contact) *
+                              settings_.dt;
+    ref_pose.translation() +=
+        velocity_base_.angular().cross(ref_pose.translation()) *
+        (settings_.T_fly + settings_.T_contact) * settings_.dt;
+
     foot_trajectories_.updateTrajectory(
-        foot_takeoff_time, foot_land_time,
-        getReferencePose(0, name).translation(),
-        name); // problem_->getHandler().getFootPose(name).translation()
-    // getReferencePose(0, name).translation()
+        update, foot_land_time,
+        problem_->getHandler().getFootPose(name).translation(),
+        ref_pose.translation(), name);
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     for (unsigned long time = 0; time < problem_->getSize(); time++) {
       pose.translation() = foot_trajectories_.getReference(name)[time];
       setReferencePose(time, name, pose);
     }
-
-    Eigen::Vector3d com_ref;
-    com_ref << 0, 0, 0;
-    for (auto const &name : ee_names_) {
-      com_ref += foot_trajectories_.getReference(name).back();
-    }
-    com_ref /= (double)ee_names_.size();
-    com_ref[2] += com0_[2];
-
-    // problem_->updateTerminalConstraint(com0_);
   }
+
+  problem_->setVelocityBase(problem_->getSize() - 1, velocity_base_);
+
+  Eigen::Vector3d com_ref;
+  com_ref << 0, 0, 0;
+  for (auto const &name : ee_names_) {
+    com_ref += foot_trajectories_.getReference(name).back();
+  }
+  com_ref /= (double)ee_names_.size();
+  com_ref[2] += com0_[2];
+
+  // problem_->updateTerminalConstraint(com0_);
 }
 
 void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,
@@ -313,15 +332,14 @@ const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
   return problem_->getReferencePose(t, ee_name);
 }
 
-void MPC::setRelativeTranslation(
-    const std::map<std::string, Eigen::Vector3d> &relative_translations,
-    const double swing_apex) {
-  relative_translations_ = relative_translations;
-  foot_trajectories_.updateForward(relative_translations_, swing_apex);
+void MPC::switchToWalk(const Motion &velocity_base) {
+  now_ = WALKING;
+  velocity_base_ = velocity_base;
 }
 
-void MPC::switchToWalk() { now_ = WALKING; }
-
-void MPC::switchToStand() { now_ = STANDING; }
+void MPC::switchToStand() {
+  now_ = STANDING;
+  velocity_base_ = Motion::Zero();
+}
 
 } // namespace simple_mpc

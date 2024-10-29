@@ -131,6 +131,15 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
                                     ee_name);
   }
 
+  void setVelocityBase(const std::size_t t,
+                       const Motion &velocity_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setVelocityBase", t, velocity_base);
+  }
+
+  const Motion getVelocityBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Motion, "getVelocityBase", t);
+  }
+
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", );
   }
@@ -222,6 +231,16 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                getReferenceForce, t, ee_name);
   }
 
+  void setVelocityBase(const std::size_t t,
+                       const Motion &velocity_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setVelocityBase, t,
+                               velocity_base);
+  }
+
+  const Motion getVelocityBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Motion, FullDynamicsProblem, getVelocityBase, t);
+  }
+
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
                                getProblemState, );
@@ -303,6 +322,16 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
                                           const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
                                getReferenceForce, t, ee_name);
+  }
+
+  void setVelocityBase(const std::size_t t,
+                       const Motion &velocity_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setVelocityBase, t,
+                               velocity_base);
+  }
+
+  const Motion getVelocityBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Motion, CentroidalProblem, getVelocityBase, t);
   }
 
   const Eigen::VectorXd getProblemState() override {
@@ -387,6 +416,16 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                                           const std::string &ee_name) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
                                getReferenceForce, t, ee_name);
+  }
+
+  void setVelocityBase(const std::size_t t,
+                       const Motion &velocity_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setVelocityBase, t,
+                               velocity_base);
+  }
+
+  const Motion getVelocityBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Motion, KinodynamicsProblem, getVelocityBase, t);
   }
 
   const Eigen::VectorXd getProblemState() override {

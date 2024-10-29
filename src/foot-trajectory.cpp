@@ -21,7 +21,6 @@ FootTrajectory::FootTrajectory(
     const std::map<std::string, point3_t> &initial_poses, double swing_apex,
     int T_fly, int T_contact, size_t T) {
   for (auto it = initial_poses.begin(); it != initial_poses.end(); it++) {
-    relative_translations_.insert({it->first, Eigen::Vector3d::Zero()});
     references_.insert(
         {it->first, std::vector<point3_t>(T, Eigen::Vector3d::Zero())});
   }
@@ -33,12 +32,7 @@ FootTrajectory::FootTrajectory(
   T_ = T;
 }
 
-void FootTrajectory::updateForward(
-    std::map<std::string, point3_t> relative_translations, double swing_apex) {
-  if (relative_translations.size() != relative_translations_.size()) {
-    throw std::runtime_error("relative_translations is of incorrect size");
-  }
-  relative_translations_ = relative_translations;
+void FootTrajectory::updateForward(double swing_apex) {
   swing_apex_ = swing_apex;
 }
 
@@ -62,13 +56,6 @@ piecewise_curve FootTrajectory::defineTranslationBezier(point3_t &trans_init,
   piecewise_curve se3curve = piecewise_curve(ptr_curve);
 
   return se3curve;
-
-  /* ndcurves::piecewise_SE3_t SE3_curve = ndcurves::piecewise_SE3_t(
-    ndcurves::SE3Curve(
-      bezier_curve, placement_init.rotation(), placement_final.rotation()
-    )
-  )
-  return SE3_curve; */
 }
 
 std::vector<point3_t>
@@ -90,28 +77,20 @@ FootTrajectory::createTrajectory(int time_to_land, point3_t &initial_trans,
   return trajectory;
 }
 
-void FootTrajectory::updateTrajectory(int takeoff_time, int landing_time,
+void FootTrajectory::updateTrajectory(bool update, int landing_time,
                                       const point3_t &ee_trans,
+                                      const point3_t &final_trans,
                                       const std::string &ee_name) {
-  if (landing_time <= 0) {
+  if (update) {
     initial_poses_.at(ee_name) = ee_trans;
-    final_poses_.at(ee_name) = ee_trans;
-  }
-  if (takeoff_time < T_contact_ && takeoff_time >= 0) {
-    initial_poses_.at(ee_name) = ee_trans;
-    final_poses_.at(ee_name) = ee_trans + relative_translations_.at(ee_name);
+    final_poses_.at(ee_name) = final_trans;
   }
   piecewise_curve swing_trajectory = defineTranslationBezier(
       initial_poses_.at(ee_name), final_poses_.at(ee_name));
 
-  if (landing_time > -1) {
-    references_.at(ee_name) =
-        createTrajectory(landing_time, initial_poses_.at(ee_name),
-                         final_poses_.at(ee_name), swing_trajectory);
-  } else {
-    references_.at(ee_name) =
-        std::vector<point3_t>(T_, initial_poses_.at(ee_name));
-  }
+  references_.at(ee_name) =
+      createTrajectory(landing_time, initial_poses_.at(ee_name),
+                       final_poses_.at(ee_name), swing_trajectory);
 }
 
 } // namespace simple_mpc

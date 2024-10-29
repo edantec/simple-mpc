@@ -69,6 +69,13 @@ StageModel KinodynamicsProblem::createStage(
     }
   }
 
+  FrameVelocityResidual velocity_root_residual = FrameVelocityResidual(
+      space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
+      handler_.getRootId(), pinocchio::LOCAL);
+  rcost.addCost(
+      "velocity_base",
+      QuadraticResidualCost(space, velocity_root_residual, settings_.w_vbase));
+
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
       space, handler_.getModel(), settings_.gravity, contact_states,
       handler_.getFeetIds(), settings_.force_size);
@@ -240,6 +247,23 @@ KinodynamicsProblem::getReferenceForce(const std::size_t i,
 
   return getReferenceControl(i).segment(id * settings_.force_size,
                                         settings_.force_size);
+}
+
+const Motion KinodynamicsProblem::getVelocityBase(const std::size_t t) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qc =
+      cs->getComponent<QuadraticResidualCost>("velocity_base");
+  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
+  return cfr->getReference();
+}
+
+void KinodynamicsProblem::setVelocityBase(const std::size_t t,
+                                          const Motion &velocity_base) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qc =
+      cs->getComponent<QuadraticResidualCost>("velocity_base");
+  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
+  cfr->setReference(velocity_base);
 }
 
 const Eigen::VectorXd KinodynamicsProblem::getProblemState() {

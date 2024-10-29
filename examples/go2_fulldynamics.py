@@ -37,6 +37,12 @@ design_conf = dict(
         "RL_foot",
         "RR_foot",
     ],
+    hip_names=[
+        "FL_thigh_joint",
+        "FR_thigh_joint",
+        "RL_thigh_joint",
+        "RR_thigh_joint",
+    ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
@@ -48,15 +54,16 @@ fref = np.zeros(force_size)
 fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.zeros(handler.getModel().nv - 6)
 
-w_basepos = [0, 0, 0, 1, 1, 1]
+w_basepos = [0, 0, 0, 0, 0, 0]
 w_legpos = [1, 1, 1]
 
-w_basevel = [1, 1, 1, 1, 1, 1]
+w_basevel = [0, 0, 0, 0, 0, 0]
 w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
-w_cent_lin = np.array([0.1, 0.1, 1])
-w_cent_ang = np.array([0.1, 0.1, 1])
+w_cent_lin = np.array([0.0, 0.0, 1])
+w_cent_ang = np.array([0.0, 0.0, 1])
 w_forces_lin = np.array([0.001, 0.001, 0.001])
+w_frame = np.diag(np.array([1000, 1000, 1000]))
 
 problem_conf = dict(
     x0=handler.getState(),
@@ -68,7 +75,8 @@ problem_conf = dict(
     gravity=gravity,
     force_size=3,
     w_forces=np.diag(w_forces_lin),
-    w_frame=np.eye(3) * 1000,
+    w_frame=w_frame,
+    w_vbase=np.eye(6) * 20,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -96,8 +104,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    x_translation=0.1,
-    y_translation=0.0,
+    dt=0.01,
 )
 
 mpc = MPC()
@@ -156,6 +163,13 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RR_foot"),
 )
 Tmpc = len(contact_phases)
+import pinocchio as pin
+
+v = pin.Motion.Zero()
+v.linear[1] = 0.1
+v.angular[2] = 0.0
+mpc.setVelocityBase(v)
+
 for t in range(10000):
     print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
@@ -176,8 +190,13 @@ for t in range(10000):
     )
 
     mpc.iterate(q_current, v_current)
-
-    """ if t == 80:
+    if t == 500:
+        mpc.switchToStand()
+    if t == 700:
+        v = pin.Motion.Zero()
+        v.linear[0] = 0.3
+        mpc.switchToWalk(v)
+    """ if t == 2000:
         for s in range(T):
             device.resetState(mpc.xs[s][:handler.getModel().nq])
             time.sleep(0.1)
@@ -189,9 +208,10 @@ for t in range(10000):
                 mpc.getReferencePose(s, "RR_foot").translation,
             )
         top=mpc.getTrajOptProblem()
-        exit() """
+        exit()  """
 
     for j in range(10):
+        # time.sleep(0.01)
         q_current, v_current = device.measureState()
 
         x_measured = np.concatenate((q_current, v_current))
@@ -199,5 +219,7 @@ for t in range(10000):
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        current_torque = mpc.us[0] - mpc.K0 @ handler.difference(x_measured, mpc.xs[0])
+        current_torque = mpc.us[0] - 1 * mpc.K0 @ handler.difference(
+            x_measured, mpc.xs[0]
+        )
         device.execute(current_torque)

@@ -40,6 +40,7 @@ public:
   // Joint-related items
   std::vector<std::string> controlled_joints_names;
   std::vector<std::string> end_effector_names;
+  std::vector<std::string> hip_names;
 
   // Useful names
   std::string root_name = "";
@@ -57,6 +58,7 @@ private:
   std::vector<unsigned long> controlled_joints_ids_;
   std::map<std::string, FrameIndex> end_effector_map_;
   std::vector<FrameIndex> end_effector_ids_;
+
   unsigned long root_ids_;
 
   // Pinocchio objects

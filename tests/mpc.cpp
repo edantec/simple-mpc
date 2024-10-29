@@ -36,8 +36,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   mpc_settings.T_fly = 80;
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
-  mpc_settings.x_translation = 0.1;
-  mpc_settings.y_translation = 0.;
+  mpc_settings.dt = 0.01;
 
   MPC mpc = MPC(mpc_settings, problem);
 
@@ -115,6 +114,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   mpc_settings.T_fly = 80;
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
+  mpc_settings.dt = 0.01;
 
   MPC mpc = MPC(mpc_settings, problem);
 
@@ -187,6 +187,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   mpc_settings.T_fly = 80;
   mpc_settings.T_contact = 20;
   mpc_settings.T = T;
+  mpc_settings.dt = 0.01;
 
   MPC mpc = MPC(mpc_settings, problem);
 

@@ -56,6 +56,10 @@ void exposeBaseProblem() {
            bp::args("self", "t", "ee_name", "force_ref"))
       .def("getReferenceForce", bp::pure_virtual(&Problem::getReferenceForce),
            bp::args("self", "t", "ee_name"))
+      .def("setVelocityBase", bp::pure_virtual(&Problem::setVelocityBase),
+           bp::args("self", "t", "velocity_base"))
+      .def("getVelocityBase", bp::pure_virtual(&Problem::getVelocityBase),
+           bp::args("self", "t"))
       .def("getProblemState", bp::pure_virtual(&Problem::getProblemState),
            bp::args("self"))
       .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
@@ -79,6 +83,7 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
   conf.w_forces = bp::extract<Eigen::MatrixXd>(settings["w_forces"]);
   conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
+  conf.w_vbase = bp::extract<Eigen::MatrixXd>(settings["w_vbase"]);
 
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
@@ -159,6 +164,7 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   settings["force_size"] = conf.force_size;
   settings["w_forces"] = conf.w_forces;
   settings["w_frame"] = conf.w_frame;
+  settings["w_vbase"] = conf.w_vbase;
   settings["umin"] = conf.umin;
   settings["umax"] = conf.umax;
   settings["qmin"] = conf.qmin;
@@ -227,6 +233,10 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &FullDynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
+      .def("setVelocityBase", &FullDynamicsProblem::setVelocityBase,
+           bp::args("self", "t", "velocity_base"))
+      .def("getVelocityBase", &FullDynamicsProblem::getVelocityBase,
+           bp::args("self", "t"))
       .def("getProblemState", &FullDynamicsProblem::getProblemState,
            bp::args("self"))
       .def("getContactSupport", &FullDynamicsProblem::getContactSupport,
@@ -386,6 +396,10 @@ void exposeCentroidalProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &CentroidalProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
+      .def("setVelocityBase", &CentroidalProblem::setVelocityBase,
+           bp::args("self", "t", "velocity_base"))
+      .def("getVelocityBase", &CentroidalProblem::getVelocityBase,
+           bp::args("self", "t"))
       .def("getProblemState", &CentroidalProblem::getProblemState,
            bp::args("self"))
       .def("getContactSupport", &CentroidalProblem::getContactSupport,
@@ -410,6 +424,7 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
   conf.w_centder = bp::extract<Eigen::MatrixXd>(settings["w_centder"]);
   conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
+  conf.w_vbase = bp::extract<Eigen::MatrixXd>(settings["w_vbase"]);
 
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
@@ -435,6 +450,7 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
   settings["w_cent"] = conf.w_cent;
   settings["w_centder"] = conf.w_centder;
   settings["w_frame"] = conf.w_frame;
+  settings["w_vbase"] = conf.w_vbase;
   settings["gravity"] = conf.gravity;
   settings["force_size"] = conf.force_size;
   settings["qmin"] = conf.qmin;
@@ -554,6 +570,10 @@ void exposeKinodynamicsProblem() {
            bp::args("self", "t", "cost_name"))
       .def("getReferenceForce", &KinodynamicsProblem::getReferenceForce,
            bp::args("self", "t", "cost_name"))
+      .def("setVelocityBase", &KinodynamicsProblem::setVelocityBase,
+           bp::args("self", "t", "velocity_base"))
+      .def("getVelocityBase", &KinodynamicsProblem::getVelocityBase,
+           bp::args("self", "t"))
       .def("getProblemState", &KinodynamicsProblem::getProblemState,
            bp::args("self"))
       .def("getContactSupport", &KinodynamicsProblem::getContactSupport,

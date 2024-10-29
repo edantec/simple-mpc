@@ -107,6 +107,11 @@ public:
   virtual const pinocchio::SE3 getReferencePose(const std::size_t t,
                                                 const std::string &ee_name) = 0;
 
+  // Setter and getter for base velocity
+  virtual const Motion getVelocityBase(const std::size_t t) = 0;
+  virtual void setVelocityBase(const std::size_t t,
+                               const Motion &velocity_base) = 0;
+
   // Setter and getter for forces reference
   virtual void setReferenceForces(
       const std::size_t t,
@@ -127,7 +132,6 @@ public:
 
   // Setter and getter for control reference
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref);
-
   const Eigen::VectorXd getReferenceControl(const std::size_t t);
 
   // Getter for various objects and quantities

@@ -9,6 +9,7 @@
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/multibody/centroidal-momentum.hpp>
+#include <aligator/modelling/multibody/fly-high.hpp>
 #include <aligator/modelling/multibody/gravity-compensation-residual.hpp>
 #include <aligator/modelling/multibody/multibody-friction-cone.hpp>
 #include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
@@ -32,6 +33,7 @@ using MultibodyFrictionConeResidual = MultibodyFrictionConeResidualTpl<double>;
 using GravityCompensationResidual = GravityCompensationResidualTpl<double>;
 using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
 using ConstraintStack = ConstraintStackTpl<double>;
+using FlyHighResidual = FlyHighResidualTpl<double>;
 /**
  * @brief Build a full dynamics problem based on the
  * MultibodyConstraintFwdDynamics of Aligator.
@@ -55,6 +57,7 @@ public:
   Eigen::MatrixXd w_cent;   // Centroidal momentum
   Eigen::MatrixXd w_forces; // Contact forces
   Eigen::MatrixXd w_frame;  // End effector placement
+  Eigen::MatrixXd w_vbase;  // Base velocity
 
   // Physics parameters
   Eigen::Vector3d gravity;
@@ -113,6 +116,9 @@ public:
                                         const std::string &cost_name) override;
   const Eigen::VectorXd
   getReferenceForce(const std::size_t t, const std::string &cost_name) override;
+  const Motion getVelocityBase(const std::size_t t) override;
+  void setVelocityBase(const std::size_t t,
+                       const Motion &velocity_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
   FullDynamicsSettings getSettings() { return settings_; }

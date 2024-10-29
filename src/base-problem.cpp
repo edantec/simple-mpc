@@ -47,9 +47,9 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
   return stage_models;
 }
 
-void Problem::setReferenceControl(const std::size_t i,
+void Problem::setReferenceControl(const std::size_t t,
                                   const Eigen::VectorXd &u_ref) {
-  CostStack *cs = getCostStack(i);
+  CostStack *cs = getCostStack(t);
   QuadraticControlCost *qc =
       cs->getComponent<QuadraticControlCost>("control_cost");
   qc->setTarget(u_ref);

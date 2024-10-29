@@ -126,7 +126,7 @@ w_cent_lin = np.array([0.0, 0.0, 10])
 w_cent_ang = np.array([0.0, 0.0, 10])
 w_forces_lin = np.array([0.0001, 0.0001, 0.0001])
 w_forces_ang = np.ones(3) * 0.0001
-
+w_vbase = np.diag(np.ones(6) * 10)
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
@@ -140,6 +140,7 @@ problem_conf = dict(
     force_size=6,
     w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
     w_frame=np.eye(6) * 2000,
+    w_vbase=w_vbase,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -171,6 +172,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
+    dt=0.01,
 )
 
 mpc = MPC()
@@ -224,6 +226,12 @@ device.showTargetToTrack(
     mpc.getHandler().getFootPose("left_sole_link"),
     mpc.getHandler().getFootPose("right_sole_link"),
 )
+import pinocchio as pin
+
+v = pin.Motion.Zero()
+v.linear[0] = 0.1
+v.angular[2] = 0.0
+mpc.setVelocityBase(v)
 for t in range(Tmpc + 800):
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("left_sole_link")
@@ -231,12 +239,9 @@ for t in range(Tmpc + 800):
     takeoff_LF = mpc.getFootTakeoffCycle("left_sole_link")
     takeoff_RF = mpc.getFootTakeoffCycle("right_sole_link")
 
-    if t == 300:
+    if t == 600:
         print("SWITCH TO STAND")
         mpc.switchToStand()
-    if t == 600:
-        print("SWITCH TO WALK")
-        mpc.switchToWalk()
 
     print(
         "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
