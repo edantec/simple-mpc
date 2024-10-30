@@ -100,7 +100,8 @@ void MPC::initialize(const MPCSettings &settings,
 
   com0_ = problem_->getHandler().getComPosition();
   now_ = WALKING;
-  velocity_base_ = Motion::Zero();
+  velocity_base_.resize(6);
+  velocity_base_.setZero();
 }
 
 void MPC::generateCycleHorizon(
@@ -284,17 +285,23 @@ void MPC::updateStepTrackerReferences() {
     if (!foot_land_times_.at(name).empty())
       foot_land_time = foot_land_times_.at(name)[0];
 
-    pinocchio::SE3 ref_pose =
+    pinocchio::SE3 ref_pose = // problem_->getHandler().getFootPose(name);
         problem_->getHandler().getRootFrame() * relative_feet_poses_.at(name);
-    ref_pose.translation() += velocity_base_.linear() *
+    ref_pose.translation() += velocity_base_.head(3) *
                               (settings_.T_fly + settings_.T_contact) *
                               settings_.dt;
-    ref_pose.translation() +=
+    ref_pose.translation()[2] =
+        problem_->getHandler().getFootPose(name).translation()[2];
+    /* ref_pose.translation() +=
         velocity_base_.angular().cross(ref_pose.translation()) *
-        (settings_.T_fly + settings_.T_contact) * settings_.dt;
+        (settings_.T_fly + settings_.T_contact) * settings_.dt; */
 
     foot_trajectories_.updateTrajectory(
         update, foot_land_time,
+        /* getReferencePose(0, name).translation(),
+        getReferencePose(0, name).translation() + velocity_base_.linear() *
+                              (settings_.T_fly + settings_.T_contact) *
+                              settings_.dt, */
         problem_->getHandler().getFootPose(name).translation(),
         ref_pose.translation(), name);
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
@@ -332,14 +339,14 @@ const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
   return problem_->getReferencePose(t, ee_name);
 }
 
-void MPC::switchToWalk(const Motion &velocity_base) {
+void MPC::switchToWalk(const Eigen::VectorXd &velocity_base) {
   now_ = WALKING;
   velocity_base_ = velocity_base;
 }
 
 void MPC::switchToStand() {
   now_ = STANDING;
-  velocity_base_ = Motion::Zero();
+  velocity_base_.setZero();
 }
 
 } // namespace simple_mpc

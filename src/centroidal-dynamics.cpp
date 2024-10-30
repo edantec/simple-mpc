@@ -18,10 +18,8 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   settings_ = settings;
   nx_ = 9;
   nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
-  if (nu_ != settings_.u0.size()) {
-    throw std::runtime_error("settings.u0 does not have the correct size nu");
-  }
-  control_ref_ = settings_.u0;
+  control_ref_.resize(nu_);
+  control_ref_.setZero();
 }
 
 StageModel CentroidalProblem::createStage(
@@ -217,9 +215,9 @@ CentroidalProblem::getReferenceForce(const std::size_t t,
                                         settings_.force_size);
 }
 
-const Motion CentroidalProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd CentroidalProblem::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
-  pinocchio::Motion v;
+  Eigen::VectorXd v(6);
 
   QuadraticResidualCost *qcm =
       cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
@@ -229,13 +227,13 @@ const Motion CentroidalProblem::getVelocityBase(const std::size_t t) {
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  v.linear() = cfm->getReference() / handler_.getMass();
-  v.angular() = cfa->getReference() / handler_.getMass();
+  v.head(3) = cfm->getReference() / handler_.getMass();
+  v.tail(3) = cfa->getReference() / handler_.getMass();
   return v;
 }
 
 void CentroidalProblem::setVelocityBase(const std::size_t t,
-                                        const Motion &velocity_base) {
+                                        const Eigen::VectorXd &velocity_base) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qcm =
       cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
@@ -245,8 +243,8 @@ void CentroidalProblem::setVelocityBase(const std::size_t t,
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  cfm->setReference(velocity_base.linear() * handler_.getMass());
-  cfa->setReference(velocity_base.angular() * handler_.getMass());
+  cfm->setReference(velocity_base.head(3) * handler_.getMass());
+  cfa->setReference(velocity_base.tail(3) * handler_.getMass());
 }
 
 const Eigen::VectorXd CentroidalProblem::getProblemState() {

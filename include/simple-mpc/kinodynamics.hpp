@@ -29,10 +29,6 @@ using CentroidalMomentumDerivativeResidual =
  */
 
 struct KinodynamicsSettings {
-  /// reference for state and control residuals
-  Eigen::VectorXd x0;
-  Eigen::VectorXd u0;
-
   /// timestep in problem shooting nodes
   double DT;
 
@@ -42,7 +38,6 @@ struct KinodynamicsSettings {
   Eigen::MatrixXd w_frame;   // End effector placement
   Eigen::MatrixXd w_cent;    // Centroidal momentum
   Eigen::MatrixXd w_centder; // Derivative of centroidal momentum
-  Eigen::MatrixXd w_vbase;   // Velocity base
 
   // Kinematics limits
   Eigen::VectorXd qmin;
@@ -99,9 +94,9 @@ public:
   getReferenceForce(const std::size_t i, const std::string &cost_name) override;
   const pinocchio::SE3 getReferencePose(const std::size_t i,
                                         const std::string &cost_name) override;
-  const Motion getVelocityBase(const std::size_t t) override;
+  const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
   void setVelocityBase(const std::size_t t,
-                       const Motion &velocity_base) override;
+                       const Eigen::VectorXd &velocity_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
 
@@ -112,6 +107,7 @@ public:
 
 protected:
   KinodynamicsSettings settings_;
+  Eigen::VectorXd x0_;
 };
 
 } // namespace simple_mpc

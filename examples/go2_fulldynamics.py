@@ -57,7 +57,7 @@ u0 = np.zeros(handler.getModel().nv - 6)
 w_basepos = [0, 0, 0, 0, 0, 0]
 w_legpos = [1, 1, 1]
 
-w_basevel = [0, 0, 0, 0, 0, 0]
+w_basevel = [10, 10, 10, 10, 10, 10]
 w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
 w_cent_lin = np.array([0.0, 0.0, 1])
@@ -163,11 +163,9 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RR_foot"),
 )
 Tmpc = len(contact_phases)
-import pinocchio as pin
 
-v = pin.Motion.Zero()
-v.linear[1] = 0.1
-v.angular[2] = 0.0
+v = np.zeros(6)
+v[0] = 0.1
 mpc.setVelocityBase(v)
 
 for t in range(10000):
@@ -193,8 +191,6 @@ for t in range(10000):
     if t == 500:
         mpc.switchToStand()
     if t == 700:
-        v = pin.Motion.Zero()
-        v.linear[0] = 0.3
         mpc.switchToWalk(v)
     """ if t == 2000:
         for s in range(T):

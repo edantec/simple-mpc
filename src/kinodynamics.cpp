@@ -15,10 +15,9 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
 void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
   settings_ = settings;
   nu_ = nv_ - 6 + settings_.force_size * (int)handler_.getFeetNames().size();
-  if (nu_ != settings_.u0.size()) {
-    throw std::runtime_error("settings.u0 does not have the correct size nu");
-  }
-  control_ref_ = settings_.u0;
+  x0_ = handler_.getState();
+  control_ref_.resize(nu_);
+  control_ref_.setZero();
 }
 
 StageModel KinodynamicsProblem::createStage(
@@ -41,7 +40,7 @@ StageModel KinodynamicsProblem::createStage(
       space.ndx(), handler_.getModel(), settings_.gravity, contact_states,
       handler_.getFeetIds(), settings_.force_size);
   rcost.addCost("state_cost",
-                QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
+                QuadraticStateCost(space, nu_, x0_, settings_.w_x));
   rcost.addCost("control_cost",
                 QuadraticControlCost(space, control_ref_, settings_.w_u));
   rcost.addCost("centroidal_cost",
@@ -68,13 +67,6 @@ StageModel KinodynamicsProblem::createStage(
           QuadraticResidualCost(space, frame_residual, settings_.w_frame));
     }
   }
-
-  FrameVelocityResidual velocity_root_residual = FrameVelocityResidual(
-      space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-      handler_.getRootId(), pinocchio::LOCAL);
-  rcost.addCost(
-      "velocity_base",
-      QuadraticResidualCost(space, velocity_root_residual, settings_.w_vbase));
 
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
       space, handler_.getModel(), settings_.gravity, contact_states,
@@ -249,21 +241,19 @@ KinodynamicsProblem::getReferenceForce(const std::size_t i,
                                         settings_.force_size);
 }
 
-const Motion KinodynamicsProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd
+KinodynamicsProblem::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
-  QuadraticResidualCost *qc =
-      cs->getComponent<QuadraticResidualCost>("velocity_base");
-  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
-  return cfr->getReference();
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  return qc->getTarget().segment(nq_, 6);
 }
 
-void KinodynamicsProblem::setVelocityBase(const std::size_t t,
-                                          const Motion &velocity_base) {
+void KinodynamicsProblem::setVelocityBase(
+    const std::size_t t, const Eigen::VectorXd &velocity_base) {
   CostStack *cs = getCostStack(t);
-  QuadraticResidualCost *qc =
-      cs->getComponent<QuadraticResidualCost>("velocity_base");
-  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
-  cfr->setReference(velocity_base);
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  x0_.segment(nq_, 6) = velocity_base;
+  qc->setTarget(x0_);
 }
 
 const Eigen::VectorXd KinodynamicsProblem::getProblemState() {
@@ -290,9 +280,8 @@ CostStack KinodynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  term_cost.addCost(
-      "state_cost",
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+  term_cost.addCost("state_cost",
+                    QuadraticStateCost(ter_space, nu_, x0_, settings_.w_x));
   term_cost.addCost(
       "centroidal_cost",
       QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent * 10));

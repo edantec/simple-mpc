@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   FullDynamicsProblem fdproblem(settings, handler);
 
   size_t T = 100;
-  fdproblem.createProblem(settings.x0, T, 6, -settings.gravity[2]);
+  fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2]);
   std::shared_ptr<Problem> problem =
       std::make_shared<FullDynamicsProblem>(fdproblem);
 
@@ -76,8 +76,8 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 219);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(settings.x0.head(handler.getModel().nq),
-                settings.x0.tail(handler.getModel().nv));
+    mpc.iterate(handler.getState().head(handler.getModel().nq),
+                handler.getState().tail(handler.getModel().nv));
   }
 
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 160);
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force, 0, 0, 0;
 
-  kinoproblem.createProblem(settings.x0, T, 6, -settings.gravity[2]);
+  kinoproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2]);
 
   std::shared_ptr<Problem> problem =
       std::make_shared<KinodynamicsProblem>(kinoproblem);
@@ -151,15 +151,15 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   mpc.generateCycleHorizon(contact_states);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(settings.x0.head(handler.getModel().nq),
-                settings.x0.tail(handler.getModel().nv));
+    mpc.iterate(handler.getState().head(handler.getModel().nq),
+                handler.getState().tail(handler.getModel().nv));
   }
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   RobotHandler handler = getTalosHandler();
 
-  CentroidalSettings settings = getCentroidalSettings(handler);
+  CentroidalSettings settings = getCentroidalSettings();
   CentroidalProblem centproblem(settings, handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
@@ -170,7 +170,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   f1 << 0, 0, support_force / 2., 0, 0, 0;
   Eigen::VectorXd x_multibody = handler.getState();
 
-  centproblem.createProblem(settings.x0, T, 6, -settings.gravity[2]);
+  centproblem.createProblem(handler.getCentroidalState(), T, 6,
+                            -settings.gravity[2]);
   std::shared_ptr<Problem> problem =
       std::make_shared<CentroidalProblem>(centproblem);
 

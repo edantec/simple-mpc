@@ -44,10 +44,6 @@ using FlyHighResidual = FlyHighResidualTpl<double>;
 
 struct FullDynamicsSettings {
 public:
-  // reference for state and control residuals
-  Eigen::VectorXd x0;
-  Eigen::VectorXd u0;
-
   // timestep in problem shooting nodes
   double DT;
 
@@ -57,7 +53,6 @@ public:
   Eigen::MatrixXd w_cent;   // Centroidal momentum
   Eigen::MatrixXd w_forces; // Contact forces
   Eigen::MatrixXd w_frame;  // End effector placement
-  Eigen::MatrixXd w_vbase;  // Base velocity
 
   // Physics parameters
   Eigen::Vector3d gravity;
@@ -116,9 +111,9 @@ public:
                                         const std::string &cost_name) override;
   const Eigen::VectorXd
   getReferenceForce(const std::size_t t, const std::string &cost_name) override;
-  const Motion getVelocityBase(const std::size_t t) override;
+  const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
   void setVelocityBase(const std::size_t t,
-                       const Motion &velocity_base) override;
+                       const Eigen::VectorXd &velocity_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
   FullDynamicsSettings getSettings() { return settings_; }
@@ -127,6 +122,9 @@ protected:
   // Problem settings
   FullDynamicsSettings settings_;
   ProximalSettings prox_settings_;
+
+  // State reference
+  Eigen::VectorXd x0_;
 
   // Actuation matrix
   Eigen::MatrixXd actuation_matrix_;

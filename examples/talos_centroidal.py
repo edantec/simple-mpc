@@ -291,15 +291,12 @@ w_angular_acc = 0.01 * np.eye(3)
 w_vbase = np.eye(6) * 10
 
 problem_conf = dict(
-    x0=x0,
-    u0=u0,
     DT=0.01,
     w_u=w_u,
     w_linear_mom=w_linear_mom,
     w_angular_mom=w_angular_mom,
     w_linear_acc=w_linear_acc,
     w_angular_acc=w_angular_acc,
-    w_vbase=w_vbase,
     gravity=gravity,
     mu=0.8,
     Lfoot=0.1,
@@ -418,11 +415,9 @@ device.showTargetToTrack(
     mpc.getHandler().getFootPose("left_sole_link"),
     mpc.getHandler().getFootPose("right_sole_link"),
 )
-import pinocchio as pin
 
-v = pin.Motion.Zero()
-v.linear[0] = 0.1
-v.angular[2] = 0.0
+v = np.zeros(6)
+v[0] = 0.2
 mpc.setVelocityBase(v)
 for t in range(600):
     # print("Time " + str(t))

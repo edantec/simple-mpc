@@ -68,7 +68,7 @@ w_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 w_torsopos = [1, 1000]
 w_armpos = [1, 1, 10, 10]
 
-w_basevel = [0.1, 0.1, 0.1, 1000, 1000, 1000]
+w_basevel = [10, 10, 10, 10, 10, 10]
 w_legvel = [1, 1, 1, 1, 1, 1]
 w_torsovel = [0.1, 100]
 w_armvel = [10, 10, 10, 10]
@@ -102,11 +102,8 @@ w_cent = np.diag(np.concatenate((w_cent_lin, w_cent_ang)))
 w_centder_lin = np.ones(3) * 0.0
 w_centder_ang = np.ones(3) * 0.1
 w_centder = np.diag(np.concatenate((w_centder_lin, w_centder_ang)))
-w_vbase = np.diag(np.ones(6) * 10)
 
 problem_conf = dict(
-    x0=handler.getState(),
-    u0=u0,
     DT=0.01,
     w_x=w_x,
     w_u=w_u,
@@ -115,7 +112,6 @@ problem_conf = dict(
     gravity=gravity,
     force_size=6,
     w_frame=np.eye(6) * w_LFRF,
-    w_vbase=w_vbase,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -217,10 +213,9 @@ device.showTargetToTrack(
     mpc.getHandler().getFootPose("left_sole_link"),
     mpc.getHandler().getFootPose("right_sole_link"),
 )
-import pinocchio as pin
 
-v = pin.Motion.Zero()
-v.linear[0] = 0.2
+v = np.zeros(6)
+v[0] = 0.2
 mpc.setVelocityBase(v)
 for t in range(600):
     # print("Time " + str(t))

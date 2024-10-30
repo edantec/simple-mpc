@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 4);
 
-  fdproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
+  fdproblem.createProblem(handler.getState(), 100, 6, settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*fdproblem.getProblem()->stages_[0]->cost_);
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  knproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
+  knproblem.createProblem(handler.getState(), 100, 6, settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*knproblem.getProblem()->stages_[0]->cost_);
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 
 BOOST_AUTO_TEST_CASE(centroidal) {
   RobotHandler handler = getTalosHandler();
-  CentroidalSettings settings = getCentroidalSettings(handler);
+  CentroidalSettings settings = getCentroidalSettings();
   CentroidalProblem cproblem(settings, handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
@@ -224,7 +224,8 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
-  cproblem.createProblem(settings.x0, 100, 6, settings.gravity[2]);
+  cproblem.createProblem(handler.getCentroidalState(), 100, 6,
+                         settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);
@@ -280,7 +281,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {
   RobotHandler handler = getSoloHandler();
-  CentroidalSettings settings = getCentroidalSettings(handler);
+  CentroidalSettings settings = getCentroidalSettings();
   settings.force_size = 3;
 
   CentroidalProblem cproblem(settings, handler);
@@ -318,7 +319,8 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
 
-  cproblem.createProblem(settings.x0, 100, 3, settings.gravity[2]);
+  cproblem.createProblem(handler.getCentroidalState(), 100, 3,
+                         settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);

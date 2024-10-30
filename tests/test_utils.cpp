@@ -60,8 +60,6 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
   int nu = nv - 6;
 
   FullDynamicsSettings settings;
-  settings.x0 = handler.getState();
-  settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
   settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
   settings.w_x.diagonal() << 0, 0, 0, 100, 100, 100, // Base pos/ori
@@ -107,8 +105,6 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
   int nu = nv + 6;
 
   KinodynamicsSettings settings;
-  settings.x0 = handler.getState();
-  settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
   settings.w_x = Eigen::MatrixXd::Identity(nv * 2, nv * 2);
   settings.w_x.diagonal() << 0, 0, 1000, 1000, 1000, 1000, // Base pos/ori
@@ -150,15 +146,10 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
   return settings;
 }
 
-CentroidalSettings getCentroidalSettings(RobotHandler handler) {
-  int nx = 9;
+CentroidalSettings getCentroidalSettings() {
   int nu = 6 * 2;
 
   CentroidalSettings settings;
-  Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nx);
-  x0.head(3) = handler.getComPosition();
-  settings.x0 = x0;
-  settings.u0 = Eigen::VectorXd::Zero(nu);
   settings.DT = 0.01;
   settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
 

@@ -39,9 +39,6 @@ using ContactMap = ContactMapTpl<double>;
  */
 
 struct CentroidalSettings {
-  // reference state and control
-  Eigen::VectorXd x0;
-  Eigen::VectorXd u0;
   // timestep in problem shooting nodes
   double DT;
 
@@ -107,9 +104,9 @@ public:
                                           const std::string &ee_name) override;
   void computeControlFromForces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
-  const Motion getVelocityBase(const std::size_t t) override;
+  const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
   void setVelocityBase(const std::size_t t,
-                       const Motion &velocity_base) override;
+                       const Eigen::VectorXd &velocity_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
 

@@ -53,7 +53,7 @@ u0 = np.concatenate((fref, fref, fref, fref, np.zeros(handler.getModel().nv - 6)
 w_basepos = [0, 0, 0, 0, 0, 0]
 w_legpos = [1, 1, 1]
 
-w_basevel = [0, 0, 0, 0, 0, 0]
+w_basevel = [10, 10, 10, 10, 10, 10]
 w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
 w_x = np.diag(w_x)
@@ -75,17 +75,13 @@ w_cent = np.diag(np.concatenate((w_cent_lin, w_cent_ang)))
 w_centder_lin = np.ones(3) * 0.0
 w_centder_ang = np.ones(3) * 0.1
 w_centder = np.diag(np.concatenate((w_centder_lin, w_centder_ang)))
-w_vbase = np.diag(np.ones(6) * 0)
 
 problem_conf = dict(
-    x0=handler.getState(),
-    u0=u0,
     DT=0.01,
     w_x=w_x,
     w_u=w_u,
     w_cent=w_cent,
     w_centder=w_centder,
-    w_vbase=w_vbase,
     gravity=gravity,
     force_size=3,
     w_frame=np.eye(3) * w_LFRF,
@@ -192,8 +188,8 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
 )
-v = pin.Motion.Zero()
-v.linear[1] = 0.2
+v = np.zeros(6)
+v[1] = 0.2
 mpc.setVelocityBase(v)
 for t in range(5000):
     # print("Time " + str(t))
@@ -210,8 +206,8 @@ for t in range(5000):
     if t == 500:
         mpc.switchToStand()
     if t == 800:
-        v = pin.Motion.Zero()
-        v.linear[0] = 0.2
+        v = np.zeros(6)
+        v[0] = 0.2
         mpc.switchToWalk(v)
 
     mpc.iterate(q_current, v_current)

@@ -31,6 +31,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
+  x0_ = handler_.getState();
 
   for (auto const &name : handler_.getFeetNames()) {
     auto frame_ids = handler_.getFootId(name);
@@ -52,7 +53,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
       constraint_model.corrector.Kp << 0, 0, 0;
-      constraint_model.corrector.Kd << 200, 200, 200;
+      constraint_model.corrector.Kd << 50, 50, 50;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }
@@ -69,9 +70,10 @@ StageModel FullDynamicsProblem::createStage(
   auto rcost = CostStack(space, nu_);
 
   rcost.addCost("state_cost",
-                QuadraticStateCost(space, nu_, settings_.x0, settings_.w_x));
-  rcost.addCost("control_cost",
-                QuadraticControlCost(space, settings_.u0, settings_.w_u));
+                QuadraticStateCost(space, nu_, x0_, settings_.w_x));
+  rcost.addCost(
+      "control_cost",
+      QuadraticControlCost(space, Eigen::VectorXd::Zero(nu_), settings_.w_u));
 
   auto cent_mom = CentroidalMomentumResidual(
       space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
@@ -122,12 +124,6 @@ StageModel FullDynamicsProblem::createStage(
           QuadraticResidualCost(space, *frame_force, settings_.w_forces));
     }
   }
-  FrameVelocityResidual velocity_root_residual = FrameVelocityResidual(
-      space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-      handler_.getRootId(), pinocchio::LOCAL);
-  rcost.addCost(
-      "velocity_base",
-      QuadraticResidualCost(space, velocity_root_residual, settings_.w_vbase));
 
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
       space, actuation_matrix_, cms, prox_settings_);
@@ -167,7 +163,7 @@ StageModel FullDynamicsProblem::createStage(
           MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
                                         actuation_matrix_, cms, prox_settings_,
                                         name, settings_.mu);
-      // stm.addConstraint(friction_residual, NegativeOrthant());
+      stm.addConstraint(friction_residual, NegativeOrthant());
 
       if (land_constraint.at(name)) {
         std::vector<int> vel_id = {0, 1, 2};
@@ -304,21 +300,19 @@ FullDynamicsProblem::getReferenceForce(const std::size_t t,
   return cfr->getReference();
 }
 
-const Motion FullDynamicsProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd
+FullDynamicsProblem::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
-  QuadraticResidualCost *qc =
-      cs->getComponent<QuadraticResidualCost>("velocity_base");
-  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
-  return cfr->getReference();
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  return qc->getTarget().segment(nq_, 6);
 }
 
-void FullDynamicsProblem::setVelocityBase(const std::size_t t,
-                                          const Motion &velocity_base) {
+void FullDynamicsProblem::setVelocityBase(
+    const std::size_t t, const Eigen::VectorXd &velocity_base) {
   CostStack *cs = getCostStack(t);
-  QuadraticResidualCost *qc =
-      cs->getComponent<QuadraticResidualCost>("velocity_base");
-  FrameVelocityResidual *cfr = qc->getResidual<FrameVelocityResidual>();
-  cfr->setReference(velocity_base);
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  x0_.segment(nq_, 6) = velocity_base;
+  qc->setTarget(x0_);
 }
 
 const Eigen::VectorXd FullDynamicsProblem::getProblemState() {
@@ -340,9 +334,8 @@ CostStack FullDynamicsProblem::createTerminalCost() {
   auto cent_mom = CentroidalMomentumResidual(
       ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
 
-  term_cost.addCost(
-      "state_cost",
-      QuadraticStateCost(ter_space, nu_, settings_.x0, settings_.w_x));
+  term_cost.addCost("state_cost",
+                    QuadraticStateCost(ter_space, nu_, x0_, settings_.w_x));
   /* term_cost.addCost(
       "centroidal_cost",
       QuadraticResidualCost(ter_space, cent_mom, settings_.w_cent)); */

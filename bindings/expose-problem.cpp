@@ -75,15 +75,12 @@ void exposeBaseProblem() {
 
 void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   FullDynamicsSettings conf;
-  conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
-  conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
   conf.w_forces = bp::extract<Eigen::MatrixXd>(settings["w_forces"]);
   conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
-  conf.w_vbase = bp::extract<Eigen::MatrixXd>(settings["w_vbase"]);
 
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
@@ -154,8 +151,6 @@ StageModel createFullStage(FullDynamicsProblem &self,
 bp::dict getSettingsFull(FullDynamicsProblem &self) {
   FullDynamicsSettings conf = self.getSettings();
   bp::dict settings;
-  settings["x0"] = conf.x0;
-  settings["u0"] = conf.u0;
   settings["DT"] = conf.DT;
   settings["w_x"] = conf.w_x;
   settings["w_u"] = conf.w_u;
@@ -164,7 +159,6 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   settings["force_size"] = conf.force_size;
   settings["w_forces"] = conf.w_forces;
   settings["w_frame"] = conf.w_frame;
-  settings["w_vbase"] = conf.w_vbase;
   settings["umin"] = conf.umin;
   settings["umax"] = conf.umax;
   settings["qmin"] = conf.qmin;
@@ -253,8 +247,6 @@ void exposeFullDynamicsProblem() {
 
 void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   CentroidalSettings conf;
-  conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
-  conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_linear_mom = bp::extract<Eigen::Matrix3d>(settings["w_linear_mom"]);
@@ -324,8 +316,6 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
 bp::dict getSettingsCent(CentroidalProblem &self) {
   CentroidalSettings conf = self.getSettings();
   bp::dict settings;
-  settings["x0"] = conf.x0;
-  settings["u0"] = conf.u0;
   settings["DT"] = conf.DT;
   settings["w_u"] = conf.w_u;
   settings["w_linear_mom"] = conf.w_linear_mom;
@@ -416,15 +406,12 @@ void exposeCentroidalProblem() {
 
 void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   KinodynamicsSettings conf;
-  conf.x0 = bp::extract<Eigen::VectorXd>(settings["x0"]);
-  conf.u0 = bp::extract<Eigen::VectorXd>(settings["u0"]);
   conf.DT = bp::extract<double>(settings["DT"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
   conf.w_centder = bp::extract<Eigen::MatrixXd>(settings["w_centder"]);
   conf.w_frame = bp::extract<Eigen::MatrixXd>(settings["w_frame"]);
-  conf.w_vbase = bp::extract<Eigen::MatrixXd>(settings["w_vbase"]);
 
   conf.gravity = bp::extract<Eigen::Vector3d>(settings["gravity"]);
   conf.force_size = bp::extract<int>(settings["force_size"]);
@@ -442,15 +429,12 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
 bp::dict getSettingsKino(KinodynamicsProblem &self) {
   KinodynamicsSettings conf = self.getSettings();
   bp::dict settings;
-  settings["x0"] = conf.x0;
-  settings["u0"] = conf.u0;
   settings["DT"] = conf.DT;
   settings["w_x"] = conf.w_x;
   settings["w_u"] = conf.w_u;
   settings["w_cent"] = conf.w_cent;
   settings["w_centder"] = conf.w_centder;
   settings["w_frame"] = conf.w_frame;
-  settings["w_vbase"] = conf.w_vbase;
   settings["gravity"] = conf.gravity;
   settings["force_size"] = conf.force_size;
   settings["qmin"] = conf.qmin;

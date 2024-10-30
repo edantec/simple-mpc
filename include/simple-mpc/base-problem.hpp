@@ -108,9 +108,9 @@ public:
                                                 const std::string &ee_name) = 0;
 
   // Setter and getter for base velocity
-  virtual const Motion getVelocityBase(const std::size_t t) = 0;
+  virtual const Eigen::VectorXd getVelocityBase(const std::size_t t) = 0;
   virtual void setVelocityBase(const std::size_t t,
-                               const Motion &velocity_base) = 0;
+                               const Eigen::VectorXd &velocity_base) = 0;
 
   // Setter and getter for forces reference
   virtual void setReferenceForces(

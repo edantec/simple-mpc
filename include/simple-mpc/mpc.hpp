@@ -96,7 +96,7 @@ protected:
   bool time_to_solve_ddp_ = false;
   Eigen::Vector3d com0_;
   LocomotionType now_;
-  Motion velocity_base_;
+  Eigen::VectorXd velocity_base_;
 
 public:
   MPC();
@@ -128,7 +128,7 @@ public:
   const pinocchio::SE3 getReferencePose(const std::size_t t,
                                         const std::string &ee_name);
 
-  void setVelocityBase(const Motion &velocity_base) {
+  void setVelocityBase(const Eigen::VectorXd &velocity_base) {
     velocity_base_ = velocity_base;
   };
 
@@ -157,7 +157,7 @@ public:
     }
   }
 
-  void switchToWalk(const Motion &velocity_base);
+  void switchToWalk(const Eigen::VectorXd &velocity_base);
 
   void switchToStand();
 

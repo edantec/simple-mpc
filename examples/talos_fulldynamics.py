@@ -62,65 +62,24 @@ nu = nv - 6
 
 x0 = handler.getState()
 nu = handler.getModel().nv - 6
+w_basepos = [0, 0, 0, 10, 10, 10]
+w_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+w_torsopos = [1, 100]
+w_armpos = [1, 1, 10, 10]
+
+w_basevel = [10, 10, 10, 100, 10, 10]
+w_legvel = [1, 1, 1, 1, 1, 1]
+w_torsovel = [1, 100]
+w_armvel = [10, 10, 10, 10]
 w_x = np.array(
-    [
-        0,
-        0,
-        0,
-        100,
-        100,
-        100,  # Base pos/ori
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Left leg
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,  # Right leg
-        10,
-        10,  # Torso
-        1,
-        1,
-        1,
-        1,  # Left arm
-        1,
-        1,
-        1,
-        1,  # Right arm
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,  # Base pos/ori vel
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.01,
-        0.01,  # Left leg vel
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.01,
-        0.01,  # Right leg vel
-        10,
-        10,  # Torso vel
-        1,
-        1,
-        1,
-        1,  # Left arm vel
-        1,
-        1,
-        1,
-        1,  # Right arm vel
-    ]
+    w_basepos
+    + w_legpos * 2
+    + w_torsopos
+    + w_armpos * 2
+    + w_basevel
+    + w_legvel * 2
+    + w_torsovel
+    + w_armvel * 2
 )
 w_cent_lin = np.array([0.0, 0.0, 10])
 w_cent_ang = np.array([0.0, 0.0, 10])
@@ -130,8 +89,6 @@ w_vbase = np.diag(np.ones(6) * 10)
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
-    x0=x0,
-    u0=np.zeros(nu),
     DT=0.01,
     w_x=np.diag(w_x),
     w_u=np.eye(nu) * 1e-4,
@@ -140,7 +97,6 @@ problem_conf = dict(
     force_size=6,
     w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
     w_frame=np.eye(6) * 2000,
-    w_vbase=w_vbase,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -226,11 +182,9 @@ device.showTargetToTrack(
     mpc.getHandler().getFootPose("left_sole_link"),
     mpc.getHandler().getFootPose("right_sole_link"),
 )
-import pinocchio as pin
 
-v = pin.Motion.Zero()
-v.linear[0] = 0.1
-v.angular[2] = 0.0
+v = np.zeros(6)
+v[0] = 0.1
 mpc.setVelocityBase(v)
 for t in range(Tmpc + 800):
     # print("Time " + str(t))
