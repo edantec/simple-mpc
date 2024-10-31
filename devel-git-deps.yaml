@@ -1,0 +1,29 @@
+repositories:
+  aligator:
+    type: git
+    url: git@github.com:edantec/aligator.git
+    version: devel
+  eigenpy:
+    type: git
+    url: git@github.com:stack-of-tasks/eigenpy.git
+    version: master
+  example-robot-data:
+    type: git
+    url: git@github.com:gepetto/example-robot-data.git
+    version: devel
+  hpp-fcl:
+    type: git
+    url: git@github.com:humanoid-path-planner/hpp-fcl.git
+    version: devel
+  ndcurves:
+    type: git
+    url: git@github.com:loco-3d/ndcurves.git
+    version: master
+  pinocchio:
+    type: git
+    url: git@gitlab.inria.fr:jucarpen/pinocchio.git
+    version: topic/simulation
+  proxsuite-nlp:
+    type: git
+    url: git@github.com:simple-robotics/proxsuite-nlp.git
+    version: main

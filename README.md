@@ -4,7 +4,7 @@
 
 It can be used with quadrupeds and bipeds to generate whole-body walking motions based on a pre-defined contact plan.
 
-##Features
+## Features
 
 The **Simple-mpc** library provides:
 
@@ -14,12 +14,52 @@ The **Simple-mpc** library provides:
 
 ## Installation
 
-### Build from source
+### Build from source (devel)
 
+1. Clone repo.
 ```bash
+mkdir -p simple-mpc_ws/src
+cd simple-mpc_ws/src
 git clone git@github.com:edantec/simple-mpc.git --recursive
-cmake -DCMAKE_INSTALL_PREFIX=your_install_folder -S . -B build/ && cd build/
-cmake --build . -jNCPUS
+```
+
+2. Create conda environment.
+(It is recommended to use `mamba` instead of `conda` for faster/better dependencies solving)
+```bash
+mamba env create -f simple-mpc/environment-devel.yaml
+mamba activate simple-mpc-devel
+```
+
+3. Clone some dependencies
+(Some dependencies are not available on conda, or not with adequate versions)
+(vcs allow for cloning and managing multiple repo at once)
+```bash
+vcs import --recursive < simple-mpc/devel-git-deps.yaml
+```
+
+4. Build all packages
+```bash
+export MAKEFLAGS="-j4" # It is recommended to reduce the number of jobs as you ram might get full easily with the default number.
+cd ..
+colcon build --event-handlers console_direct+ --cmake-args \
+-DCMAKE_BUILD_TYPE=Release             \
+-DCMAKE_PREFIX_PATH=$CONDA_PREFIX      \
+-DPYTHON_EXECUTABLE=$(which python)    \
+-DCMAKE_CXX_COMPILER_LAUNCHER='ccache' \
+-DBUILD_TESTING=OFF                    \
+-DBUILD_DOCUMENTATION=OFF              \
+-DBUILD_EXAMPLES=OFF                   \
+-DBUILD_BENCHMARK=OFF                  \
+-DBUILD_BENCHMARKS=OFF                 \
+-DBUILD_WITH_COLLISION_SUPPORT=ON      \
+-DGENERATE_PYTHON_STUBS=OFF
+```
+
+5. Source the environment
+(This step need to be repeated every time a new shell is opened. It can be put in your ~/.bashrc)
+```bash
+mamba activate simple-mpc-devel # If not already done
+source install/setup.bash
 ```
 
 #### Dependencies
