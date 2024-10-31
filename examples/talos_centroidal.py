@@ -264,6 +264,10 @@ design_conf = dict(
         "left_sole_link",
         "right_sole_link",
     ],
+    hip_names=[
+        "leg_left_2_link",
+        "right_left_2_link",
+    ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)

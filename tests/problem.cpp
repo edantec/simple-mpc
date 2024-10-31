@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
-  BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 1);
 
   cproblem.createProblem(handler.getCentroidalState(), 100, 6,
                          settings.gravity[2]);
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 5);
-  BOOST_CHECK_EQUAL(sm.numConstraints(), 0);
+  BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
   cproblem.createProblem(handler.getCentroidalState(), 100, 3,
                          settings.gravity[2]);

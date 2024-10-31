@@ -26,6 +26,7 @@ RobotHandler getTalosHandler() {
       "arm_right_3_joint", "arm_right_4_joint",
   };
   settings.end_effector_names = {"left_sole_link", "right_sole_link"};
+  settings.hip_names = {"leg_left_2_link", "right_left_2_link"};
   settings.base_configuration = "half_sitting";
   settings.root_name = "root_joint";
   settings.load_rotor = true;
@@ -47,6 +48,7 @@ RobotHandler getSoloHandler() {
       "HL_HAA",     "HL_HFE", "HL_KFE", "HR_HAA", "HR_HFE", "HR_KFE",
   };
   settings.end_effector_names = {"FR_FOOT", "FL_FOOT", "HL_FOOT", "HR_FOOT"};
+  settings.hip_names = {"FR_THIGH", "FL_THIGH", "HL_THIGH", "HR_THIGH"};
   settings.base_configuration = "straight_standing";
   settings.root_name = "root_joint";
 

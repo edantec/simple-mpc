@@ -53,6 +53,10 @@ design_conf = dict(
         "left_sole_link",
         "right_sole_link",
     ],
+    hip_names=[
+        "leg_left_2_link",
+        "right_left_2_link",
+    ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
@@ -67,7 +71,7 @@ w_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 w_torsopos = [1, 100]
 w_armpos = [1, 1, 10, 10]
 
-w_basevel = [10, 10, 10, 100, 10, 10]
+w_basevel = [10, 10, 10, 10, 10, 10]
 w_legvel = [1, 1, 1, 1, 1, 1]
 w_torsovel = [1, 100]
 w_armvel = [10, 10, 10, 10]
@@ -81,11 +85,10 @@ w_x = np.array(
     + w_torsovel
     + w_armvel * 2
 )
-w_cent_lin = np.array([0.0, 0.0, 10])
-w_cent_ang = np.array([0.0, 0.0, 10])
-w_forces_lin = np.array([0.0001, 0.0001, 0.0001])
-w_forces_ang = np.ones(3) * 0.0001
-w_vbase = np.diag(np.ones(6) * 10)
+w_cent_lin = np.array([0.1, 0.1, 10])
+w_cent_ang = np.array([0.1, 0.1, 10])
+w_forces_lin = np.array([0.001, 0.001, 0.001])
+w_forces_ang = np.ones(3) * 0.001
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
