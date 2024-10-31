@@ -102,6 +102,8 @@ void MPC::initialize(const MPCSettings &settings,
   now_ = WALKING;
   velocity_base_.resize(6);
   velocity_base_.setZero();
+  next_pose_.setZero();
+  twist_vect_.setZero();
 }
 
 void MPC::generateCycleHorizon(
@@ -230,11 +232,11 @@ void MPC::recedeWithCycle() {
       if (!contact_states_[contact_states_.size() - 1].at(name) and
           contact_states_[contact_states_.size() - 2].at(name))
         foot_takeoff_times_.at(name).push_back(
-            (int)(contact_states_.size() - 1 + problem_->getSize()));
+            (int)(contact_states_.size() + problem_->getSize()));
       if (contact_states_[contact_states_.size() - 1].at(name) and
           !contact_states_[contact_states_.size() - 2].at(name))
         foot_land_times_.at(name).push_back(
-            (int)(contact_states_.size() - 1 + problem_->getSize()));
+            (int)(contact_states_.size() + problem_->getSize()));
     }
     updateCycleTiming(false);
   } else {
@@ -270,40 +272,31 @@ void MPC::updateCycleTiming(const bool updateOnlyHorizon) {
 }
 
 void MPC::updateStepTrackerReferences() {
-  bool update = false;
-  for (auto const &name : ee_names_) {
-    int foot_takeoff_time = -1;
-    if (!foot_takeoff_times_.at(name).empty())
-      foot_takeoff_time = foot_takeoff_times_.at(name)[0];
-    if (foot_takeoff_time >= 0 and foot_takeoff_time < settings_.T_contact) {
-      update = true;
-      break;
-    }
-  }
   for (auto const &name : ee_names_) {
     int foot_land_time = -1;
     if (!foot_land_times_.at(name).empty())
       foot_land_time = foot_land_times_.at(name)[0];
 
-    pinocchio::SE3 ref_pose = // problem_->getHandler().getFootPose(name);
-        problem_->getHandler().getRootFrame() * relative_feet_poses_.at(name);
-    ref_pose.translation() += velocity_base_.head(3) *
-                              (settings_.T_fly + settings_.T_contact) *
-                              settings_.dt;
-    ref_pose.translation()[2] =
-        problem_->getHandler().getFootPose(name).translation()[2];
-    /* ref_pose.translation() +=
-        velocity_base_.angular().cross(ref_pose.translation()) *
-        (settings_.T_fly + settings_.T_contact) * settings_.dt; */
+    bool update = true;
+    if (foot_land_time < settings_.T_fly)
+      update = false;
 
+    // Use the Raibert heuristics to compute the next foot pose
+    twist_vect_[0] =
+        -(problem_->getHandler().getHipPose(name).translation()[1] -
+          problem_->getHandler().getRootFrame().translation()[1]);
+    twist_vect_[1] = problem_->getHandler().getHipPose(name).translation()[0] -
+                     problem_->getHandler().getRootFrame().translation()[0];
+    next_pose_.head(2) =
+        problem_->getHandler().getHipPose(name).translation().head(2);
+    next_pose_.head(2) +=
+        (velocity_base_.head(2) + velocity_base_[5] * twist_vect_) *
+        (settings_.T_fly + settings_.T_contact) * settings_.dt;
+    next_pose_[2] = problem_->getHandler().getFootPose(name).translation()[2];
     foot_trajectories_.updateTrajectory(
         update, foot_land_time,
-        /* getReferencePose(0, name).translation(),
-        getReferencePose(0, name).translation() + velocity_base_.linear() *
-                              (settings_.T_fly + settings_.T_contact) *
-                              settings_.dt, */
-        problem_->getHandler().getFootPose(name).translation(),
-        ref_pose.translation(), name);
+        problem_->getHandler().getFootPose(name).translation(), next_pose_,
+        name);
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     for (unsigned long time = 0; time < problem_->getSize(); time++) {
       pose.translation() = foot_trajectories_.getReference(name)[time];

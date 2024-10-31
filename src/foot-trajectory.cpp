@@ -64,7 +64,7 @@ FootTrajectory::createTrajectory(int time_to_land, point3_t &initial_trans,
                                  piecewise_curve trajectory_swing) {
   std::vector<point3_t> trajectory;
   for (int t = time_to_land; t > time_to_land - (int)T_; t--) {
-    if (t <= 0)
+    if (t < 0)
       trajectory.push_back(final_trans);
     else if (t > T_fly_)
       trajectory.push_back(initial_trans);
@@ -88,9 +88,10 @@ void FootTrajectory::updateTrajectory(bool update, int landing_time,
   piecewise_curve swing_trajectory = defineTranslationBezier(
       initial_poses_.at(ee_name), final_poses_.at(ee_name));
 
-  references_.at(ee_name) =
-      createTrajectory(landing_time, initial_poses_.at(ee_name),
-                       final_poses_.at(ee_name), swing_trajectory);
+  references_.at(ee_name) = createTrajectory(
+      landing_time, initial_poses_.at(ee_name), final_poses_.at(ee_name),
+      defineTranslationBezier(initial_poses_.at(ee_name),
+                              final_poses_.at(ee_name)));
 }
 
 } // namespace simple_mpc

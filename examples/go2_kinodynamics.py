@@ -38,6 +38,12 @@ design_conf = dict(
         "RL_foot",
         "RR_foot",
     ],
+    hip_names=[
+        "FL_thigh",
+        "FR_thigh",
+        "RL_thigh",
+        "RR_thigh",
+    ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
@@ -50,7 +56,7 @@ fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.concatenate((fref, fref, fref, fref, np.zeros(handler.getModel().nv - 6)))
 
 
-w_basepos = [0, 0, 0, 0, 0, 0]
+w_basepos = [0, 0, 0, 1000, 1000, 0]
 w_legpos = [1, 1, 1]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
@@ -93,7 +99,7 @@ problem_conf = dict(
     Lfoot=0.01,
     Wfoot=0.01,
 )
-T = 100
+T = 50
 
 dynproblem = KinodynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
@@ -189,7 +195,7 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RR_foot"),
 )
 v = np.zeros(6)
-v[1] = 0.2
+v[5] = 0.4
 mpc.setVelocityBase(v)
 for t in range(5000):
     # print("Time " + str(t))
@@ -203,12 +209,12 @@ for t in range(5000):
         str(land_LF),
     )
 
-    if t == 500:
+    """ if t == 500:
         mpc.switchToStand()
     if t == 800:
         v = np.zeros(6)
         v[0] = 0.2
-        mpc.switchToWalk(v)
+        mpc.switchToWalk(v) """
 
     mpc.iterate(q_current, v_current)
 

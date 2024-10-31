@@ -97,6 +97,8 @@ protected:
   Eigen::Vector3d com0_;
   LocomotionType now_;
   Eigen::VectorXd velocity_base_;
+  Eigen::Vector3d next_pose_;
+  Eigen::Vector3d twist_vect_;
 
 public:
   MPC();

@@ -106,6 +106,12 @@ design_conf = dict(
         "RL_foot",
         "RR_foot",
     ],
+    hip_names=[
+        "FL_thigh",
+        "FR_thigh",
+        "RL_thigh",
+        "RR_thigh",
+    ],
 )
 handler = RobotHandler()
 handler.initialize(design_conf)

@@ -164,7 +164,6 @@ StageModel FullDynamicsProblem::createStage(
                                         actuation_matrix_, cms, prox_settings_,
                                         name, settings_.mu);
       stm.addConstraint(friction_residual, NegativeOrthant());
-
       if (land_constraint.at(name)) {
         std::vector<int> vel_id = {0, 1, 2};
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(

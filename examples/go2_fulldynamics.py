@@ -38,10 +38,10 @@ design_conf = dict(
         "RR_foot",
     ],
     hip_names=[
-        "FL_thigh_joint",
-        "FR_thigh_joint",
-        "RL_thigh_joint",
-        "RR_thigh_joint",
+        "FL_thigh",
+        "FR_thigh",
+        "RL_thigh",
+        "RR_thigh",
     ],
 )
 handler = RobotHandler()
@@ -58,7 +58,7 @@ w_basepos = [0, 0, 0, 0, 0, 0]
 w_legpos = [1, 1, 1]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
-w_legvel = [0.1, 0.1, 0.1]
+w_legvel = [1, 1, 1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
 w_cent_lin = np.array([0.0, 0.0, 1])
 w_cent_ang = np.array([0.0, 0.0, 1])
@@ -66,8 +66,6 @@ w_forces_lin = np.array([0.001, 0.001, 0.001])
 w_frame = np.diag(np.array([1000, 1000, 1000]))
 
 problem_conf = dict(
-    x0=handler.getState(),
-    u0=u0,
     DT=0.01,
     w_x=np.diag(w_x),
     w_u=np.eye(u0.size) * 1e-4,
@@ -76,7 +74,6 @@ problem_conf = dict(
     force_size=3,
     w_forces=np.diag(w_forces_lin),
     w_frame=w_frame,
-    w_vbase=np.eye(6) * 20,
     umin=-handler.getModel().effortLimit[6:],
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
@@ -90,6 +87,9 @@ T = 50
 dynproblem = FullDynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
+
+""" T_ds = 80
+T_ss = 30 """
 
 T_ds = 10
 T_ss = 40
@@ -129,11 +129,21 @@ contact_phase_lift_FR = {
     "RL_foot": False,
     "RR_foot": True,
 }
+contact_phase_lift = {
+    "FL_foot": False,
+    "FR_foot": False,
+    "RL_foot": False,
+    "RR_foot": False,
+}
 contact_phases = [contact_phase_quadru] * int(T_ds / 2)
 contact_phases += [contact_phase_lift_FL] * T_ss
 contact_phases += [contact_phase_quadru] * T_ds
 contact_phases += [contact_phase_lift_FR] * T_ss
 contact_phases += [contact_phase_quadru] * int(T_ds / 2)
+
+""" contact_phases = [contact_phase_quadru] * int(T_ds / 2)
+contact_phases += [contact_phase_lift] * T_ss
+contact_phases += [contact_phase_quadru] * int(T_ds / 2) """
 
 mpc.generateCycleHorizon(contact_phases)
 
@@ -156,18 +166,27 @@ x_measured = mpc.getHandler().shapeState(q_current, v_current)
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
-device.showQuadrupedFeet(
+""" device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("FL_foot"),
     mpc.getHandler().getFootPose("FR_foot"),
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
-)
+) """
+rmodel = handler.getModel()
+a1 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
+a2 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
+a3 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
+a4 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RR_thigh")]
+a1.translation[2] = 0
+a2.translation[2] = 0
+a3.translation[2] = 0
+a4.translation[2] = 0
+device.showQuadrupedFeet(a1, a2, a3, a4)
 Tmpc = len(contact_phases)
 
 v = np.zeros(6)
-v[0] = 0.1
+v[0] = 0.2
 mpc.setVelocityBase(v)
-
 for t in range(10000):
     print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
@@ -188,13 +207,13 @@ for t in range(10000):
     )
 
     mpc.iterate(q_current, v_current)
-    if t == 500:
+    """ if t == 500:
         mpc.switchToStand()
     if t == 700:
-        mpc.switchToWalk(v)
-    """ if t == 2000:
+        mpc.switchToWalk(v) """
+    if t == 695:
         for s in range(T):
-            device.resetState(mpc.xs[s][:handler.getModel().nq])
+            device.resetState(mpc.xs[s][: handler.getModel().nq])
             time.sleep(0.1)
             print("s = " + str(s))
             device.moveQuadrupedFeet(
@@ -203,8 +222,8 @@ for t in range(10000):
                 mpc.getReferencePose(s, "RL_foot").translation,
                 mpc.getReferencePose(s, "RR_foot").translation,
             )
-        top=mpc.getTrajOptProblem()
-        exit()  """
+        top = mpc.getTrajOptProblem()
+        exit()
 
     for j in range(10):
         # time.sleep(0.01)

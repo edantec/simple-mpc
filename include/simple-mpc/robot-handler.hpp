@@ -57,6 +57,7 @@ private:
   // Useful index
   std::vector<unsigned long> controlled_joints_ids_;
   std::map<std::string, FrameIndex> end_effector_map_;
+  std::map<std::string, FrameIndex> hip_map_;
   std::vector<FrameIndex> end_effector_ids_;
 
   unsigned long root_ids_;
@@ -104,6 +105,12 @@ public:
   }
   const SE3 &getFootPose(const std::string &ee_name) {
     return rdata_.oMf[getFootId(ee_name)];
+  };
+  const FrameIndex &getHipId(const std::string &ee_name) {
+    return hip_map_.at(ee_name);
+  }
+  const SE3 &getHipPose(const std::string &ee_name) {
+    return rdata_.oMf[getHipId(ee_name)];
   };
   const SE3 &getRootFrame() { return rdata_.oMf[root_ids_]; }
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }

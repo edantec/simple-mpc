@@ -109,7 +109,7 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
     Jdot_.setZero();
     if (contact_state[(size_t)i]) {
       Jvel_ = getFrameVelocity(model_, data, settings_.contact_ids[(size_t)i],
-                               pinocchio::LOCAL_WORLD_ALIGNED);
+                               LOCAL_WORLD_ALIGNED);
       getFrameJacobianTimeVariation(model_, data,
                                     settings_.contact_ids[(size_t)i],
                                     LOCAL_WORLD_ALIGNED, Jdot_);

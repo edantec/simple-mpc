@@ -82,6 +82,10 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     end_effector_map_.insert({name, rmodel_.getFrameId(name)});
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
   }
+  for (std::size_t i = 0; i < settings_.hip_names.size(); i++) {
+    hip_map_.insert({settings_.end_effector_names[i],
+                     rmodel_.getFrameId(settings.hip_names[i])});
+  }
   root_ids_ = rmodel_.getFrameId(settings_.root_name);
   rdata_ = Data(rmodel_);
 
