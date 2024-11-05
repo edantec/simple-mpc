@@ -98,6 +98,9 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandler handler) {
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;
+  settings.torque_limits = true;
+  settings.kinematics_limits = true;
+  settings.force_cone = true;
 
   return settings;
 }
@@ -144,6 +147,8 @@ KinodynamicsSettings getKinodynamicsSettings(RobotHandler handler) {
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;
+  settings.kinematics_limits = true;
+  settings.force_cone = true;
 
   return settings;
 }

@@ -89,11 +89,17 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
   conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
 
+  /// Limits
   conf.umin = bp::extract<Eigen::VectorXd>(settings["umin"]);
   conf.umax = bp::extract<Eigen::VectorXd>(settings["umax"]);
 
   conf.qmin = bp::extract<Eigen::VectorXd>(settings["qmin"]);
   conf.qmax = bp::extract<Eigen::VectorXd>(settings["qmax"]);
+
+  /// Constraints
+  conf.torque_limits = bp::extract<bool>(settings["torque_limits"]);
+  conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
+  conf.force_cone = bp::extract<bool>(settings["force_cone"]);
 
   self.initialize(conf);
 }
@@ -166,6 +172,9 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   settings["mu"] = conf.mu;
   settings["Lfoot"] = conf.Lfoot;
   settings["Wfoot"] = conf.Wfoot;
+  settings["torque_limits"] = conf.torque_limits;
+  settings["kinematics_limits"] = conf.kinematics_limits;
+  settings["force_cone"] = conf.force_cone;
 
   return settings;
 }
@@ -423,6 +432,9 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
   conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
 
+  conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
+  conf.force_cone = bp::extract<bool>(settings["force_cone"]);
+
   self.initialize(conf);
 }
 
@@ -442,6 +454,8 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
   settings["mu"] = conf.mu;
   settings["Lfoot"] = conf.Lfoot;
   settings["Wfoot"] = conf.Wfoot;
+  settings["kinematics_limits"] = conf.kinematics_limits;
+  settings["force_cone"] = conf.force_cone;
 
   return settings;
 }

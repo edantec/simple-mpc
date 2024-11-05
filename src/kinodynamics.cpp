@@ -73,16 +73,19 @@ StageModel KinodynamicsProblem::createStage(
       handler_.getFeetIds(), settings_.force_size);
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.DT);
-
   StageModel stm = StageModel(rcost, dyn_model);
-  StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
-  std::vector<int> state_id;
-  for (int i = 6; i < nv_; i++) {
-    state_id.push_back(i);
+
+  if (settings_.kinematics_limits) {
+    StateErrorResidual state_fn =
+        StateErrorResidual(space, nu_, space.neutral());
+    std::vector<int> state_id;
+    for (int i = 6; i < nv_; i++) {
+      state_id.push_back(i);
+    }
+    FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
+    stm.addConstraint(state_slice,
+                      BoxConstraint(-settings_.qmax, -settings_.qmin));
   }
-  FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
-  stm.addConstraint(state_slice,
-                    BoxConstraint(-settings_.qmax, -settings_.qmin));
 
   Motion v_ref = Motion::Zero();
   int i = 0;
@@ -92,16 +95,20 @@ StageModel KinodynamicsProblem::createStage(
           FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), v_ref,
                                 handler_.getFootId(name), pinocchio::LOCAL);
       if (settings_.force_size == 6) {
-        CentroidalWrenchConeResidual wrench_residual =
-            CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
-                                         settings_.Lfoot, settings_.Wfoot);
-        stm.addConstraint(wrench_residual, NegativeOrthant());
+        if (settings_.force_cone) {
+          CentroidalWrenchConeResidual wrench_residual =
+              CentroidalWrenchConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                           settings_.Lfoot, settings_.Wfoot);
+          stm.addConstraint(wrench_residual, NegativeOrthant());
+        }
         stm.addConstraint(frame_vel, EqualityConstraint());
       } else {
-        CentroidalFrictionConeResidual friction_residual =
-            CentroidalFrictionConeResidual(space.ndx(), nu_, i, settings_.mu,
-                                           1e-4);
-        // stm.addConstraint(friction_residual, NegativeOrthant());
+        if (settings_.force_cone) {
+          CentroidalFrictionConeResidual friction_residual =
+              CentroidalFrictionConeResidual(space.ndx(), nu_, i, settings_.mu,
+                                             1e-4);
+          stm.addConstraint(friction_residual, NegativeOrthant());
+        }
         std::vector<int> vel_id = {0, 1, 2};
 
         FunctionSliceXpr vel_slice = FunctionSliceXpr(frame_vel, vel_id);

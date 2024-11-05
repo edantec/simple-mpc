@@ -49,6 +49,10 @@ struct KinodynamicsSettings {
   double Lfoot;
   double Wfoot;
   int force_size;
+
+  // Constraint
+  bool kinematics_limits;
+  bool force_cone;
 };
 
 class KinodynamicsProblem : public Problem {

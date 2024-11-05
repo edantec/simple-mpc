@@ -61,6 +61,11 @@ public:
   double Lfoot; // Half-length of foot (if contact 6D)
   double Wfoot; // Half-width of foot (if contact 6D)
 
+  // Constraints
+  bool torque_limits;
+  bool kinematics_limits;
+  bool force_cone;
+
   // Control limits
   Eigen::VectorXd umin;
   Eigen::VectorXd umax;

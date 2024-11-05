@@ -148,6 +148,8 @@ mpc_conf = dict(
     T_contact=T_ds,
     T=T,
     dt=0.01,
+    kinematics_limits=True,
+    force_cone=True,
 )
 
 mpc = MPC()

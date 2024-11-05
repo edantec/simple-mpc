@@ -107,6 +107,9 @@ problem_conf = dict(
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
+    torque_limits=True,
+    kinematics_limits=True,
+    force_cone=True,
 )
 
 T = 100

@@ -133,24 +133,33 @@ StageModel FullDynamicsProblem::createStage(
   StageModel stm = StageModel(rcost, dyn_model);
 
   // Constraints
-  ControlErrorResidual ctrl_fn =
-      ControlErrorResidual(space.ndx(), Eigen::VectorXd::Zero(nu_));
-  stm.addConstraint(ctrl_fn, BoxConstraint(settings_.umin, settings_.umax));
-  StateErrorResidual state_fn = StateErrorResidual(space, nu_, space.neutral());
-  std::vector<int> state_id;
-  for (int i = 6; i < nv_; i++) {
-    state_id.push_back(i);
+  if (settings_.torque_limits) {
+    ControlErrorResidual ctrl_fn =
+        ControlErrorResidual(space.ndx(), Eigen::VectorXd::Zero(nu_));
+    stm.addConstraint(ctrl_fn, BoxConstraint(settings_.umin, settings_.umax));
   }
-  FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
-  stm.addConstraint(state_slice,
-                    BoxConstraint(-settings_.qmax, -settings_.qmin));
+  if (settings_.kinematics_limits) {
+    StateErrorResidual state_fn =
+        StateErrorResidual(space, nu_, space.neutral());
+    std::vector<int> state_id;
+    for (int i = 6; i < nv_; i++) {
+      state_id.push_back(i);
+    }
+    FunctionSliceXpr state_slice = FunctionSliceXpr(state_fn, state_id);
+    stm.addConstraint(state_slice,
+                      BoxConstraint(-settings_.qmax, -settings_.qmin));
+  }
 
   for (auto const &name : handler_.getFeetNames()) {
     if (settings_.force_size == 6 and contact_phase.at(name)) {
-      MultibodyWrenchConeResidual wrench_residual = MultibodyWrenchConeResidual(
-          space.ndx(), handler_.getModel(), actuation_matrix_, cms,
-          prox_settings_, name, settings_.mu, settings_.Lfoot, settings_.Wfoot);
-      stm.addConstraint(wrench_residual, NegativeOrthant());
+      if (settings_.force_cone) {
+        MultibodyWrenchConeResidual wrench_residual =
+            MultibodyWrenchConeResidual(space.ndx(), handler_.getModel(),
+                                        actuation_matrix_, cms, prox_settings_,
+                                        name, settings_.mu, settings_.Lfoot,
+                                        settings_.Wfoot);
+        stm.addConstraint(wrench_residual, NegativeOrthant());
+      }
 
       if (land_constraint.at(name)) {
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
@@ -159,11 +168,13 @@ StageModel FullDynamicsProblem::createStage(
         stm.addConstraint(velocity_residual, EqualityConstraint());
       }
     } else if (settings_.force_size == 3 and contact_phase.at(name)) {
-      MultibodyFrictionConeResidual friction_residual =
-          MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
-                                        actuation_matrix_, cms, prox_settings_,
-                                        name, settings_.mu);
-      stm.addConstraint(friction_residual, NegativeOrthant());
+      if (settings_.force_cone) {
+        MultibodyFrictionConeResidual friction_residual =
+            MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
+                                          actuation_matrix_, cms,
+                                          prox_settings_, name, settings_.mu);
+        stm.addConstraint(friction_residual, NegativeOrthant());
+      }
       if (land_constraint.at(name)) {
         std::vector<int> vel_id = {0, 1, 2};
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
