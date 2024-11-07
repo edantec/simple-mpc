@@ -6,13 +6,14 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-vector.hpp>
+#include <pinocchio/fwd.hpp>
+
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
-#include <eigenpy/eigenpy.hpp>
-#include <eigenpy/std-vector.hpp>
 #include <fmt/format.h>
-#include <pinocchio/fwd.hpp>
 
 #include "simple-mpc/lowlevel-control.hpp"
 #include <proxsuite/proxqp/dense/dense.hpp>
