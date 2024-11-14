@@ -182,12 +182,12 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
   recedeWithCycle();
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "recedeCycle = "
+  /* std::chrono::steady_clock::time_point end =
+  std::chrono::steady_clock::now(); std::cout << "recedeCycle = "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end -
                                                                      begin)
                    .count()
-            << "[ms]" << std::endl;
+            << "[ms]" << std::endl; */
 
   // ~~REFERENCES~~ //
   updateStepTrackerReferences();
@@ -206,12 +206,12 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   std::chrono::steady_clock::time_point begin5 =
       std::chrono::steady_clock::now();
   solver_->run(*problem_->getProblem(), xs_, us_);
-  std::chrono::steady_clock::time_point end5 = std::chrono::steady_clock::now();
-  std::cout << "solve = "
+  /* std::chrono::steady_clock::time_point end5 =
+  std::chrono::steady_clock::now(); std::cout << "solve = "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
                                                                      begin5)
                    .count()
-            << "[ms]" << std::endl;
+            << "[ms]" << std::endl; */
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
