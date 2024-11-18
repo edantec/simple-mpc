@@ -293,7 +293,7 @@ void MPC::updateStepTrackerReferences() {
         (velocity_base_.head(2) + velocity_base_[5] * twist_vect_) *
         (settings_.T_fly + settings_.T_contact) * settings_.dt;
     next_pose_[2] = problem_->getHandler().getFootPose(name).translation()[2];
-    next_pose_ = problem_->getHandler().getFootPose(name).translation();
+
     foot_trajectories_.updateTrajectory(
         update, foot_land_time,
         problem_->getHandler().getFootPose(name).translation(), next_pose_,
