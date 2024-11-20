@@ -112,7 +112,7 @@ StageModel KinodynamicsProblem::createStage(
         std::vector<int> vel_id = {0, 1, 2};
 
         FunctionSliceXpr vel_slice = FunctionSliceXpr(frame_vel, vel_id);
-        stm.addConstraint(vel_slice, EqualityConstraint());
+        //stm.addConstraint(vel_slice, EqualityConstraint());
         if (land_constraint.at(name)) {
           std::vector<int> frame_id = {2};
 
@@ -123,7 +123,7 @@ StageModel KinodynamicsProblem::createStage(
           FunctionSliceXpr frame_slice =
               FunctionSliceXpr(frame_residual, frame_id);
 
-          stm.addConstraint(frame_slice, EqualityConstraint());
+          //stm.addConstraint(frame_slice, EqualityConstraint());
         }
       }
     }
