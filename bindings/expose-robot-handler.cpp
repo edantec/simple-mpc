@@ -115,9 +115,17 @@ void exposeHandler() {
            bp::make_function(
                &RobotHandler::getRootId,
                bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getRootFrame",
+           bp::make_function(
+               &RobotHandler::getRootFrame,
+               bp::return_value_policy<bp::copy_const_reference>()))
       .def("getFootId",
            bp::make_function(
                &RobotHandler::getFootId,
+               bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getRefFootId",
+           bp::make_function(
+               &RobotHandler::getRefFootId,
                bp::return_value_policy<bp::copy_const_reference>()))
       .def("getFeetNames",
            bp::make_function(
@@ -130,6 +138,10 @@ void exposeHandler() {
       .def("getFootPose",
            bp::make_function(
                &RobotHandler::getFootPose,
+               bp::return_value_policy<bp::copy_const_reference>()))
+      .def("getRefFootPose",
+           bp::make_function(
+               &RobotHandler::getRefFootPose,
                bp::return_value_policy<bp::copy_const_reference>()))
       .def("getMass", bp::make_function(
                           &RobotHandler::getMass,

@@ -282,6 +282,7 @@ void MPC::updateStepTrackerReferences() {
       update = false;
 
     // Use the Raibert heuristics to compute the next foot pose
+
     twist_vect_[0] =
         -(problem_->getHandler().getRefFootPose(name).translation()[1] -
           problem_->getHandler().getRootFrame().translation()[1]);

@@ -205,10 +205,10 @@ pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation, 
   placement.translation() = translation;
   auto new_frame = pinocchio::Frame(
     name, 
-    rmodel_.frames[root_ids_].parentJoint,
-    rmodel_.frames[root_ids_].parentFrame,
-    rmodel_.frames[root_ids_].placement * placement, 
-    pinocchio::OP_FRAME
+    1,
+    2,
+    placement, 
+    pinocchio::FIXED_JOINT
   );
 
   auto frame_id = rmodel_.addFrame(new_frame);
