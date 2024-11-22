@@ -46,11 +46,6 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
 
   // REDUCED MODEL //
 
-  if (settings_.controlled_joints_names[0] != settings.root_name) {
-    throw std::invalid_argument("the joint at index 0 must be called " +
-                                settings.root_name);
-  }
-
   // Check if listed joints belong to model
   for (std::vector<std::string>::const_iterator it =
            settings_.controlled_joints_names.begin();
@@ -78,6 +73,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   }
 
   rmodel_ = buildReducedModel(rmodel_complete_, locked_joints_id, q_complete_);
+  root_ids_ = rmodel_.getFrameId(settings_.root_name);
   for (std::size_t i = 0; i < settings_.end_effector_names.size(); i++) {
     std::string name = settings_.end_effector_names[i];
     end_effector_map_.insert({name, rmodel_.getFrameId(name)});
@@ -88,7 +84,6 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     hip_map_.insert({settings_.end_effector_names[i],
                      rmodel_.getFrameId(settings.hip_names[i])});
   }
-  root_ids_ = rmodel_.getFrameId(settings_.root_name);
   rdata_ = Data(rmodel_);
 
   if (settings_.srdf_path.size() > 0) {
@@ -205,10 +200,10 @@ pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation, 
   placement.translation() = translation;
   auto new_frame = pinocchio::Frame(
     name, 
-    1,
-    2,
+    rmodel_.frames[root_ids_].parentJoint,
+    root_ids_,
     placement, 
-    pinocchio::FIXED_JOINT
+    pinocchio::OP_FRAME
   );
 
   auto frame_id = rmodel_.addFrame(new_frame);
