@@ -78,11 +78,8 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
     std::string name = settings_.end_effector_names[i];
     end_effector_map_.insert({name, rmodel_.getFrameId(name)});
     end_effector_ids_.push_back(rmodel_.getFrameId(name));
-    ref_end_effector_map_.insert({name, addFrameToBase(settings_.feet_to_base_trans[i], name + "_ref")});
-  }
-  for (std::size_t i = 0; i < settings_.hip_names.size(); i++) {
-    hip_map_.insert({settings_.end_effector_names[i],
-                     rmodel_.getFrameId(settings.hip_names[i])});
+    ref_end_effector_map_.insert(
+        {name, addFrameToBase(settings_.feet_to_base_trans[i], name + "_ref")});
   }
   rdata_ = Data(rmodel_);
 
@@ -98,6 +95,7 @@ void RobotHandler::initialize(const RobotHandlerSettings &settings) {
   v_ = Eigen::VectorXd::Zero(rmodel_.nv);
   x_.resize(rmodel_.nq + rmodel_.nv);
   x_centroidal_.resize(9);
+
   // Generating list of indices for controlled joints //
   for (std::vector<std::string>::const_iterator it = rmodel_.names.begin() + 1;
        it != rmodel_.names.end(); ++it) {
@@ -195,16 +193,12 @@ void RobotHandler::computeMass() {
     mass_ += I.mass();
 }
 
-pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation, std::string name) {
+pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation,
+                                                   std::string name) {
   auto placement = pinocchio::SE3::Identity();
   placement.translation() = translation;
-  auto new_frame = pinocchio::Frame(
-    name, 
-    rmodel_.frames[root_ids_].parentJoint,
-    root_ids_,
-    placement, 
-    pinocchio::OP_FRAME
-  );
+  auto new_frame = pinocchio::Frame(name, rmodel_.frames[root_ids_].parentJoint,
+                                    root_ids_, placement, pinocchio::OP_FRAME);
 
   auto frame_id = rmodel_.addFrame(new_frame);
 

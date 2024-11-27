@@ -17,7 +17,6 @@
 
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/robot-handler.hpp"
-#include <chrono>
 
 namespace simple_mpc {
 using namespace aligator;
@@ -179,15 +178,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getHandler().updateState(q_current, v_current, false);
 
   // ~~TIMING~~ //
-  std::chrono::steady_clock::time_point begin =
-      std::chrono::steady_clock::now();
   recedeWithCycle();
-  /* std::chrono::steady_clock::time_point end =
-  std::chrono::steady_clock::now(); std::cout << "recedeCycle = "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                     begin)
-                   .count()
-            << "[ms]" << std::endl; */
 
   // ~~REFERENCES~~ //
   updateStepTrackerReferences();
@@ -203,15 +194,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
   problem_->getProblem()->setInitState(x0_);
 
   // ~~SOLVER~~ //
-  std::chrono::steady_clock::time_point begin5 =
-      std::chrono::steady_clock::now();
   solver_->run(*problem_->getProblem(), xs_, us_);
-  /* std::chrono::steady_clock::time_point end5 =
-  std::chrono::steady_clock::now(); std::cout << "solve = "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end5 -
-                                                                     begin5)
-                   .count()
-            << "[ms]" << std::endl; */
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
@@ -286,8 +269,9 @@ void MPC::updateStepTrackerReferences() {
     twist_vect_[0] =
         -(problem_->getHandler().getRefFootPose(name).translation()[1] -
           problem_->getHandler().getRootFrame().translation()[1]);
-    twist_vect_[1] = problem_->getHandler().getRefFootPose(name).translation()[0] -
-                     problem_->getHandler().getRootFrame().translation()[0];
+    twist_vect_[1] =
+        problem_->getHandler().getRefFootPose(name).translation()[0] -
+        problem_->getHandler().getRootFrame().translation()[0];
     next_pose_.head(2) =
         problem_->getHandler().getRefFootPose(name).translation().head(2);
     next_pose_.head(2) +=

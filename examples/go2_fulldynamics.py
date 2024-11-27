@@ -43,6 +43,12 @@ design_conf = dict(
         "RL_thigh",
         "RR_thigh",
     ],
+    feet_to_base_trans=[
+        np.array([0.2, 0.15, 0.]),
+        np.array([0.2, -0.15, 0.]),
+        np.array([-0.2, 0.15, 0.]),
+        np.array([-0.2, -0.15, 0.]),
+    ]
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
@@ -54,7 +60,7 @@ fref = np.zeros(force_size)
 fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.zeros(handler.getModel().nv - 6)
 
-w_basepos = [0, 0, 0, 0, 0, 0]
+w_basepos = [0, 0, 10, 10, 10, 0]
 w_legpos = [1, 1, 1]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
@@ -94,8 +100,8 @@ dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
 """ T_ds = 80
 T_ss = 30 """
 
-T_ds = 10
-T_ss = 40
+T_ds = 5
+T_ss = 30
 mpc_conf = dict(
     ddpIteration=1,
     support_force=-handler.getMass() * gravity[2],
@@ -210,23 +216,10 @@ for t in range(10000):
     )
 
     mpc.iterate(q_current, v_current)
-    """ if t == 500:
+    if t == 500:
         mpc.switchToStand()
     if t == 700:
-        mpc.switchToWalk(v) """
-    if t == 695:
-        for s in range(T):
-            device.resetState(mpc.xs[s][: handler.getModel().nq])
-            time.sleep(0.1)
-            print("s = " + str(s))
-            device.moveQuadrupedFeet(
-                mpc.getReferencePose(s, "FL_foot").translation,
-                mpc.getReferencePose(s, "FR_foot").translation,
-                mpc.getReferencePose(s, "RL_foot").translation,
-                mpc.getReferencePose(s, "RR_foot").translation,
-            )
-        top = mpc.getTrajOptProblem()
-        exit()
+        mpc.switchToWalk(v)
 
     for j in range(10):
         # time.sleep(0.01)

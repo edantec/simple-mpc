@@ -26,7 +26,11 @@ RobotHandler getTalosHandler() {
       "arm_right_3_joint", "arm_right_4_joint",
   };
   settings.end_effector_names = {"left_sole_link", "right_sole_link"};
-  settings.hip_names = {"leg_left_2_link", "right_left_2_link"};
+  Eigen::Vector3d left_foot_trans;
+  Eigen::Vector3d right_foot_trans;
+  left_foot_trans << 0., 0.1, 0.;
+  right_foot_trans << 0., -0.1, 0.;
+  settings.feet_to_base_trans = {left_foot_trans, right_foot_trans};
   settings.base_configuration = "half_sitting";
   settings.root_name = "root_joint";
   settings.load_rotor = true;
@@ -48,7 +52,15 @@ RobotHandler getSoloHandler() {
       "HL_HAA",     "HL_HFE", "HL_KFE", "HR_HAA", "HR_HFE", "HR_KFE",
   };
   settings.end_effector_names = {"FR_FOOT", "FL_FOOT", "HL_FOOT", "HR_FOOT"};
-  settings.hip_names = {"FR_THIGH", "FL_THIGH", "HL_THIGH", "HR_THIGH"};
+  Eigen::Vector3d FL_trans;
+  Eigen::Vector3d FR_trans;
+  Eigen::Vector3d HL_trans;
+  Eigen::Vector3d HR_trans;
+  FL_trans << 0.1, 0.1, 0.;
+  FR_trans << 0.1, -0.1, 0.;
+  HL_trans << -0.1, 0.1, 0.;
+  HR_trans << -0.1, -0.1, 0.;
+  settings.feet_to_base_trans = {FR_trans, FL_trans, HL_trans, HR_trans};
   settings.base_configuration = "straight_standing";
   settings.root_name = "root_joint";
 

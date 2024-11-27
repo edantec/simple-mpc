@@ -40,7 +40,6 @@ public:
   // Joint-related items
   std::vector<std::string> controlled_joints_names;
   std::vector<std::string> end_effector_names;
-  std::vector<std::string> hip_names;
   std::vector<Eigen::Vector3d> feet_to_base_trans;
 
   // Useful names
@@ -58,7 +57,6 @@ private:
   // Useful index
   std::vector<unsigned long> controlled_joints_ids_;
   std::map<std::string, FrameIndex> end_effector_map_;
-  std::map<std::string, FrameIndex> hip_map_;
   std::vector<FrameIndex> end_effector_ids_;
   std::map<std::string, FrameIndex> ref_end_effector_map_;
 
@@ -92,8 +90,9 @@ public:
                    const bool updateJacobians);
   void updateInternalData(const bool updateJacobians);
   void updateJacobiansMassMatrix();
-  
-  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation, std::string name);
+
+  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation,
+                                       std::string name);
 
   // Return reduced state from measures
   const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,
@@ -109,12 +108,6 @@ public:
   }
   const SE3 &getFootPose(const std::string &ee_name) {
     return rdata_.oMf[getFootId(ee_name)];
-  };
-  const FrameIndex &getHipId(const std::string &ee_name) {
-    return hip_map_.at(ee_name);
-  }
-  const SE3 &getHipPose(const std::string &ee_name) {
-    return rdata_.oMf[getHipId(ee_name)];
   };
   const FrameIndex &getRefFootId(const std::string &ee_name) {
     return ref_end_effector_map_.at(ee_name);

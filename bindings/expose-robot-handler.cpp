@@ -39,8 +39,8 @@ void initialize(RobotHandler &self, bp::dict settings) {
                         conf.controlled_joints_names);
   py_list_to_std_vector(settings["end_effector_names"],
                         conf.end_effector_names);
-  py_list_to_std_vector(settings["hip_names"], conf.hip_names);
-  py_list_to_std_vector(settings["feet_to_base_trans"], conf.feet_to_base_trans);
+  py_list_to_std_vector(settings["feet_to_base_trans"],
+                        conf.feet_to_base_trans);
   self.initialize(conf);
 }
 

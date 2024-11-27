@@ -45,6 +45,12 @@ design_conf = dict(
         "RL_foot",
         "RR_foot",
     ],
+    feet_to_base_trans=[
+        np.array([0.2, 0.15, 0.]),
+        np.array([0.2, -0.15, 0.]),
+        np.array([-0.2, 0.15, 0.]),
+        np.array([-0.2, -0.15, 0.]),
+    ]
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
@@ -92,6 +98,9 @@ problem_conf = dict(
     mu=0.8,
     Lfoot=0.01,
     Wfoot=0.01,
+    torque_limits=True,
+    kinematics_limits=True,
+    force_cone=True,
 )
 nsteps = 100
 
@@ -101,23 +110,6 @@ dynproblem.createProblem(handler.getState(), nsteps, force_size, gravity[2])
 
 T_ground = 100
 T_fly = 30
-mpc_conf = dict(
-    ddpIteration=1,
-    support_force=-handler.getMass() * gravity[2],
-    TOL=1e-4,
-    mu_init=1e-8,
-    max_iters=1,
-    num_threads=8,
-    swing_apex=0.15,
-    T_fly=T_fly,
-    T_contact=T_ground,
-    T=nsteps,
-    x_translation=0.0,
-    y_translation=0.0,
-)
-
-mpc = MPC()
-mpc.initialize(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_quadru = {
@@ -135,8 +127,6 @@ contact_phase_lift = {
 contact_phases = [contact_phase_quadru] * T_ground
 contact_phases += [contact_phase_lift] * T_fly
 contact_phases += [contact_phase_quadru] * T_ground
-
-mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize simulation"""
 device = BulletRobot(

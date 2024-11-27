@@ -38,12 +38,12 @@ design_conf = dict(
         "RL_foot",
         "RR_foot",
     ],
-    hip_names=[
-        "FL_thigh",
-        "FR_thigh",
-        "RL_thigh",
-        "RR_thigh",
-    ],
+    feet_to_base_trans=[
+        np.array([0.2, 0.15, 0.]),
+        np.array([0.2, -0.15, 0.]),
+        np.array([-0.2, 0.15, 0.]),
+        np.array([-0.2, -0.15, 0.]),
+    ]
 )
 handler = RobotHandler()
 handler.initialize(design_conf)

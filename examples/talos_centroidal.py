@@ -264,10 +264,10 @@ design_conf = dict(
         "left_sole_link",
         "right_sole_link",
     ],
-    hip_names=[
-        "leg_left_2_link",
-        "right_left_2_link",
-    ],
+    feet_to_base_trans=[
+        np.array([0., 0.1, 0.]),
+        np.array([0., -0.1, 0.]),
+    ]
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
