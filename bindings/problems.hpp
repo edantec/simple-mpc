@@ -140,6 +140,15 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getVelocityBase", t);
   }
 
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setPoseBase", t, pose_base);
+  }
+
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getPoseBase", t);
+  }
+
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", );
   }
@@ -242,6 +251,17 @@ struct PyFullDynamicsProblem : FullDynamicsProblem,
                                getVelocityBase, t);
   }
 
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, FullDynamicsProblem, setPoseBase, t,
+                               pose_base);
+  }
+
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
+                               getPoseBase, t);
+  }
+
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, FullDynamicsProblem,
                                getProblemState, );
@@ -336,6 +356,17 @@ struct PyCentroidalProblem : CentroidalProblem, bp::wrapper<CentroidalProblem> {
                                getVelocityBase, t);
   }
 
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, CentroidalProblem, setPoseBase, t,
+                               pose_base);
+  }
+
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem, getPoseBase,
+                               t);
+  }
+
   const Eigen::VectorXd getProblemState() override {
     SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, CentroidalProblem,
                                getProblemState, );
@@ -424,6 +455,17 @@ struct PyKinodynamicsProblem : KinodynamicsProblem,
                        const Eigen::VectorXd &velocity_base) override {
     SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setVelocityBase, t,
                                velocity_base);
+  }
+
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, KinodynamicsProblem, setPoseBase, t,
+                               pose_base);
+  }
+
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override {
+    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, KinodynamicsProblem,
+                               getPoseBase, t);
   }
 
   const Eigen::VectorXd getVelocityBase(const std::size_t t) override {

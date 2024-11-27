@@ -170,6 +170,7 @@ CentroidalSettings getCentroidalSettings() {
 
   CentroidalSettings settings;
   settings.DT = 0.01;
+  settings.w_com = Eigen::MatrixXd::Identity(3, 3) * 0;
   settings.w_u = Eigen::MatrixXd::Identity(nu, nu);
 
   settings.w_linear_mom = Eigen::MatrixXd::Identity(3, 3);

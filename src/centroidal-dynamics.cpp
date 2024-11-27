@@ -20,6 +20,7 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
   control_ref_.resize(nu_);
   control_ref_.setZero();
+  com_ref_.setZero();
 }
 
 StageModel CentroidalProblem::createStage(
@@ -44,6 +45,7 @@ StageModel CentroidalProblem::createStage(
   ContactMap contact_map =
       ContactMap(handler_.getFeetNames(), contact_states, contact_poses);
 
+  auto com_res = CentroidalCoMResidual(nx_, nu_, com_ref_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
 
@@ -54,6 +56,8 @@ StageModel CentroidalProblem::createStage(
       space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
 
+  rcost.addCost("com_cost",
+                QuadraticResidualCost(space, com_res, settings_.w_com));
   rcost.addCost("control_cost",
                 QuadraticControlCost(space, control_ref_, settings_.w_u));
   rcost.addCost(
@@ -245,6 +249,27 @@ void CentroidalProblem::setVelocityBase(const std::size_t t,
 
   cfm->setReference(velocity_base.head(3) * handler_.getMass());
   cfa->setReference(velocity_base.tail(3) * handler_.getMass());
+}
+
+const Eigen::VectorXd CentroidalProblem::getPoseBase(const std::size_t t) {
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qrc =
+      cs->getComponent<QuadraticResidualCost>("com_cost");
+  CentroidalCoMResidual *cfr = qrc->getResidual<CentroidalCoMResidual>();
+  return cfr->getReference();
+}
+
+void CentroidalProblem::setPoseBase(const std::size_t t,
+                                    const Eigen::VectorXd &pose_base) {
+  if (pose_base.size() != 3) {
+    throw std::runtime_error("pose_base size should be 3");
+  }
+  CostStack *cs = getCostStack(t);
+  QuadraticResidualCost *qrc =
+      cs->getComponent<QuadraticResidualCost>("com_cost");
+  CentroidalCoMResidual *cfr = qrc->getResidual<CentroidalCoMResidual>();
+  com_ref_ = pose_base;
+  cfr->setReference(com_ref_);
 }
 
 const Eigen::VectorXd CentroidalProblem::getProblemState() {

@@ -119,6 +119,9 @@ public:
   const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
   void setVelocityBase(const std::size_t t,
                        const Eigen::VectorXd &velocity_base) override;
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override;
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
   FullDynamicsSettings getSettings() { return settings_; }

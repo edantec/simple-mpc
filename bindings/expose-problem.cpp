@@ -61,6 +61,10 @@ void exposeBaseProblem() {
            bp::args("self", "t", "velocity_base"))
       .def("getVelocityBase", bp::pure_virtual(&Problem::getVelocityBase),
            bp::args("self", "t"))
+      .def("setPoseBase", bp::pure_virtual(&Problem::setPoseBase),
+           bp::args("self", "t", "pose_base"))
+      .def("getPoseBase", bp::pure_virtual(&Problem::getPoseBase),
+           bp::args("self", "t"))
       .def("getProblemState", bp::pure_virtual(&Problem::getProblemState),
            bp::args("self"))
       .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
@@ -241,6 +245,10 @@ void exposeFullDynamicsProblem() {
            bp::args("self", "t", "velocity_base"))
       .def("getVelocityBase", &FullDynamicsProblem::getVelocityBase,
            bp::args("self", "t"))
+      .def("setPoseBase", &FullDynamicsProblem::setPoseBase,
+           bp::args("self", "t", "pose_base"))
+      .def("getPoseBase", &FullDynamicsProblem::getPoseBase,
+           bp::args("self", "t"))
       .def("getProblemState", &FullDynamicsProblem::getProblemState,
            bp::args("self"))
       .def("getContactSupport", &FullDynamicsProblem::getContactSupport,
@@ -258,6 +266,7 @@ void exposeFullDynamicsProblem() {
 void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   CentroidalSettings conf;
   conf.DT = bp::extract<double>(settings["DT"]);
+  conf.w_com = bp::extract<Eigen::Matrix3d>(settings["w_com"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_linear_mom = bp::extract<Eigen::Matrix3d>(settings["w_linear_mom"]);
   conf.w_angular_mom = bp::extract<Eigen::Matrix3d>(settings["w_angular_mom"]);
@@ -327,6 +336,7 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
   CentroidalSettings conf = self.getSettings();
   bp::dict settings;
   settings["DT"] = conf.DT;
+  settings["w_com"] = conf.w_com;
   settings["w_u"] = conf.w_u;
   settings["w_linear_mom"] = conf.w_linear_mom;
   settings["w_angular_mom"] = conf.w_angular_mom;
@@ -399,6 +409,10 @@ void exposeCentroidalProblem() {
       .def("setVelocityBase", &CentroidalProblem::setVelocityBase,
            bp::args("self", "t", "velocity_base"))
       .def("getVelocityBase", &CentroidalProblem::getVelocityBase,
+           bp::args("self", "t"))
+      .def("setPoseBase", &CentroidalProblem::setPoseBase,
+           bp::args("self", "t", "pose_base"))
+      .def("getPoseBase", &CentroidalProblem::getPoseBase,
            bp::args("self", "t"))
       .def("getProblemState", &CentroidalProblem::getProblemState,
            bp::args("self"))
@@ -572,6 +586,10 @@ void exposeKinodynamicsProblem() {
       .def("setVelocityBase", &KinodynamicsProblem::setVelocityBase,
            bp::args("self", "t", "velocity_base"))
       .def("getVelocityBase", &KinodynamicsProblem::getVelocityBase,
+           bp::args("self", "t"))
+      .def("setPoseBase", &KinodynamicsProblem::setPoseBase,
+           bp::args("self", "t", "pose_base"))
+      .def("getPoseBase", &KinodynamicsProblem::getPoseBase,
            bp::args("self", "t"))
       .def("getProblemState", &KinodynamicsProblem::getProblemState,
            bp::args("self"))

@@ -44,6 +44,7 @@ struct CentroidalSettings {
 
   // Cost function weights
   Eigen::MatrixXd w_u;           // Control
+  Eigen::Matrix3d w_com;         // Linear momentum
   Eigen::Matrix3d w_linear_mom;  // Linear momentum
   Eigen::Matrix3d w_angular_mom; // Angular momentum
   Eigen::Matrix3d w_linear_acc;  // Linear acceleration
@@ -107,6 +108,9 @@ public:
   const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
   void setVelocityBase(const std::size_t t,
                        const Eigen::VectorXd &velocity_base) override;
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override;
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
 
@@ -115,6 +119,7 @@ public:
 protected:
   CentroidalSettings settings_;
   int nx_;
+  Eigen::Vector3d com_ref_;
 };
 
 } // namespace simple_mpc

@@ -112,6 +112,11 @@ public:
   virtual void setVelocityBase(const std::size_t t,
                                const Eigen::VectorXd &velocity_base) = 0;
 
+  // Setter and getter for base pose
+  virtual const Eigen::VectorXd getPoseBase(const std::size_t t) = 0;
+  virtual void setPoseBase(const std::size_t t,
+                           const Eigen::VectorXd &pose_base) = 0;
+
   // Setter and getter for forces reference
   virtual void setReferenceForces(
       const std::size_t t,

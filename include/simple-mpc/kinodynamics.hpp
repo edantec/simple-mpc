@@ -99,6 +99,9 @@ public:
   const pinocchio::SE3 getReferencePose(const std::size_t i,
                                         const std::string &cost_name) override;
   const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
+  const Eigen::VectorXd getPoseBase(const std::size_t t) override;
+  void setPoseBase(const std::size_t t,
+                   const Eigen::VectorXd &pose_base) override;
   void setVelocityBase(const std::size_t t,
                        const Eigen::VectorXd &velocity_base) override;
   const Eigen::VectorXd getProblemState() override;

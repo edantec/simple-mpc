@@ -257,9 +257,29 @@ KinodynamicsProblem::getVelocityBase(const std::size_t t) {
 
 void KinodynamicsProblem::setVelocityBase(
     const std::size_t t, const Eigen::VectorXd &velocity_base) {
+  if (velocity_base.size() != 6) {
+    throw std::runtime_error("velocity_base size should be 6");
+  }
   CostStack *cs = getCostStack(t);
   QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
   x0_.segment(nq_, 6) = velocity_base;
+  qc->setTarget(x0_);
+}
+
+const Eigen::VectorXd KinodynamicsProblem::getPoseBase(const std::size_t t) {
+  CostStack *cs = getCostStack(t);
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  return qc->getTarget().head(7);
+};
+
+void KinodynamicsProblem::setPoseBase(const std::size_t t,
+                                      const Eigen::VectorXd &pose_base) {
+  if (pose_base.size() != 7) {
+    throw std::runtime_error("pose_base size should be 7");
+  }
+  CostStack *cs = getCostStack(t);
+  QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
+  x0_.head(7) = pose_base;
   qc->setTarget(x0_);
 }
 

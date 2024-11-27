@@ -98,6 +98,11 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
                               force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(5, "left_sole_link"),
                     force_refs.at("left_sole_link"));
+
+  Eigen::VectorXd pose_base(7);
+  pose_base << 0, 0, 2, 0, 0, 0, 1;
+  fdproblem.setPoseBase(2, pose_base);
+  BOOST_CHECK_EQUAL(fdproblem.getPoseBase(2), pose_base);
 }
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
@@ -187,6 +192,11 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                               force_refs.at("left_sole_link"));
   BOOST_CHECK_EQUAL(knproblem.getReferenceForce(5, "left_sole_link"),
                     force_refs.at("left_sole_link"));
+
+  Eigen::VectorXd pose_base(7);
+  pose_base << 0, 0, 2, 0, 0, 0, 1;
+  knproblem.setPoseBase(2, pose_base);
+  BOOST_CHECK_EQUAL(knproblem.getPoseBase(2), pose_base);
 }
 
 BOOST_AUTO_TEST_CASE(centroidal) {
@@ -221,7 +231,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                                        force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
-  BOOST_CHECK_EQUAL(cs->components_.size(), 5);
+  BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 1);
 
   cproblem.createProblem(handler.getCentroidalState(), 100, 6,
@@ -277,6 +287,11 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                     new_poses.at("left_sole_link"));
   BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "right_sole_link"),
                     new_poses.at("right_sole_link"));
+
+  Eigen::VectorXd pose_base(3);
+  pose_base << 0, 0, 2;
+  cproblem.setPoseBase(2, pose_base);
+  BOOST_CHECK_EQUAL(cproblem.getPoseBase(2), pose_base);
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {
@@ -316,7 +331,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
                                        force_refs, contact_states);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
-  BOOST_CHECK_EQUAL(cs->components_.size(), 5);
+  BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
   cproblem.createProblem(handler.getCentroidalState(), 100, 3,
