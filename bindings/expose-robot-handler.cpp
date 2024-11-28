@@ -28,10 +28,8 @@ inline void py_list_to_std_vector(const bp::object &iterable,
 
 void initialize(RobotHandler &self, bp::dict settings) {
   RobotHandlerSettings conf;
-  conf.urdf_path = bp::extract<std::string>(settings["urdf_path"]);
-  conf.srdf_path = bp::extract<std::string>(settings["srdf_path"]);
-  conf.robot_description =
-      bp::extract<std::string>(settings["robot_description"]);
+  conf.robot_urdf = bp::extract<std::string>(settings["robot_urdf"]);
+  conf.robot_srdf = bp::extract<std::string>(settings["robot_srdf"]);
   conf.root_name = bp::extract<std::string>(settings["root_name"]);
   conf.base_configuration =
       bp::extract<std::string>(settings["base_configuration"]);

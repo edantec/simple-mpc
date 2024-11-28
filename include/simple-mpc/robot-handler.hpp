@@ -21,50 +21,55 @@
 
 namespace simple_mpc {
 using namespace pinocchio;
+
 /**
  * @brief Class managing every robot-related quantities.
  *
  * It holds the robot data, controlled joints, end-effector names
  * and other useful items.
  */
-
 struct RobotHandlerSettings {
 public:
-  // Path to fetch the robot model.
-  // Either urdf_path or robot_description should
-  // be filled.
-  std::string urdf_path = "";
-  std::string srdf_path = "";
-  std::string robot_description = "";
+  /**
+   * @brief Robot model with all joints unlocked
+   */
+  Model model_full;
 
-  // Joint-related items
-  std::vector<std::string> controlled_joints_names;
-  std::vector<std::string> end_effector_names;
-  std::vector<Eigen::Vector3d> feet_to_base_trans;
+  /**
+   * @brief Reduced model to be used by ocp
+   */
+  Model model;
 
-  // Useful names
-  std::string root_name = "";
-  std::string base_configuration = "";
+  /**
+   * @brief Robot total mass
+   */
+  double mass;
 
-  // Wether to use rotor parameters in joint dynamics
-  bool load_rotor = false;
+  /**
+   * @brief Joint id to be controlled in full model
+   */
+  std::vector<unsigned long> controlled_joints_ids;
+
+  /**
+   * @brief Ids of the frames to be in contact with the environment
+   */
+  std::vector<FrameIndex> feet_ids;
+
+  /**
+   * @brief Ids of the frames that are reference position for the feet
+   */
+  std::vector<FrameIndex> ref_feet_ids;
+
+  /**
+   * @brief Name of the configuration to use as reference
+   */
+  Eigen::VectorXd reference_configuration;
 };
 
 class RobotHandler {
 private:
   RobotHandlerSettings settings_;
-
-  // Useful index
-  std::vector<unsigned long> controlled_joints_ids_;
-  std::map<std::string, FrameIndex> end_effector_map_;
-  std::vector<FrameIndex> end_effector_ids_;
-  std::map<std::string, FrameIndex> ref_end_effector_map_;
-
-  unsigned long root_ids_;
-
-  // Pinocchio objects
-  Model rmodel_complete_, rmodel_;
-  Data rdata_;
+  Data data;
 
   // State vectors
   Eigen::VectorXd q_complete_, q_;
@@ -73,8 +78,7 @@ private:
   Eigen::VectorXd x_centroidal_;
   Eigen::MatrixXd M_; // Mass matrix
 
-  // Robot total mass and CoM
-  double mass_ = 0;
+  // Position of robot Center of Mass
   Eigen::Vector3d com_position_;
 
 public:
@@ -117,7 +121,6 @@ public:
   };
   const SE3 &getRootFrame() { return rdata_.oMf[root_ids_]; }
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
-  const double &getMass() { return mass_; }
   const Model &getModel() { return rmodel_; }
   const Model &getCompleteModel() { return rmodel_complete_; }
   const Data &getData() { return rdata_; }
