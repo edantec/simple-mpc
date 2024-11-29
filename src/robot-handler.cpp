@@ -141,26 +141,26 @@ void RobotHandler::updateState(const Eigen::VectorXd &q,
 }
 
 void RobotHandler::updateInternalData(const bool updateJacobians) {
-  forwardKinematics(settings_.model, rdata_, q_);
-  updateFramePlacements(settings_.model, rdata_);
-  com_position_ = centerOfMass(settings_.model, rdata_, q_, false);
-  computeCentroidalMomentum(settings_.model, rdata_, q_, v_);
+  forwardKinematics(settings_.model, data, q_);
+  updateFramePlacements(settings_.model, data);
+  com_position_ = centerOfMass(settings_.model, data, q_, false);
+  computeCentroidalMomentum(settings_.model, data, q_, v_);
 
   x_centroidal_.head(3) = com_position_;
-  x_centroidal_.segment(3, 3) = rdata_.hg.linear();
-  x_centroidal_.tail(3) = rdata_.hg.angular();
+  x_centroidal_.segment(3, 3) = data.hg.linear();
+  x_centroidal_.tail(3) = data.hg.angular();
 
   if (updateJacobians)
     updateJacobiansMassMatrix();
 }
 
 void RobotHandler::updateJacobiansMassMatrix() {
-  computeJointJacobians(settings_.model, rdata_);
-  computeJointJacobiansTimeVariation(settings_.model, rdata_, q_, v_);
-  crba(settings_.model, rdata_, q_);
-  make_symmetric(rdata_.M);
-  nonLinearEffects(settings_.model, rdata_, q_, v_);
-  dccrba(settings_.model, rdata_, q_, v_);
+  computeJointJacobians(settings_.model, data);
+  computeJointJacobiansTimeVariation(settings_.model, data, q_, v_);
+  crba(settings_.model, data, q_);
+  make_symmetric(data.M);
+  nonLinearEffects(settings_.model, data, q_, v_);
+  dccrba(settings_.model, data, q_, v_);
 }
 
 const Eigen::VectorXd RobotHandler::shapeState(const Eigen::VectorXd &q,
@@ -185,12 +185,6 @@ const Eigen::VectorXd RobotHandler::shapeState(const Eigen::VectorXd &q,
     throw std::runtime_error(
         "q and v must have the dimentions of the reduced or complete model.");
   }
-}
-
-void RobotHandler::computeMass() {
-  mass_ = 0;
-  for (Inertia &I : settings_.model.inertias)
-    mass_ += I.mass();
 }
 
 pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation,

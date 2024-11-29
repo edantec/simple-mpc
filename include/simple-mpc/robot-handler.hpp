@@ -51,6 +51,11 @@ public:
   std::vector<unsigned long> controlled_joints_ids;
 
   /**
+   * @brief Names of the frames to be in contact with the environment
+   */
+  std::vector<std::string> feet_names;
+
+  /**
    * @brief Ids of the frames to be in contact with the environment
    */
   std::vector<FrameIndex> feet_ids;
@@ -69,6 +74,48 @@ public:
    * @brief Root frame id
    */
   pinocchio::FrameIndex root_id;
+
+public:
+  // Const getters
+  size_t getFootIndex(const std::string &foot_name) const
+  {
+    std::find(feet_names.begin(), feet_names.end(), foot_name) - feet_names.begin();
+  }
+
+  const std::string &getFootName(size_t i) const
+  {
+    return feet_names[i];
+  }
+
+  const std::vector<std::string> &getFeetNames() const
+  {
+    return feet_names;
+  }
+
+  const FrameIndex &getFootId(const std::string &foot_name) const
+  {
+    return feet_ids.at[getFootIndex(foot_name)]
+  }
+
+  const FrameIndex &getRefFootId(const std::string &foot_name) const
+  {
+    return feet_ids.at(foot_name);
+  }
+
+  double getMass() const
+  {
+    return settings_.mass;
+  }
+
+  const Model &getModel()
+  {
+    return settings_.model;
+  }
+
+  const Model &getCompleteModel()
+  {
+    return settings_.model_full;
+  }
 };
 
 class RobotHandler {
@@ -110,23 +157,17 @@ public:
   Eigen::VectorXd difference(const Eigen::VectorXd &x1,
                              const Eigen::VectorXd &x2);
   // Getters
-  const std::vector<FrameIndex> &getFeetIds() { return settings_.ref_feet_ids; }
-  const FrameIndex &getFootId(size_t feet) {
-    return settings_.feet_ids.at(feet);
-  }
-  const SE3 &getFootPose(size_t feet) {
-    return data.oMf[getFootId(feet)];
+  const SE3 &getRefFootPose(const std::string &foot_name) const
+  {
+    return data.oMf[getRefFootId(foot_name)];
   };
-  const FrameIndex &getRefFootId(size_t feet) {
-    return settings_.feet_ids.at(feet);
-  }
-  const SE3 &getRefFootPose(size_t feet) {
-    return data.oMf[getRefFootId(feet)];
+  const SE3 &getFootPose(const std::string &foot_name) const
+  {
+    return data.oMf[getFootId(foot_name)];
   };
+
   const SE3 &getRootFrame() { return data.oMf[settings_.root_id]; }
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
-  const Model &getModel() { return settings_.model; }
-  const Model &getCompleteModel() { return settings_.model_full; }
   const Data &getData() { return data; }
   const Eigen::VectorXd &getConfiguration() { return q_; }
   const Eigen::VectorXd &getVelocity() { return v_; }
@@ -136,8 +177,6 @@ public:
   const RobotHandlerSettings &getSettings() { return settings_; }
   const Eigen::Vector3d &getComPosition() { return com_position_; }
   const Eigen::MatrixXd &getMassMatrix() { return data.M; }
-  // Compute the total robot mass
-  void computeMass();
 };
 
 } // namespace simple_mpc
