@@ -64,6 +64,11 @@ public:
    * @brief Name of the configuration to use as reference
    */
   Eigen::VectorXd reference_configuration;
+
+  /**
+   * @brief Root frame id
+   */
+  pinocchio::FrameIndex root_id;
 };
 
 class RobotHandler {
@@ -105,42 +110,32 @@ public:
   Eigen::VectorXd difference(const Eigen::VectorXd &x1,
                              const Eigen::VectorXd &x2);
   // Getters
-  const FrameIndex &getRootId() { return root_ids_; }
-  const std::vector<FrameIndex> &getFeetIds() { return end_effector_ids_; }
-  const FrameIndex &getFootId(const std::string &ee_name) {
-    return end_effector_map_.at(ee_name);
+  const std::vector<FrameIndex> &getFeetIds() { return settings_.ref_feet_ids; }
+  const FrameIndex &getFootId(size_t feet) {
+    return settings_.feet_ids.at(feet);
   }
-  const SE3 &getFootPose(const std::string &ee_name) {
-    return rdata_.oMf[getFootId(ee_name)];
+  const SE3 &getFootPose(size_t feet) {
+    return data.oMf[getFootId(feet)];
   };
-  const FrameIndex &getRefFootId(const std::string &ee_name) {
-    return ref_end_effector_map_.at(ee_name);
+  const FrameIndex &getRefFootId(size_t feet) {
+    return settings_.feet_ids.at(feet);
   }
-  const SE3 &getRefFootPose(const std::string &ee_name) {
-    return rdata_.oMf[getRefFootId(ee_name)];
+  const SE3 &getRefFootPose(size_t feet) {
+    return data.oMf[getRefFootId(feet)];
   };
-  const SE3 &getRootFrame() { return rdata_.oMf[root_ids_]; }
+  const SE3 &getRootFrame() { return data.oMf[settings_.root_id]; }
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
-  const Model &getModel() { return rmodel_; }
-  const Model &getCompleteModel() { return rmodel_complete_; }
-  const Data &getData() { return rdata_; }
+  const Model &getModel() { return settings_.model; }
+  const Model &getCompleteModel() { return settings_.model_full; }
+  const Data &getData() { return data; }
   const Eigen::VectorXd &getConfiguration() { return q_; }
   const Eigen::VectorXd &getVelocity() { return v_; }
   const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
   const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
   const Eigen::VectorXd &getState() { return x_; }
-  const std::string &getFootName(const unsigned long &i) {
-    return settings_.end_effector_names[i];
-  }
-  const std::vector<std::string> &getFeetNames() {
-    return settings_.end_effector_names;
-  }
   const RobotHandlerSettings &getSettings() { return settings_; }
-  const std::vector<unsigned long> &getControlledJointsIDs() {
-    return controlled_joints_ids_;
-  }
   const Eigen::Vector3d &getComPosition() { return com_position_; }
-  const Eigen::MatrixXd &getMassMatrix() { return rdata_.M; }
+  const Eigen::MatrixXd &getMassMatrix() { return data.M; }
   // Compute the total robot mass
   void computeMass();
 };
