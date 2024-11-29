@@ -4,6 +4,8 @@ from simple_mpc import RobotHandler, KinodynamicsProblem, MPC, IDSolver
 import example_robot_data
 import pinocchio as pin
 import time
+import copy
+from utils import save_trajectory
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -39,10 +41,10 @@ design_conf = dict(
         "RR_foot",
     ],
     feet_to_base_trans=[
-        np.array([0.2, 0.15, 0.]),
-        np.array([0.2, -0.15, 0.]),
-        np.array([-0.2, 0.15, 0.]),
-        np.array([-0.2, -0.15, 0.]),
+        np.array([0.17, 0.15, 0.]),
+        np.array([0.17, -0.15, 0.]),
+        np.array([-0.24, 0.15, 0.]),
+        np.array([-0.24, -0.15, 0.]),
     ]
 )
 handler = RobotHandler()
@@ -56,7 +58,7 @@ fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.concatenate((fref, fref, fref, fref, np.zeros(handler.getModel().nv - 6)))
 
 
-w_basepos = [0, 0, 0, 1000, 1000, 0]
+w_basepos = [0, 0, 100, 10, 10, 0]
 w_legpos = [1, 1, 1]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
@@ -70,7 +72,7 @@ w_u = np.concatenate(
         w_linforce,
         w_linforce,
         w_linforce,
-        np.ones(handler.getModel().nv - 6) * 1e-4,
+        np.ones(handler.getModel().nv - 6) * 1e-5,
     )
 )
 w_u = np.diag(w_u)
@@ -99,7 +101,7 @@ problem_conf = dict(
     Lfoot=0.01,
     Wfoot=0.01,
     kinematics_limits=True,
-    force_cone=True,
+    force_cone=False,
 )
 T = 50
 
@@ -108,7 +110,7 @@ dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
 
 T_ds = 10
-T_ss = 40
+T_ss = 30
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -146,11 +148,20 @@ contact_phase_lift_FR = {
     "RL_foot": False,
     "RR_foot": True,
 }
+contact_phase_lift = {
+    "FL_foot": False,
+    "FR_foot": False,
+    "RL_foot": False,
+    "RR_foot": False,
+}
 contact_phases = [contact_phase_quadru] * T_ds
 contact_phases += [contact_phase_lift_FL] * T_ss
 contact_phases += [contact_phase_quadru] * T_ds
 contact_phases += [contact_phase_lift_FR] * T_ss
 
+""" contact_phases = [contact_phase_quadru] * T_ds
+contact_phases += [contact_phase_lift] * T_ss
+contact_phases += [contact_phase_quadru] * T_ds """
 mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize whole-body inverse dynamics QP"""
@@ -196,10 +207,31 @@ device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
 )
+
+force_FL = []
+force_FR = []
+force_RL = []
+force_RR = []
+FL_measured = []
+FR_measured = []
+RL_measured = []
+RR_measured = []
+FL_references = []
+FR_references = []
+RL_references = []
+RR_references = []
+x_multibody = []
+u_multibody = []
+u_riccati = []
+com_measured = []
+solve_time = []
+L_measured = []
+
+N_simu = 10
 v = np.zeros(6)
-v[5] = 0.4
+v[0] = 0.2
 mpc.setVelocityBase(v)
-for t in range(5000):
+for t in range(2000):
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -217,12 +249,35 @@ for t in range(5000):
         v = np.zeros(6)
         v[0] = 0.2
         mpc.switchToWalk(v) """
-
+    start = time.time()
     mpc.iterate(q_current, v_current)
+    end = time.time()
+    solve_time.append(end - start)
+
+    force_FL.append(mpc.us[0][:3])
+    force_FR.append(mpc.us[0][3:6])
+    force_RL.append(mpc.us[0][6:9])
+    force_RR.append(mpc.us[0][9:12])
+
+    FL_measured.append(mpc.getHandler().getFootPose("FL_foot").translation)
+    FR_measured.append(mpc.getHandler().getFootPose("FR_foot").translation)
+    RL_measured.append(mpc.getHandler().getFootPose("RL_foot").translation)
+    RR_measured.append(mpc.getHandler().getFootPose("RR_foot").translation)
+    FL_references.append(mpc.getReferencePose(0, "FL_foot").translation)
+    FR_references.append(mpc.getReferencePose(0, "FR_foot").translation)
+    RL_references.append(mpc.getReferencePose(0, "RL_foot").translation)
+    RR_references.append(mpc.getReferencePose(0, "RR_foot").translation)
+    com_measured.append(mpc.getHandler().getComPosition().copy())
+    L_measured.append(mpc.getHandler().getData().hg.angular.copy())
 
     a0 = (
         mpc.getSolver()
         .workspace.problem_data.stage_data[0]
+        .dynamics_data.continuous_data.xdot[nv:]
+    )
+    a1 = (
+        mpc.getSolver()
+        .workspace.problem_data.stage_data[1]
         .dynamics_data.continuous_data.xdot[nv:]
     )
     contact_states = (
@@ -249,37 +304,50 @@ for t in range(5000):
             )
         exit()  """
 
-    for j in range(10):
+    for j in range(N_simu):
         # time.sleep(0.01)
         q_current, v_current = device.measureState()
 
         x_measured = np.concatenate((q_current, v_current))
-
-        state_diff = mpc.getHandler().difference(x_measured, mpc.xs[0])
         mpc.getHandler().updateState(q_current, v_current, True)
 
-        a0[6:] = (
-            mpc.us[0][nk * force_size :]
-            - 1
-            * mpc.getSolver().results.controlFeedbacks()[0][nk * force_size :]
-            @ state_diff
-        )
-        forces = (
-            mpc.us[0][: nk * force_size]
-            - 1
-            * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
-            @ state_diff
-        )
-        # a0[6:] = mpc.us[0][nk * force_size :]
-        # forces = mpc.us[0][: nk * force_size]
+        a0[6:] = mpc.us[0][nk * force_size :]
+        a1[6:] = mpc.us[1][nk * force_size :]
+        a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
+        forces = mpc.us[0][: nk * force_size]
+        forces1 = mpc.us[1][: nk * force_size]
+        f_interp = (N_simu - j) / N_simu * forces + j / N_simu * forces1
 
         qp.solve_qp(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
-            a0,
-            forces,
+            a_interp,
+            f_interp,
             mpc.getHandler().getMassMatrix(),
         )
 
         device.execute(qp.solved_torque)
+        u_multibody.append(copy.deepcopy(qp.solved_torque))
+        x_multibody.append(x_measured)
+
+
+force_FL = np.array(force_FL)
+force_FR = np.array(force_FR)
+force_RL = np.array(force_RL)
+force_RR = np.array(force_RR)
+solve_time = np.array(solve_time)
+FL_measured = np.array(FL_measured)
+FR_measured = np.array(FR_measured)
+RL_measured = np.array(RL_measured)
+RR_measured = np.array(RR_measured)
+FL_references = np.array(FL_references)
+FR_references = np.array(FR_references)
+RL_references = np.array(RL_references)
+RR_references = np.array(RR_references)
+com_measured = np.array(com_measured)
+L_measured = np.array(L_measured)
+
+""" save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
+                FL_measured, FR_measured, RL_measured, RR_measured,
+                FL_references, FR_references, RL_references, RR_references, L_measured, "kinodynamics") """

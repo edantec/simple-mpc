@@ -93,6 +93,7 @@ void exposeMPC() {
            bp::args("self", "ee_name", "pose_ref"))
       .def("setVelocityBase", &MPC::setVelocityBase,
            bp::args("self", "velocity_base"))
+      .def("setPoseBase", &MPC::setPoseBase, bp::args("self", "pose_base"))
       .def("switchToWalk", &MPC::switchToWalk,
            bp::args("self", "velocity_base"))
       .def("switchToStand", &MPC::switchToStand, bp::args("self"))
@@ -100,6 +101,8 @@ void exposeMPC() {
            bp::args("self", "ee_name"))
       .def("getFootLandCycle", &MPC::getFootLandCycle,
            bp::args("self", "ee_name"))
+      .def("getCyclingContactState", &MPC::getCyclingContactState,
+           bp::args("self", "t", "ee_name"))
       .def("getHandler", &MPC::getHandler, bp::args("self"),
            bp::return_internal_reference<>(), "Get the robot handler.")
       .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
@@ -111,7 +114,7 @@ void exposeMPC() {
            bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
-      .add_property("K0", &MPC::K0_);
+      .add_property("Ks", &MPC::Ks_);
 }
 
 } // namespace python

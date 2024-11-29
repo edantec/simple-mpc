@@ -78,14 +78,14 @@ class BulletRobot:
         )
 
         # Augment friction to forbid feet sliding for Talos
-        p.changeDynamics(self.robotId, 50, lateralFriction=100, spinningFriction=30)
+        """ p.changeDynamics(self.robotId, 50, lateralFriction=100, spinningFriction=30)
         p.changeDynamics(self.robotId, 57, lateralFriction=100, spinningFriction=30)
 
         # Augment friction to forbid feet sliding for Solo
         p.changeDynamics(self.robotId, 3, lateralFriction=100, spinningFriction=30)
         p.changeDynamics(self.robotId, 7, lateralFriction=100, spinningFriction=30)
         p.changeDynamics(self.robotId, 11, lateralFriction=100, spinningFriction=30)
-        p.changeDynamics(self.robotId, 15, lateralFriction=100, spinningFriction=30)
+        p.changeDynamics(self.robotId, 15, lateralFriction=100, spinningFriction=30) """
         p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
 
     def initializeJoints(self, q0CompleteStart):
@@ -105,6 +105,14 @@ class BulletRobot:
             p.resetJointState(
                 self.robotId, self.JointIndicesComplete[i], initial_joint_positions[i]
             )
+
+    def getFrictionCoefficients(self, link_id):
+        lat_fric = p.getDynamicsInfo(self.robotId, link_id)[1]
+        spin_fric = p.getDynamicsInfo(self.robotId, link_id)[7]
+        return lat_fric, spin_fric
+
+    def setFrictionCoefficients(self, link_id, lateral_friction, spin_friction):
+        p.changeDynamics(self.robotId, link_id, lateralFriction=lateral_friction, spinningFriction=spin_friction)
 
     def resetState(self, q0Start):
         # Initialize position in pyBullet

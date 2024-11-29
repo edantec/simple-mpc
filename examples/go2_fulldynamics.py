@@ -3,6 +3,7 @@ from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
 import example_robot_data
 import time
+from utils import save_trajectory, extract_forces
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -44,10 +45,10 @@ design_conf = dict(
         "RR_thigh",
     ],
     feet_to_base_trans=[
-        np.array([0.2, 0.15, 0.]),
-        np.array([0.2, -0.15, 0.]),
-        np.array([-0.2, 0.15, 0.]),
-        np.array([-0.2, -0.15, 0.]),
+        np.array([0.17, 0.15, 0.]),
+        np.array([0.17, -0.15, 0.]),
+        np.array([-0.24, 0.15, 0.]),
+        np.array([-0.24, -0.15, 0.]),
     ]
 )
 handler = RobotHandler()
@@ -61,18 +62,19 @@ fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.zeros(handler.getModel().nv - 6)
 
 w_basepos = [0, 0, 10, 10, 10, 0]
-w_legpos = [1, 1, 1]
+w_legpos = [100, 100, 100]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
-w_legvel = [1, 1, 1]
+w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
-w_cent_lin = np.array([0.0, 0.0, 1])
-w_cent_ang = np.array([0.0, 0.0, 1])
+w_cent_lin = np.array([0.0, 0.0, 0])
+w_cent_ang = np.array([1, 1, 1])
 w_forces_lin = np.array([0.001, 0.001, 0.001])
 w_frame = np.diag(np.array([1000, 1000, 1000]))
 
+dt = 0.01
 problem_conf = dict(
-    DT=0.01,
+    DT=dt,
     w_x=np.diag(w_x),
     w_u=np.eye(u0.size) * 1e-4,
     w_cent=np.diag(np.concatenate((w_cent_lin, w_cent_ang))),
@@ -84,12 +86,12 @@ problem_conf = dict(
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
     qmax=handler.getModel().upperPositionLimit[7:],
-    mu=0.8,
+    mu=1,
     Lfoot=0.01,
     Wfoot=0.01,
     torque_limits=True,
     kinematics_limits=True,
-    force_cone=True,
+    force_cone=False,
 )
 T = 50
 
@@ -97,11 +99,9 @@ dynproblem = FullDynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
 
-""" T_ds = 80
-T_ss = 30 """
-
-T_ds = 5
+T_ds = 10
 T_ss = 30
+N_simu = int(0.01 / 0.001)
 mpc_conf = dict(
     ddpIteration=1,
     support_force=-handler.getMass() * gravity[2],
@@ -166,7 +166,9 @@ device = BulletRobot(
     handler.getState()[:3],
 )
 device.initializeJoints(handler.getConfiguration())
-device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
+for i in range(40):
+    device.setFrictionCoefficients(i, 10, 0)
+#device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
 nq = mpc.getHandler().getModel().nq
 nv = mpc.getHandler().getModel().nv
@@ -175,38 +177,56 @@ x_measured = mpc.getHandler().shapeState(q_current, v_current)
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
-""" device.showQuadrupedFeet(
+device.showQuadrupedFeet(
     mpc.getHandler().getFootPose("FL_foot"),
     mpc.getHandler().getFootPose("FR_foot"),
     mpc.getHandler().getFootPose("RL_foot"),
     mpc.getHandler().getFootPose("RR_foot"),
-) """
-rmodel = handler.getModel()
-a1 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
-a2 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
-a3 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
-a4 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RR_thigh")]
-a1.translation[2] = 0
-a2.translation[2] = 0
-a3.translation[2] = 0
-a4.translation[2] = 0
-device.showQuadrupedFeet(a1, a2, a3, a4)
+)
 Tmpc = len(contact_phases)
+
+
+
+force_FL = []
+force_FR = []
+force_RL = []
+force_RR = []
+FL_measured = []
+FR_measured = []
+RL_measured = []
+RR_measured = []
+FL_references = []
+FR_references = []
+RL_references = []
+RR_references = []
+x_multibody = []
+u_multibody = []
+com_measured = []
+solve_time = []
+L_measured = []
 
 v = np.zeros(6)
 v[0] = 0.2
 mpc.setVelocityBase(v)
-for t in range(10000):
+for t in range(2000):
     print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
     takeoff_LF = mpc.getFootTakeoffCycle("FL_foot")
     takeoff_RF = mpc.getFootTakeoffCycle("RL_foot")
-    print(
+    """ print(
         "takeoff_RF = " + str(takeoff_RF) + ", landing_RF = ",
         str(land_RF) + ", takeoff_LF = " + str(takeoff_LF) + ", landing_LF = ",
         str(land_LF),
-    )
+    ) """
+
+    """ if t == 160:
+        for s in range(T):
+            device.resetState(mpc.xs[s][:nq])
+            #device.resetState(state_ref[s])
+            time.sleep(0.1)
+            print("s = " + str(s))
+        exit() """
 
     device.moveQuadrupedFeet(
         mpc.getReferencePose(0, "FL_foot").translation,
@@ -215,22 +235,70 @@ for t in range(10000):
         mpc.getReferencePose(0, "RR_foot").translation,
     )
 
+    start = time.time()
     mpc.iterate(q_current, v_current)
-    if t == 500:
+    end = time.time()
+    solve_time.append(end - start)
+
+    """ if t == 500:
         mpc.switchToStand()
     if t == 700:
-        mpc.switchToWalk(v)
+        mpc.switchToWalk(v) """
 
-    for j in range(10):
+    FL_f, FR_f, RL_f, RR_f, contact_states = extract_forces(mpc.getTrajOptProblem(), mpc.getSolver().workspace, 0)
+    force_FL.append(FL_f)
+    force_FR.append(FR_f)
+    force_RL.append(RL_f)
+    force_RR.append(RR_f)
+
+    FL_measured.append(mpc.getHandler().getFootPose("FL_foot").translation)
+    FR_measured.append(mpc.getHandler().getFootPose("FR_foot").translation)
+    RL_measured.append(mpc.getHandler().getFootPose("RL_foot").translation)
+    RR_measured.append(mpc.getHandler().getFootPose("RR_foot").translation)
+    FL_references.append(mpc.getReferencePose(0, "FL_foot").translation)
+    FR_references.append(mpc.getReferencePose(0, "FR_foot").translation)
+    RL_references.append(mpc.getReferencePose(0, "RL_foot").translation)
+    RR_references.append(mpc.getReferencePose(0, "RR_foot").translation)
+    com_measured.append(mpc.getHandler().getComPosition().copy())
+    L_measured.append(mpc.getHandler().getData().hg.angular.copy())
+
+    for j in range(N_simu):
         # time.sleep(0.01)
+        u_interp = (N_simu - j) / N_simu * mpc.us[0] + j / N_simu * mpc.us[1]
+        x_interp = (N_simu - j) / N_simu * mpc.xs[0] + j / N_simu * mpc.xs[1]
         q_current, v_current = device.measureState()
 
         x_measured = np.concatenate((q_current, v_current))
+        mpc.getHandler().updateState(q_current, v_current, True)
 
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        current_torque = mpc.us[0] - 1 * mpc.K0 @ handler.difference(
-            x_measured, mpc.xs[0]
+        current_torque = u_interp - 1. * mpc.Ks[0] @ handler.difference(
+            x_measured, x_interp
         )
+
         device.execute(current_torque)
+
+        u_multibody.append(current_torque)
+        x_multibody.append(x_measured)
+
+force_FL = np.array(force_FL)
+force_FR = np.array(force_FR)
+force_RL = np.array(force_RL)
+force_RR = np.array(force_RR)
+solve_time = np.array(solve_time)
+FL_measured = np.array(FL_measured)
+FR_measured = np.array(FR_measured)
+RL_measured = np.array(RL_measured)
+RR_measured = np.array(RR_measured)
+FL_references = np.array(FL_references)
+FR_references = np.array(FR_references)
+RL_references = np.array(RL_references)
+RR_references = np.array(RR_references)
+com_measured = np.array(com_measured)
+L_measured = np.array(L_measured)
+
+""" save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
+                FL_measured, FR_measured, RL_measured, RR_measured,
+                FL_references, FR_references, RL_references, RR_references, L_measured, "fulldynamics") """

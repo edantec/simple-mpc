@@ -53,7 +53,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
       constraint_model.corrector.Kp << 0, 0, 0;
-      constraint_model.corrector.Kd << 50, 50, 50;
+      constraint_model.corrector.Kd << 100, 100, 100;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }

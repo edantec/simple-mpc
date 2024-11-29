@@ -93,12 +93,14 @@ void MPC::initialize(const MPCSettings &settings,
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
-  K0_ = solver_->results_.getCtrlFeedbacks()[0];
+  Ks_ = solver_->results_.getCtrlFeedbacks();
 
   solver_->max_iters = settings_.max_iters;
 
   com0_ = problem_->getHandler().getComPosition();
   now_ = WALKING;
+  pose_base_.resize(7);
+  pose_base_ << x0_.head(7);
   velocity_base_.resize(6);
   velocity_base_.setZero();
   next_pose_.setZero();
@@ -198,7 +200,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
-  K0_ = solver_->results_.getCtrlFeedbacks()[0];
+  Ks_ = solver_->results_.getCtrlFeedbacks();
 }
 
 void MPC::recedeWithCycle() {
@@ -291,6 +293,7 @@ void MPC::updateStepTrackerReferences() {
   }
 
   problem_->setVelocityBase(problem_->getSize() - 1, velocity_base_);
+  problem_->setPoseBase(problem_->getSize() - 1, pose_base_);
 
   Eigen::Vector3d com_ref;
   com_ref << 0, 0, 0;
@@ -316,6 +319,13 @@ void MPC::setTerminalReferencePose(const std::string &ee_name,
 const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
                                            const std::string &ee_name) {
   return problem_->getReferencePose(t, ee_name);
+}
+
+void MPC::setPoseBase(const Eigen::VectorXd pose_ref) { pose_base_ = pose_ref; }
+
+bool MPC::getCyclingContactState(const std::size_t t,
+                                 const std::string &ee_name) {
+  return contact_states_[t].at(ee_name);
 }
 
 void MPC::switchToWalk(const Eigen::VectorXd &velocity_base) {

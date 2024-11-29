@@ -97,6 +97,7 @@ protected:
   Eigen::Vector3d com0_;
   LocomotionType now_;
   Eigen::VectorXd velocity_base_;
+  Eigen::VectorXd pose_base_;
   Eigen::Vector3d next_pose_;
   Eigen::Vector3d twist_vect_;
 
@@ -133,6 +134,7 @@ public:
   void setVelocityBase(const Eigen::VectorXd &velocity_base) {
     velocity_base_ = velocity_base;
   };
+  void setPoseBase(const Eigen::VectorXd pose_ref);
 
   // getters and setters
   MPCSettings &getSettings() { return settings_; }
@@ -144,6 +146,7 @@ public:
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }
+  bool getCyclingContactState(const std::size_t t, const std::string &ee_name);
   int getFootTakeoffCycle(const std::string &ee_name) {
     if (foot_takeoff_times_.at(ee_name).empty()) {
       return -1;
@@ -170,8 +173,8 @@ public:
   std::vector<Eigen::VectorXd> xs_;
   std::vector<Eigen::VectorXd> us_;
 
-  // Riccati gains for first stage
-  Eigen::MatrixXd K0_;
+  // Riccati gains
+  std::vector<Eigen::MatrixXd> Ks_;
 
   // Initial quantities
   Eigen::VectorXd x0_;
