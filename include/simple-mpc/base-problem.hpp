@@ -70,7 +70,7 @@ public:
 
   /// Constructor
   Problem();
-  Problem(const RobotHandlerData &handler);
+  Problem(const RobotDataHandler &handler);
   virtual ~Problem();
 
   /// Virtual functions defined in child classes
@@ -145,7 +145,7 @@ public:
   std::size_t getCostNumber();
   std::size_t getSize();
   std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
-  RobotHandlerData &getHandler() { return handler_; }
+  RobotDataHandler &getHandler() { return handler_; }
   int getNu() { return nu_; }
 
 protected:
@@ -158,7 +158,7 @@ protected:
   bool terminal_constraint_ = false;
 
   /// The robot model
-  RobotHandlerData handler_;
+  RobotDataHandler handler_;
 
   /// The reference shooting problem storing all shooting nodes
   std::shared_ptr<TrajOptProblem> problem_;

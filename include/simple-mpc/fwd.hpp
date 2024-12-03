@@ -32,7 +32,7 @@ typedef std::shared_ptr<aligator::FramePlacementResidualTpl<double>>
 // MPC
 struct Settings;
 struct FullDynamicsSettings;
-class RobotHandlerData;
+class RobotDataHandler;
 class FullDynamicsProblem;
 class KinodynamicsProblem;
 class CentroidalProblem;

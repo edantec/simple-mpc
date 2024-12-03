@@ -8,8 +8,8 @@
 
 using namespace simple_mpc;
 
-RobotHandlerData getTalosHandler() {
-  RobotHandler settings;
+RobotDataHandler getTalosHandler() {
+  RobotModelHandler settings;
   settings.urdf_path =
       EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
   settings.srdf_path =
@@ -35,13 +35,13 @@ RobotHandlerData getTalosHandler() {
   settings.root_name = "root_joint";
   settings.load_rotor = true;
 
-  RobotHandlerData handler(settings);
+  RobotDataHandler handler(settings);
 
   return handler;
 }
 
-RobotHandlerData getSoloHandler() {
-  RobotHandler settings;
+RobotDataHandler getSoloHandler() {
+  RobotModelHandler settings;
   settings.urdf_path =
       EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
   settings.srdf_path =
@@ -64,12 +64,12 @@ RobotHandlerData getSoloHandler() {
   settings.base_configuration = "straight_standing";
   settings.root_name = "root_joint";
 
-  RobotHandlerData handler(settings);
+  RobotDataHandler handler(settings);
 
   return handler;
 }
 
-FullDynamicsSettings getFullDynamicsSettings(RobotHandlerData handler) {
+FullDynamicsSettings getFullDynamicsSettings(RobotDataHandler handler) {
   int nv = handler.getModel().nv;
   int nu = nv - 6;
 
@@ -117,7 +117,7 @@ FullDynamicsSettings getFullDynamicsSettings(RobotHandlerData handler) {
   return settings;
 }
 
-KinodynamicsSettings getKinodynamicsSettings(RobotHandlerData handler) {
+KinodynamicsSettings getKinodynamicsSettings(RobotDataHandler handler) {
   int nv = handler.getModel().nv;
   int nu = nv + 6;
 

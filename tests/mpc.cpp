@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_SUITE(mpc)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
-  RobotHandlerData handler = getTalosHandler();
+  RobotDataHandler handler = getTalosHandler();
 
   FullDynamicsSettings settings = getFullDynamicsSettings(handler);
   FullDynamicsProblem fdproblem(settings, handler);
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
-  RobotHandlerData handler = getTalosHandler();
+  RobotDataHandler handler = getTalosHandler();
 
   KinodynamicsSettings settings = getKinodynamicsSettings(handler);
   KinodynamicsProblem kinoproblem(settings, handler);
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal) {
-  RobotHandlerData handler = getTalosHandler();
+  RobotDataHandler handler = getTalosHandler();
 
   CentroidalSettings settings = getCentroidalSettings();
   CentroidalProblem centproblem(settings, handler);

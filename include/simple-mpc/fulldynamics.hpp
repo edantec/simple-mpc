@@ -81,9 +81,9 @@ public:
 
   // Constructors
   FullDynamicsProblem();
-  FullDynamicsProblem(const RobotHandlerData &handler);
+  FullDynamicsProblem(const RobotDataHandler &handler);
   FullDynamicsProblem(const FullDynamicsSettings &settings,
-                      const RobotHandlerData &handler);
+                      const RobotDataHandler &handler);
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 
