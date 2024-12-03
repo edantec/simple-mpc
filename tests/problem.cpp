@@ -288,10 +288,10 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "right_sole_link"),
                     new_poses.at("right_sole_link"));
 
-  Eigen::VectorXd pose_base(3);
-  pose_base << 0, 0, 2;
+  Eigen::VectorXd pose_base(7);
+  pose_base << 0, 0, 2, 0, 0, 0, 1;
   cproblem.setPoseBase(2, pose_base);
-  BOOST_CHECK_EQUAL(cproblem.getPoseBase(2), pose_base);
+  BOOST_CHECK_EQUAL(cproblem.getPoseBase(2), pose_base.head(3));
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {

@@ -101,6 +101,10 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   conf.qmin = bp::extract<Eigen::VectorXd>(settings["qmin"]);
   conf.qmax = bp::extract<Eigen::VectorXd>(settings["qmax"]);
 
+  /// Baumgarte correctors
+  conf.Kp_correction = bp::extract<Eigen::VectorXd>(settings["Kp_correction"]);
+  conf.Kd_correction = bp::extract<Eigen::VectorXd>(settings["Kd_correction"]);
+
   /// Constraints
   conf.torque_limits = bp::extract<bool>(settings["torque_limits"]);
   conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
@@ -174,6 +178,8 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   settings["umax"] = conf.umax;
   settings["qmin"] = conf.qmin;
   settings["qmax"] = conf.qmax;
+  settings["Kp_correction"] = conf.Kp_correction;
+  settings["Kd_correction"] = conf.Kd_correction;
   settings["mu"] = conf.mu;
   settings["Lfoot"] = conf.Lfoot;
   settings["Wfoot"] = conf.Wfoot;

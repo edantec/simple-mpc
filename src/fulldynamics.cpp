@@ -32,6 +32,12 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
   x0_ = handler_.getState();
+  if (settings.force_size != settings.Kp_correction.size()) {
+    throw std::runtime_error("Force must be of same size as Kp correction");
+  }
+  if (settings.force_size != settings.Kd_correction.size()) {
+    throw std::runtime_error("Force must be of same size as Kd correction");
+  }
 
   for (auto const &name : handler_.getFeetNames()) {
     auto frame_ids = handler_.getFootId(name);
@@ -43,8 +49,8 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
           pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
-      constraint_model.corrector.Kp << 0, 0, 10, 0, 0, 0;
-      constraint_model.corrector.Kd << 50, 50, 50, 50, 50, 50;
+      constraint_model.corrector.Kp = settings.Kp_correction;
+      constraint_model.corrector.Kd = settings.Kd_correction;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     } else {
@@ -52,8 +58,8 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
           pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_3D,
                                           handler_.getModel(), joint_ids, pl1,
                                           0, pl2, pinocchio::LOCAL);
-      constraint_model.corrector.Kp << 0, 0, 0;
-      constraint_model.corrector.Kd << 100, 100, 100;
+      constraint_model.corrector.Kp = settings.Kp_correction;
+      constraint_model.corrector.Kd = settings.Kd_correction;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     }

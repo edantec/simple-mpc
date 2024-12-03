@@ -73,6 +73,10 @@ public:
   // Kinematics limits
   Eigen::VectorXd qmin;
   Eigen::VectorXd qmax;
+
+  // Baumgarte gains
+  Eigen::VectorXd Kp_correction;
+  Eigen::VectorXd Kd_correction;
 };
 
 class FullDynamicsProblem : public Problem {

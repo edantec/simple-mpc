@@ -30,14 +30,17 @@ FootTrajectory::FootTrajectory(
   T_fly_ = T_fly;
   T_contact_ = T_contact;
   T_ = T;
+
+  for (auto pose : initial_poses_) {
+    piecewise_curve swing_trajectory =
+        defineTranslationBezier(pose.second, pose.second);
+    swing_trajectories_.insert({pose.first, swing_trajectory});
+  }
 }
 
-void FootTrajectory::updateForward(double swing_apex) {
-  swing_apex_ = swing_apex;
-}
-
-piecewise_curve FootTrajectory::defineTranslationBezier(point3_t &trans_init,
-                                                        point3_t &trans_final) {
+piecewise_curve
+FootTrajectory::defineTranslationBezier(const point3_t &trans_init,
+                                        const point3_t &trans_final) {
   std::vector<Eigen::Vector3d> points;
   for (long i = 0; i < 4; i++) { // init position. init vel,acc and jerk == 0
     points.push_back(trans_init);
@@ -84,14 +87,13 @@ void FootTrajectory::updateTrajectory(bool update, int landing_time,
   if (update) {
     initial_poses_.at(ee_name) = ee_trans;
     final_poses_.at(ee_name) = final_trans;
+    swing_trajectories_.at(ee_name) = defineTranslationBezier(
+        initial_poses_.at(ee_name), final_poses_.at(ee_name));
   }
-  piecewise_curve swing_trajectory = defineTranslationBezier(
-      initial_poses_.at(ee_name), final_poses_.at(ee_name));
 
   references_.at(ee_name) = createTrajectory(
       landing_time, initial_poses_.at(ee_name), final_poses_.at(ee_name),
-      defineTranslationBezier(initial_poses_.at(ee_name),
-                              final_poses_.at(ee_name)));
+      swing_trajectories_.at(ee_name));
 }
 
 } // namespace simple_mpc

@@ -136,12 +136,14 @@ w_linear_mom = np.diag(np.array([0, 0, 0]))
 w_linear_acc = 1 * np.eye(3)
 w_angular_mom = np.diag(np.array([1, 1, 1]))
 w_angular_acc = 1 * np.eye(3)
+w_com = 1 * np.eye(3)
 
 problem_conf = dict(
     x0=x0,
     u0=u0,
     DT=0.01,
     w_u=w_u,
+    w_com=w_com,
     w_linear_mom=w_linear_mom,
     w_angular_mom=w_angular_mom,
     w_linear_acc=w_linear_acc,
@@ -174,6 +176,7 @@ mpc_conf = dict(
     T=T,
     x_translation=0.0,
     y_translation=0.0,
+    dt=0.01
 )
 
 mpc = MPC()
@@ -375,8 +378,8 @@ for t in range(1000):
         RR_refs,
         0.01,
     )
-    if t == 140:
-        exit()
+    """ if t == 140:
+        exit() """
 
     for j in range(10):
         time.sleep(0.001)
@@ -397,16 +400,16 @@ for t in range(1000):
             @ state_diff
         )
 
-        qp.solve_qp(
+        """ qp.solve_qp(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
             forces,
             dH,
             mpc.getHandler().getMassMatrix(),
-        )
+        ) """
 
-        """ new_acc, new_forces, torque = IKID_solver.solve(
+        new_acc, new_forces, torque = IKID_solver.solve(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
@@ -425,11 +428,11 @@ for t in range(1000):
             forces,
             dH,
             mpc.getHandler().getMassMatrix(),
-        ) """
+        )
 
         """ print(qp.solved_torque)
 
         if (not(contact_states[0])):
             exit() """
 
-        device.execute(qp.solved_torque)
+        device.execute(torque)

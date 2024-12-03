@@ -45,7 +45,7 @@ void MPC::initialize(const MPCSettings &settings,
       FootTrajectory(starting_poses, settings_.swing_apex, settings_.T_fly,
                      settings_.T_contact, settings_.T);
 
-  foot_trajectories_.updateForward(settings.swing_apex);
+  foot_trajectories_.updateApex(settings.swing_apex);
   x0_ = problem_->getProblemState();
 
   solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init,

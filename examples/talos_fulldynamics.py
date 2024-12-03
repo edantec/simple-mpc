@@ -104,6 +104,8 @@ problem_conf = dict(
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
     qmax=handler.getModel().upperPositionLimit[7:],
+    Kp_correction=np.array([0, 0, 50, 0, 0, 0]),
+    Kd_correction=np.array([100, 100, 100, 100, 100 ,100]),
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
@@ -227,5 +229,5 @@ for t in range(Tmpc + 800):
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        current_torque = mpc.us[0] - mpc.K0 @ handler.difference(x_measured, mpc.xs[0])
+        current_torque = mpc.us[0] - mpc.Ks[0] @ handler.difference(x_measured, mpc.xs[0])
         device.execute(current_torque)
