@@ -67,8 +67,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo"
   )
 endif()
+
 find_package(example-robot-data 4.0.9 REQUIRED)
-find_package(ndcurves REQUIRED)
 add_project_dependency(OpenMP REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(aligator REQUIRED)
