@@ -223,7 +223,7 @@ class BulletRobot:
     def showPointTrack(self, pose):
         visualShapeTarget = p.createVisualShape(
             shapeType=p.GEOM_BOX,
-            halfExtents=[0.05, 0.05, 0.05],
+            halfExtents=[0.2, 0.1, 0.05],
             rgbaColor=[0.0, 0.0, 1.0, 1.0],
             specularColor=[0.4, 0.4, 0],
             visualFramePosition=[0.0, 0.0, 0.0],
@@ -238,6 +238,12 @@ class BulletRobot:
                 pose[1],
                 pose[2],
             ],
+            baseOrientation=[
+                pose[3],
+                pose[4],
+                pose[5],
+                pose[6],
+            ],
             useMaximalCoordinates=True,
         )
 
@@ -249,7 +255,7 @@ class BulletRobot:
                 pose[1],
                 pose[2],
             ],
-            ornObj=np.array([0.0, 0.0, 0.0, 1.0]),
+            ornObj=np.array([pose[3], pose[4], pose[5], pose[6]]),
         )
 
     def showTargetToTrack(self, LF_pose, RF_pose):

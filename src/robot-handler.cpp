@@ -158,7 +158,8 @@ void RobotHandler::updateJacobiansMassMatrix() {
   computeJointJacobians(rmodel_, rdata_);
   computeJointJacobiansTimeVariation(rmodel_, rdata_, q_, v_);
   crba(rmodel_, rdata_, q_);
-  make_symmetric(rdata_.M);
+  rdata_.M.triangularView<Eigen::StrictlyLower>() =
+      rdata_.M.transpose().triangularView<Eigen::StrictlyLower>();
   nonLinearEffects(rmodel_, rdata_, q_, v_);
   dccrba(rmodel_, rdata_, q_, v_);
 }

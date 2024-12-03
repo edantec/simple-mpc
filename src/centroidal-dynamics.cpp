@@ -261,14 +261,14 @@ const Eigen::VectorXd CentroidalProblem::getPoseBase(const std::size_t t) {
 
 void CentroidalProblem::setPoseBase(const std::size_t t,
                                     const Eigen::VectorXd &pose_base) {
-  if (pose_base.size() != 3) {
-    throw std::runtime_error("pose_base size should be 3");
+  if (pose_base.size() != 7) {
+    throw std::runtime_error("pose_base size should be 7");
   }
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>("com_cost");
   CentroidalCoMResidual *cfr = qrc->getResidual<CentroidalCoMResidual>();
-  com_ref_ = pose_base;
+  com_ref_ = pose_base.head(3);
   cfr->setReference(com_ref_);
 }
 

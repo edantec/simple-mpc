@@ -94,6 +94,7 @@ void exposeMPC() {
       .def("setVelocityBase", &MPC::setVelocityBase,
            bp::args("self", "velocity_base"))
       .def("setPoseBase", &MPC::setPoseBase, bp::args("self", "pose_base"))
+      .def("getPoseBase", &MPC::getPoseBase, bp::args("self", "t"))
       .def("switchToWalk", &MPC::switchToWalk,
            bp::args("self", "velocity_base"))
       .def("switchToStand", &MPC::switchToStand, bp::args("self"))

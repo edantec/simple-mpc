@@ -135,6 +135,9 @@ public:
     velocity_base_ = velocity_base;
   };
   void setPoseBase(const Eigen::VectorXd pose_ref);
+  const Eigen::VectorXd getPoseBase(const std::size_t t) {
+    return problem_->getPoseBase(t);
+  }
 
   // getters and setters
   MPCSettings &getSettings() { return settings_; }
