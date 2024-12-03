@@ -117,7 +117,7 @@ problem_conf = dict(
 T = 100
 dynproblem = FullDynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
-dynproblem.createProblem(x0, T, 6, gravity[2])
+dynproblem.createProblem(x0, T, 6, gravity[2], False)
 
 """ Define feet trajectory """
 T_ss = 80

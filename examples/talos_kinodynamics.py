@@ -123,13 +123,15 @@ problem_conf = dict(
     mu=0.8,
     Lfoot=0.1,
     Wfoot=0.075,
+    kinematics_limits=True,
+    force_cone=True,
 )
 
 T = 100
 
 problem = KinodynamicsProblem(handler)
 problem.initialize(problem_conf)
-problem.createProblem(handler.getState(), T, 6, gravity[2])
+problem.createProblem(handler.getState(), T, 6, gravity[2], False)
 
 """ Define MPC object """
 T_ds = 20

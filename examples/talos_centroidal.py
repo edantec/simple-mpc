@@ -288,15 +288,16 @@ w_u = np.diag(
         (w_control_linear, w_control_angular, w_control_linear, w_control_angular)
     )
 )
+w_com = np.diag(np.array([0, 0, 0]))
 w_linear_mom = np.diag(np.array([0.01, 0.01, 100]))
 w_linear_acc = 0.01 * np.eye(3)
 w_angular_mom = np.diag(np.array([0.1, 0.1, 1000]))
 w_angular_acc = 0.01 * np.eye(3)
-w_vbase = np.eye(6) * 10
 
 problem_conf = dict(
     DT=0.01,
     w_u=w_u,
+    w_com=w_com,
     w_linear_mom=w_linear_mom,
     w_angular_mom=w_angular_mom,
     w_linear_acc=w_linear_acc,
@@ -311,7 +312,7 @@ T = 100
 
 problem = CentroidalProblem(handler)
 problem.initialize(problem_conf)
-problem.createProblem(handler.getCentroidalState(), T, 6, gravity[2])
+problem.createProblem(handler.getCentroidalState(), T, 6, gravity[2], False)
 
 T_ds = 20
 T_ss = 80

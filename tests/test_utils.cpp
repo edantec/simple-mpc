@@ -33,7 +33,7 @@ RobotHandler getTalosHandler() {
   settings.feet_to_base_trans = {left_foot_trans, right_foot_trans};
   settings.base_configuration = "half_sitting";
   settings.root_name = "root_joint";
-  settings.load_rotor = true;
+  settings.load_rotor = false;
 
   RobotHandler handler(settings);
 
@@ -184,6 +184,9 @@ CentroidalSettings getCentroidalSettings() {
   settings.w_angular_acc = Eigen::MatrixXd::Identity(3, 3);
   settings.w_angular_acc.diagonal() << 0.01, 0.01, 0.01;
   settings.gravity << 0, 0, -9.81;
+  settings.mu = 0.8;
+  settings.Lfoot = 0.1;
+  settings.Wfoot = 0.075;
   settings.force_size = 6;
 
   return settings;

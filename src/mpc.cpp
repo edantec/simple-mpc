@@ -110,29 +110,40 @@ void MPC::initialize(const MPCSettings &settings,
 void MPC::generateCycleHorizon(
     const std::vector<std::map<std::string, bool>> &contact_states) {
   contact_states_ = contact_states;
+  // Guarantee that cycle horizon size is higher than problem size
+  int m = int(problem_->getProblem()->numSteps()) / int(contact_states.size());
+  for (int i = 0; i < m; i++) {
+    std::vector<std::map<std::string, bool>> copy_vec = contact_states;
+    contact_states_.insert(contact_states_.end(), copy_vec.begin(),
+                           copy_vec.end());
+  }
+
+  // Generate contact switch timings
   for (auto const &name : ee_names_) {
     foot_takeoff_times_.insert({name, std::vector<int>()});
     foot_land_times_.insert({name, std::vector<int>()});
-    for (size_t i = 1; i < contact_states.size(); i++) {
-      if (!contact_states[i].at(name) and contact_states[i - 1].at(name)) {
+    for (size_t i = 1; i < contact_states_.size(); i++) {
+      if (!contact_states_[i].at(name) and contact_states_[i - 1].at(name)) {
         foot_takeoff_times_.at(name).push_back((int)(i + problem_->getSize()));
       }
-      if (contact_states[i].at(name) and !contact_states[i - 1].at(name)) {
+      if (contact_states_[i].at(name) and !contact_states_[i - 1].at(name)) {
         foot_land_times_.at(name).push_back((int)(i + problem_->getSize()));
       }
     }
-    if (contact_states.back().at(name) and !contact_states[0].at(name))
+    if (contact_states_.back().at(name) and !contact_states_[0].at(name))
       foot_takeoff_times_.at(name).push_back(
-          (int)(contact_states.size() - 1 + problem_->getSize()));
-    if (!contact_states.back().at(name) and contact_states[0].at(name))
+          (int)(contact_states_.size() - 1 + problem_->getSize()));
+    if (!contact_states_.back().at(name) and contact_states_[0].at(name))
       foot_land_times_.at(name).push_back(
-          (int)(contact_states.size() - 1 + problem_->getSize()));
+          (int)(contact_states_.size() - 1 + problem_->getSize()));
   }
   std::map<std::string, bool> previous_contacts;
   for (auto const &name : ee_names_) {
     previous_contacts.insert({name, true});
   }
-  for (auto const &state : contact_states) {
+
+  // Generate the model stages for cycle horizon
+  for (auto const &state : contact_states_) {
     int active_contacts = 0;
     for (auto const &contact : state) {
       if (contact.second)
@@ -179,12 +190,13 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   problem_->getHandler().updateState(q_current, v_current, false);
 
-  // ~~TIMING~~ //
+  // Recede all horizons
   recedeWithCycle();
 
-  // ~~REFERENCES~~ //
+  // Update the feet and CoM references
   updateStepTrackerReferences();
 
+  // Recede previous solutions
   x0_ << problem_->getProblemState();
   xs_.erase(xs_.begin());
   xs_[0] = x0_;
@@ -195,9 +207,10 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
   problem_->getProblem()->setInitState(x0_);
 
-  // ~~SOLVER~~ //
+  // Run solver
   solver_->run(*problem_->getProblem(), xs_, us_);
 
+  // Collect results
   xs_ = solver_->results_.xs;
   us_ = solver_->results_.us;
   Ks_ = solver_->results_.getCtrlFeedbacks();
@@ -267,7 +280,6 @@ void MPC::updateStepTrackerReferences() {
       update = false;
 
     // Use the Raibert heuristics to compute the next foot pose
-
     twist_vect_[0] =
         -(problem_->getHandler().getRefFootPose(name).translation()[1] -
           problem_->getHandler().getRootFrame().translation()[1]);
