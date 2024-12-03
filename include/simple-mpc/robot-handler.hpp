@@ -76,6 +76,9 @@ public:
   pinocchio::FrameIndex root_id;
 
 public:
+  // Helper function to augment the model
+  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation, std::string name);
+
   // Const getters
   size_t getFootIndex(const std::string &foot_name) const
   {
@@ -136,15 +139,10 @@ public:
   bool initialized_ = false;
 
   // Set new robot state
-  void updateConfiguration(const Eigen::VectorXd &q,
-                           const bool updateJacobians);
-  void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v,
-                   const bool updateJacobians);
+  void updateConfiguration(const Eigen::VectorXd &q, const bool updateJacobians);
+  void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v, const bool updateJacobians);
   void updateInternalData(const bool updateJacobians);
   void updateJacobiansMassMatrix();
-
-  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation,
-                                       std::string name);
 
   // Return reduced state from measures
   const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,

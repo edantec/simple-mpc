@@ -111,6 +111,16 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &settings) {
 //   initialized_ = true;
 // }
 
+pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translation, std::string name) {
+  auto placement = pinocchio::SE3::Identity();
+  placement.translation() = translation;
+
+  auto new_frame = pinocchio::Frame(name, model.frames[root_id].parentJoint, root_id, placement, pinocchio::OP_FRAME);
+  auto frame_id = model.addFrame(new_frame);
+
+  return frame_id;
+}
+
 void RobotDataHandler::updateConfiguration(const Eigen::VectorXd &q,
                                        const bool updateJacobians) {
   if (q.size() != settings_.model.nq) {
@@ -184,18 +194,6 @@ const Eigen::VectorXd RobotDataHandler::shapeState(const Eigen::VectorXd &q,
     throw std::runtime_error(
         "q and v must have the dimentions of the reduced or complete model.");
   }
-}
-
-pinocchio::FrameIndex RobotDataHandler::addFrameToBase(Eigen::Vector3d translation,
-                                                   std::string name) {
-  auto placement = pinocchio::SE3::Identity();
-  placement.translation() = translation;
-  auto new_frame = pinocchio::Frame(name, settings_.model.frames[settings_.root_id].parentJoint,
-                                    settings_.root_id, placement, pinocchio::OP_FRAME);
-
-  auto frame_id = settings_.model.addFrame(new_frame);
-
-  return frame_id;
 }
 
 Eigen::VectorXd RobotDataHandler::difference(const Eigen::VectorXd &x1,
