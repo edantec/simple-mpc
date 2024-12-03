@@ -79,6 +79,7 @@ endif()
 
 find_package(example-robot-data 4.0.9 REQUIRED)
 add_project_dependency(OpenMP REQUIRED)
+add_project_dependency(proxsuite REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(aligator REQUIRED)
 add_project_dependency(ndcurves REQUIRED)
