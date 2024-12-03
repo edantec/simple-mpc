@@ -70,7 +70,8 @@ void exposeBaseProblem() {
       .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
            bp::args("self", "t"))
       .def("createProblem", &Problem::createProblem,
-           bp::args("self", "x0", "horizon", "force_size", "gravity"))
+           bp::args("self", "x0", "horizon", "force_size", "gravity",
+                    "terminal_constraint"))
       .def("setReferenceControl", &Problem::setReferenceControl,
            bp::args("self", "t", "u_ref"))
       .def("getReferenceControl", &Problem::getReferenceControl,
@@ -192,9 +193,9 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
 
 void createFullProblem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
                        const size_t horizon, const int force_size,
-                       const double gravity) {
+                       const double gravity, const bool terminal_constraint) {
 
-  self.createProblem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
 TrajOptProblem getFullProblem(FullDynamicsProblem &self) {
@@ -359,9 +360,9 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
 
 void createCentProblem(CentroidalProblem &self, const Eigen::VectorXd &x0,
                        const size_t horizon, const int force_size,
-                       const double gravity) {
+                       const double gravity, const bool terminal_constraint) {
 
-  self.createProblem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
 TrajOptProblem getCentProblem(FullDynamicsProblem &self) {
@@ -533,9 +534,9 @@ StageModel createKinoStage(KinodynamicsProblem &self,
 
 void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
                        const size_t horizon, const int force_size,
-                       const double gravity) {
+                       const double gravity, const bool terminal_constraint) {
 
-  self.createProblem(x0, horizon, force_size, gravity);
+  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
 TrajOptProblem getKinoProblem(KinodynamicsProblem &self) {

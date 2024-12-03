@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   FullDynamicsProblem fdproblem(settings, handler);
 
   size_t T = 100;
-  fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2]);
+  fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2], true);
   std::shared_ptr<Problem> problem =
       std::make_shared<FullDynamicsProblem>(fdproblem);
 
@@ -96,7 +96,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force, 0, 0, 0;
 
-  kinoproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2]);
+  kinoproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2],
+                            true);
 
   std::shared_ptr<Problem> problem =
       std::make_shared<KinodynamicsProblem>(kinoproblem);
@@ -171,7 +172,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   Eigen::VectorXd x_multibody = handler.getState();
 
   centproblem.createProblem(handler.getCentroidalState(), T, 6,
-                            -settings.gravity[2]);
+                            -settings.gravity[2], false);
   std::shared_ptr<Problem> problem =
       std::make_shared<CentroidalProblem>(centproblem);
 

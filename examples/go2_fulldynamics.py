@@ -61,14 +61,14 @@ fref = np.zeros(force_size)
 fref[2] = -handler.getMass() / nk * gravity[2]
 u0 = np.zeros(handler.getModel().nv - 6)
 
-w_basepos = [0, 0, 10, 10, 10, 0]
-w_legpos = [100, 100, 100]
+w_basepos = [0, 0, 0, 0, 0, 0]
+w_legpos = [10, 10, 10]
 
 w_basevel = [10, 10, 10, 10, 10, 10]
 w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
 w_cent_lin = np.array([0.0, 0.0, 0])
-w_cent_ang = np.array([1, 1, 1])
+w_cent_ang = np.array([0, 0, 0])
 w_forces_lin = np.array([0.001, 0.001, 0.001])
 w_frame = np.diag(np.array([1000, 1000, 1000]))
 
@@ -86,6 +86,8 @@ problem_conf = dict(
     umax=handler.getModel().effortLimit[6:],
     qmin=handler.getModel().lowerPositionLimit[7:],
     qmax=handler.getModel().upperPositionLimit[7:],
+    Kp_correction=np.array([0, 0, 0]),
+    Kd_correction=np.array([100, 100, 100]),
     mu=1,
     Lfoot=0.01,
     Wfoot=0.01,
@@ -97,7 +99,7 @@ T = 50
 
 dynproblem = FullDynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
-dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
+dynproblem.createProblem(handler.getState(), T, force_size, gravity[2], False)
 
 T_ds = 10
 T_ss = 30
@@ -220,13 +222,13 @@ for t in range(2000):
         str(land_LF),
     ) """
 
-    """ if t == 160:
+    if t == 1000:
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             #device.resetState(state_ref[s])
             time.sleep(0.1)
             print("s = " + str(s))
-        exit() """
+        exit()
 
     device.moveQuadrupedFeet(
         mpc.getReferencePose(0, "FL_foot").translation,

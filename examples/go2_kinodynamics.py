@@ -107,7 +107,7 @@ T = 50
 
 dynproblem = KinodynamicsProblem(handler)
 dynproblem.initialize(problem_conf)
-dynproblem.createProblem(handler.getState(), T, force_size, gravity[2])
+dynproblem.createProblem(handler.getState(), T, force_size, gravity[2], False)
 
 T_ds = 10
 T_ss = 30

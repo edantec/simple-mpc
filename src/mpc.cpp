@@ -303,7 +303,7 @@ void MPC::updateStepTrackerReferences() {
   com_ref /= (double)ee_names_.size();
   com_ref[2] += com0_[2];
 
-  // problem_->updateTerminalConstraint(com0_);
+  problem_->updateTerminalConstraint(com_ref);
 }
 
 void MPC::setReferencePose(const std::size_t t, const std::string &ee_name,

@@ -85,7 +85,8 @@ std::size_t Problem::getCostNumber() {
 std::size_t Problem::getSize() { return problem_->stages_.size(); }
 
 void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
-                            const int force_size, const double gravity) {
+                            const int force_size, const double gravity,
+                            const bool terminal_constraint = false) {
   std::vector<std::map<std::string, bool>> contact_phases;
   std::vector<std::map<std::string, pinocchio::SE3>> contact_poses;
   std::vector<std::map<std::string, Eigen::VectorXd>> contact_forces;
@@ -116,6 +117,8 @@ void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
       std::make_shared<TrajOptProblem>(x0, stage_models, createTerminalCost());
   problem_initialized_ = true;
 
-  // createTerminalConstraint();
+  if (terminal_constraint) {
+    createTerminalConstraint();
+  }
 }
 } // namespace simple_mpc

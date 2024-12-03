@@ -133,7 +133,8 @@ public:
 
   // Create one TrajOptProblem from contact sequence
   void createProblem(const Eigen::VectorXd &x0, const size_t horizon,
-                     const int force_size, const double gravity);
+                     const int force_size, const double gravity,
+                     const bool terminal_constraint);
 
   // Setter and getter for control reference
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref);
