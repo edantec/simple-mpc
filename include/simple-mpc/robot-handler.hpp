@@ -84,7 +84,7 @@ public:
 
   const std::string &getFootName(size_t i) const
   {
-    return feet_names[i];
+    return feet_names.at(i);
   }
 
   const std::vector<std::string> &getFeetNames() const
@@ -94,27 +94,27 @@ public:
 
   const FrameIndex &getFootId(const std::string &foot_name) const
   {
-    return feet_ids.at[getFootIndex(foot_name)]
+    return feet_ids.at(getFootIndex(foot_name));
   }
 
   const FrameIndex &getRefFootId(const std::string &foot_name) const
   {
-    return feet_ids.at(foot_name);
+    return feet_ids.at(getFootIndex(foot_name));
   }
 
   double getMass() const
   {
-    return settings_.mass;
+    return mass;
   }
 
   const Model &getModel()
   {
-    return settings_.model;
+    return model;
   }
 
   const Model &getCompleteModel()
   {
-    return settings_.model_full;
+    return model_full;
   }
 };
 
@@ -159,11 +159,11 @@ public:
   // Getters
   const SE3 &getRefFootPose(const std::string &foot_name) const
   {
-    return data.oMf[getRefFootId(foot_name)];
+    return data.oMf[settings_.getRefFootId(foot_name)];
   };
   const SE3 &getFootPose(const std::string &foot_name) const
   {
-    return data.oMf[getFootId(foot_name)];
+    return data.oMf[settings_.getFootId(foot_name)];
   };
 
   const SE3 &getRootFrame() { return data.oMf[settings_.root_id]; }
