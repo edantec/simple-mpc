@@ -71,8 +71,6 @@ find_package(example-robot-data 4.0.9 REQUIRED)
 find_package(ndcurves REQUIRED)
 add_project_dependency(OpenMP REQUIRED)
 add_project_dependency(pinocchio REQUIRED)
-add_project_dependency(proxsuite-nlp 0.6.1 REQUIRED PKG_CONFIG_REQUIRES
-                       "proxsuite-nlp >= 0.6.1")
 add_project_dependency(aligator REQUIRED)
 add_project_dependency(ndcurves REQUIRED)
 
@@ -91,7 +89,7 @@ add_library(${PROJECT_NAME} SHARED ${mpc_HEADER} ${mpc_SOURCE})
 target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(
   ${PROJECT_NAME}
-  PUBLIC pinocchio::pinocchio proxsuite-nlp::proxsuite-nlp aligator::aligator
+  PUBLIC pinocchio::pinocchio aligator::aligator
          example-robot-data::example-robot-data ndcurves::ndcurves)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${mpc_HEADER}")
