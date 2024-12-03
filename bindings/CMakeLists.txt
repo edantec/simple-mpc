@@ -1,4 +1,5 @@
 include("${JRL_CMAKE_MODULES}/python.cmake")
+add_project_dependency(eigenpy 2.7.10 REQUIRED)
 
 set(${PY_NAME}_SOURCES main.cpp expose-robot-handler.cpp expose-problem.cpp
                        expose-mpc.cpp expose-lowlevel.cpp problems.hpp)

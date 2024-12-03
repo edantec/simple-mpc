@@ -84,13 +84,6 @@ add_project_dependency(pinocchio REQUIRED)
 add_project_dependency(aligator REQUIRED)
 add_project_dependency(ndcurves REQUIRED)
 
-# Project dependencies
-if(BUILD_PYTHON_INTERFACE)
-  add_project_dependency(eigenpy 2.7.10 REQUIRED)
-  string(REGEX REPLACE "-" "_" PY_NAME ${PROJECT_NAME})
-  set(${PY_NAME}_INSTALL_DIR ${PYTHON_SITELIB}/${PY_NAME})
-endif()
-
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB mpc_HEADER CONFIGURE_DEPENDS include/${PROJECT_NAME}/*.hpp)
@@ -123,6 +116,8 @@ endif()
 
 # Bindings
 if(BUILD_PYTHON_INTERFACE)
+  string(REGEX REPLACE "-" "_" PY_NAME ${PROJECT_NAME})
+  set(${PY_NAME}_INSTALL_DIR ${PYTHON_SITELIB}/${PY_NAME})
   add_subdirectory(bindings)
 endif()
 
