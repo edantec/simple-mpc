@@ -13,11 +13,11 @@
 namespace simple_mpc {
 using namespace aligator;
 
-FullDynamicsProblem::FullDynamicsProblem(const RobotHandler &handler)
+FullDynamicsProblem::FullDynamicsProblem(const RobotHandlerData &handler)
     : Base(handler) {}
 
 FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings &settings,
-                                         const RobotHandler &handler)
+                                         const RobotHandlerData &handler)
     : Base(handler) {
 
   initialize(settings);

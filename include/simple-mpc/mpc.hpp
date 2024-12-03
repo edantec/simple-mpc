@@ -140,7 +140,7 @@ public:
   std::shared_ptr<Problem> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
-  RobotHandler &getHandler() { return problem_->getHandler(); }
+  RobotHandlerData &getHandler() { return problem_->getHandler(); }
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }

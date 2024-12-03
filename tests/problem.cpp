@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_SUITE(problem)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(fulldynamics) {
-  RobotHandler handler = getTalosHandler();
+  RobotHandlerData handler = getTalosHandler();
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
-  RobotHandler handler = getTalosHandler();
+  RobotHandlerData handler = getTalosHandler();
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(centroidal) {
-  RobotHandler handler = getTalosHandler();
+  RobotHandlerData handler = getTalosHandler();
   CentroidalSettings settings = getCentroidalSettings();
   CentroidalProblem cproblem(settings, handler);
 
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {
-  RobotHandler handler = getSoloHandler();
+  RobotHandlerData handler = getSoloHandler();
   CentroidalSettings settings = getCentroidalSettings();
   settings.force_size = 3;
 

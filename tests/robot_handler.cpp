@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_SUITE(robot_handler)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(build_talos) {
-  RobotHandler handler = getTalosHandler();
+  RobotHandlerData handler = getTalosHandler();
 
   BOOST_CHECK_EQUAL(handler.getModel().nq, 29);
   BOOST_CHECK_EQUAL(handler.getModel().nv, 28);
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(build_talos) {
 }
 
 BOOST_AUTO_TEST_CASE(build_solo) {
-  RobotHandler handler = getSoloHandler();
+  RobotHandlerData handler = getSoloHandler();
 
   BOOST_CHECK_EQUAL(handler.getModel().nq, 19);
   BOOST_CHECK_EQUAL(handler.getModel().nv, 18);

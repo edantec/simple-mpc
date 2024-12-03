@@ -3,11 +3,11 @@
 namespace simple_mpc {
 using namespace aligator;
 
-KinodynamicsProblem::KinodynamicsProblem(const RobotHandler &handler)
+KinodynamicsProblem::KinodynamicsProblem(const RobotHandlerData &handler)
     : Base(handler) {}
 
 KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
-                                         const RobotHandler &handler)
+                                         const RobotHandlerData &handler)
     : Base(handler) {
   initialize(settings);
 }

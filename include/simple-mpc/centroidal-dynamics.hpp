@@ -66,9 +66,9 @@ public:
 
   // Constructor
   CentroidalProblem();
-  CentroidalProblem(const RobotHandler &handler);
+  CentroidalProblem(const RobotHandlerData &handler);
   CentroidalProblem(const CentroidalSettings &settings,
-                    const RobotHandler &handler);
+                    const RobotHandlerData &handler);
   void initialize(const CentroidalSettings &settings);
   virtual ~CentroidalProblem() {};
 

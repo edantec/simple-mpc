@@ -63,9 +63,9 @@ public:
 
   // Constructor
   KinodynamicsProblem();
-  KinodynamicsProblem(const RobotHandler &handler);
+  KinodynamicsProblem(const RobotHandlerData &handler);
   KinodynamicsProblem(const KinodynamicsSettings &settings,
-                      const RobotHandler &handler);
+                      const RobotHandlerData &handler);
   void initialize(const KinodynamicsSettings &settings);
   virtual ~KinodynamicsProblem() {};
 

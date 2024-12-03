@@ -28,7 +28,7 @@ using namespace pinocchio;
  * It holds the robot data, controlled joints, end-effector names
  * and other useful items.
  */
-struct RobotHandlerSettings {
+struct RobotHandler {
 public:
   /**
    * @brief Robot model with all joints unlocked
@@ -118,9 +118,9 @@ public:
   }
 };
 
-class RobotHandler {
+class RobotHandlerData {
 private:
-  RobotHandlerSettings settings_;
+  RobotHandler settings_;
   Data data;
 
   // State vectors
@@ -134,9 +134,9 @@ private:
   Eigen::Vector3d com_position_;
 
 public:
-  RobotHandler();
-  RobotHandler(const RobotHandlerSettings &settings);
-  void initialize(const RobotHandlerSettings &settings);
+  RobotHandlerData();
+  RobotHandlerData(const RobotHandler &settings);
+  void initialize(const RobotHandler &settings);
   bool initialized_ = false;
 
   // Set new robot state
@@ -174,7 +174,7 @@ public:
   const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
   const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
   const Eigen::VectorXd &getState() { return x_; }
-  const RobotHandlerSettings &getSettings() { return settings_; }
+  const RobotHandler &getSettings() { return settings_; }
   const Eigen::Vector3d &getComPosition() { return com_position_; }
   const Eigen::MatrixXd &getMassMatrix() { return data.M; }
 };

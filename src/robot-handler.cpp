@@ -8,13 +8,13 @@
 #include <pinocchio/parsers/urdf.hpp>
 namespace simple_mpc {
 
-RobotHandler::RobotHandler() {}
+RobotHandlerData::RobotHandlerData() {}
 
-RobotHandler::RobotHandler(const RobotHandlerSettings &settings) {
+RobotHandlerData::RobotHandlerData(const RobotHandler &settings) {
   initialize(settings);
 }
 
-// void RobotHandler::initialize(const RobotHandlerSettings &settings) {
+// void RobotHandlerData::initialize(const RobotHandler &settings) {
 //   settings_ = settings;
 
 //   // COMPLETE MODEL //
@@ -112,7 +112,7 @@ RobotHandler::RobotHandler(const RobotHandlerSettings &settings) {
 //   initialized_ = true;
 // }
 
-void RobotHandler::updateConfiguration(const Eigen::VectorXd &q,
+void RobotHandlerData::updateConfiguration(const Eigen::VectorXd &q,
                                        const bool updateJacobians) {
   if (q.size() != settings_.model.nq) {
     throw std::runtime_error(
@@ -123,7 +123,7 @@ void RobotHandler::updateConfiguration(const Eigen::VectorXd &q,
   updateInternalData(updateJacobians);
 }
 
-void RobotHandler::updateState(const Eigen::VectorXd &q,
+void RobotHandlerData::updateState(const Eigen::VectorXd &q,
                                const Eigen::VectorXd &v,
                                const bool updateJacobians) {
   if (q.size() != settings_.model.nq) {
@@ -140,7 +140,7 @@ void RobotHandler::updateState(const Eigen::VectorXd &q,
   updateInternalData(updateJacobians);
 }
 
-void RobotHandler::updateInternalData(const bool updateJacobians) {
+void RobotHandlerData::updateInternalData(const bool updateJacobians) {
   forwardKinematics(settings_.model, data, q_);
   updateFramePlacements(settings_.model, data);
   com_position_ = centerOfMass(settings_.model, data, q_, false);
@@ -154,7 +154,7 @@ void RobotHandler::updateInternalData(const bool updateJacobians) {
     updateJacobiansMassMatrix();
 }
 
-void RobotHandler::updateJacobiansMassMatrix() {
+void RobotHandlerData::updateJacobiansMassMatrix() {
   computeJointJacobians(settings_.model, data);
   computeJointJacobiansTimeVariation(settings_.model, data, q_, v_);
   crba(settings_.model, data, q_);
@@ -163,7 +163,7 @@ void RobotHandler::updateJacobiansMassMatrix() {
   dccrba(settings_.model, data, q_, v_);
 }
 
-const Eigen::VectorXd RobotHandler::shapeState(const Eigen::VectorXd &q,
+const Eigen::VectorXd RobotHandlerData::shapeState(const Eigen::VectorXd &q,
                                                const Eigen::VectorXd &v) {
   Eigen::VectorXd x = Eigen::VectorXd::Zero(settings_.model.nq + settings_.model.nv);
   if (q.size() == settings_.model.nq && v.size() == settings_.model.nv) {
@@ -187,7 +187,7 @@ const Eigen::VectorXd RobotHandler::shapeState(const Eigen::VectorXd &q,
   }
 }
 
-pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation,
+pinocchio::FrameIndex RobotHandlerData::addFrameToBase(Eigen::Vector3d translation,
                                                    std::string name) {
   auto placement = pinocchio::SE3::Identity();
   placement.translation() = translation;
@@ -199,7 +199,7 @@ pinocchio::FrameIndex RobotHandler::addFrameToBase(Eigen::Vector3d translation,
   return frame_id;
 }
 
-Eigen::VectorXd RobotHandler::difference(const Eigen::VectorXd &x1,
+Eigen::VectorXd RobotHandlerData::difference(const Eigen::VectorXd &x1,
                                          const Eigen::VectorXd &x2) {
   Eigen::VectorXd dx = Eigen::VectorXd::Zero(2 * settings_.model.nv);
   pinocchio::difference(settings_.model, x1.head(settings_.model.nq), x2.head(settings_.model.nq),

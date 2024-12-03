@@ -6,7 +6,7 @@ using namespace aligator;
 
 Problem::~Problem() {}
 
-Problem::Problem(const RobotHandler &handler) : handler_(handler) {
+Problem::Problem(const RobotHandlerData &handler) : handler_(handler) {
   nq_ = handler_.getModel().nq;
   nv_ = handler_.getModel().nv;
   ndx_ = 2 * handler_.getModel().nv;
