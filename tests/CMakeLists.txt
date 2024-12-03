@@ -8,7 +8,8 @@ macro(ADD_TEST_CFLAGS test_name flag)
   set_property(
     TARGET ${test_name}
     APPEND_STRING
-    PROPERTY COMPILE_FLAGS " ${flag}")
+    PROPERTY COMPILE_FLAGS " ${flag}"
+  )
 endmacro()
 
 file(GLOB TEST_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
@@ -17,9 +18,11 @@ message(STATUS "Test headers: ${TEST_HEADERS}")
 function(set_standard_output_directory target)
   set_target_properties(
     ${target}
-    PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
-               LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-               ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+  )
 endfunction()
 
 function(_add_test_prototype name prefix dependencies)

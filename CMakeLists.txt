@@ -28,33 +28,38 @@ else()
     get_property(
       JRL_CMAKE_MODULES
       TARGET jrl-cmakemodules::jrl-cmakemodules
-      PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+      PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    )
     message(STATUS "JRL cmakemodules found on system at ${JRL_CMAKE_MODULES}")
   elseif(${CMAKE_VERSION} VERSION_LESS "3.14.0")
     message(
       FATAL_ERROR
-        "\nCan't find jrl-cmakemodules. Please either:\n"
-        "  - use git submodule: 'git submodule update --init'\n"
-        "  - or install https://github.com/jrl-umi3218/jrl-cmakemodules\n"
-        "  - or upgrade your CMake to >= 3.14 to allow automatic fetching\n")
+      "\nCan't find jrl-cmakemodules. Please either:\n"
+      "  - use git submodule: 'git submodule update --init'\n"
+      "  - or install https://github.com/jrl-umi3218/jrl-cmakemodules\n"
+      "  - or upgrade your CMake to >= 3.14 to allow automatic fetching\n"
+    )
   else()
     message(STATUS "JRL cmakemodules not found. Let's fetch it.")
     FetchContent_Declare(
       "jrl-cmakemodules"
-      GIT_REPOSITORY "https://github.com/jrl-umi3218/jrl-cmakemodules.git")
+      GIT_REPOSITORY "https://github.com/jrl-umi3218/jrl-cmakemodules.git"
+    )
     FetchContent_MakeAvailable("jrl-cmakemodules")
     FetchContent_GetProperties("jrl-cmakemodules" SOURCE_DIR JRL_CMAKE_MODULES)
   endif()
 endif()
 
-# The following was copied over from https://github.com/Simple-Robotics/aligator:
-# Use BoostConfig module distributed by boost library instead of using FindBoost module distributed
-# by CMake
+# The following was copied over from
+# https://github.com/Simple-Robotics/aligator: Use BoostConfig module
+# distributed by boost library instead of using FindBoost module distributed by
+# CMake
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
-  # find_package(SDFormat14) reset this policy (with cmake_minimum_required) and redefine the find_dependency macro.
-  # Then, futur call of this macro don't use the right version of this policy.
-  # To avoid that, we define the CMP0167 default value.
+  # find_package(SDFormat14) reset this policy (with cmake_minimum_required) and
+  # redefine the find_dependency macro. Then, futur call of this macro don't use
+  # the right version of this policy. To avoid that, we define the CMP0167
+  # default value.
   set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
 endif()
 # JRL-cmakemodule setup
@@ -92,12 +97,18 @@ add_library(${PROJECT_NAME} SHARED ${mpc_HEADER} ${mpc_SOURCE})
 target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(
   ${PROJECT_NAME}
-  PUBLIC pinocchio::pinocchio aligator::aligator
-         example-robot-data::example-robot-data ndcurves::ndcurves)
+  PUBLIC
+    pinocchio::pinocchio
+    aligator::aligator
+    example-robot-data::example-robot-data
+    ndcurves::ndcurves
+)
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${mpc_HEADER}")
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX
-                                                 INSTALL_RPATH "\$ORIGIN")
+set_target_properties(
+  ${PROJECT_NAME}
+  PROPERTIES LINKER_LANGUAGE CXX INSTALL_RPATH "\$ORIGIN"
+)
 
 if(SUFFIX_SO_VERSION)
   set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION})
@@ -126,5 +137,6 @@ install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${TARGETS_EXPORT_NAME}
   PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
+  LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
+)
 install(FILES package.xml DESTINATION share/${PROJECT_NAME})
