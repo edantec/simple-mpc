@@ -128,10 +128,6 @@ private:
   Eigen::VectorXd v_complete_, v_;
   Eigen::VectorXd x_;
   Eigen::VectorXd x_centroidal_;
-  Eigen::MatrixXd M_; // Mass matrix
-
-  // Position of robot Center of Mass
-  Eigen::Vector3d com_position_;
 
 public:
   RobotHandlerData();
@@ -175,7 +171,7 @@ public:
   const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
   const Eigen::VectorXd &getState() { return x_; }
   const RobotHandler &getSettings() { return settings_; }
-  const Eigen::Vector3d &getComPosition() { return com_position_; }
+  const Eigen::Vector3d &getComPosition() { return data.com[0]; }
   const Eigen::MatrixXd &getMassMatrix() { return data.M; }
 };
 

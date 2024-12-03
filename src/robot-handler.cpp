@@ -106,7 +106,6 @@ RobotHandlerData::RobotHandlerData(const RobotHandler &settings) {
 //       controlled_joints_ids_.push_back(rmodel_complete_.getJointId(joint_name));
 //     }
 //   }
-//   M_.resize(rmodel_.nv, rmodel_.nv);
 //   updateConfiguration(q_, true);
 //   computeMass();
 //   initialized_ = true;
