@@ -17,7 +17,7 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
 void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   settings_ = settings;
   nx_ = 9;
-  nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
+  nu_ = (int)handler_.settings_.getFeetNames().size() * settings_.force_size;
   control_ref_.resize(nu_);
   control_ref_.setZero();
   com_ref_.setZero();
@@ -43,7 +43,7 @@ StageModel CentroidalProblem::createStage(
   computeControlFromForces(contact_force);
 
   ContactMap contact_map =
-      ContactMap(handler_.getFeetNames(), contact_states, contact_poses);
+      ContactMap(handler_.settings_.getFeetNames(), contact_states, contact_poses);
 
   auto com_res = CentroidalCoMResidual(nx_, nu_, com_ref_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
@@ -81,7 +81,7 @@ StageModel CentroidalProblem::createStage(
   StageModel stm = StageModel(rcost, dyn_model);
 
   int i = 0;
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : handler_.settings_.getFeetNames()) {
     if (contact_phase.at(name)) {
       if (settings_.force_size == 6) {
         CentroidalWrenchConeResidual wrench_residual =
@@ -102,7 +102,7 @@ StageModel CentroidalProblem::createStage(
 
 void CentroidalProblem::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < handler_.getFeetNames().size(); i++) {
+  for (std::size_t i = 0; i < handler_.settings_.getFeetNames().size(); i++) {
     if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
@@ -118,7 +118,7 @@ void CentroidalProblem::setReferencePoses(
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  if (pose_refs.size() != handler_.getFeetNames().size()) {
+  if (pose_refs.size() != handler_.settings_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
@@ -132,7 +132,7 @@ void CentroidalProblem::setReferencePoses(
   }
   CostStack *cs = getCostStack(t);
 
-  for (auto ee_name : handler_.getFeetNames()) {
+  for (auto ee_name : handler_.settings_.getFeetNames()) {
     QuadraticResidualCost *qrc1 =
         cs->getComponent<QuadraticResidualCost>("linear_acc_cost");
     QuadraticResidualCost *qrc2 =
@@ -198,7 +198,7 @@ void CentroidalProblem::setReferenceForces(
 void CentroidalProblem::setReferenceForce(const std::size_t t,
                                           const std::string &ee_name,
                                           const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = handler_.getFeetNames();
+  std::vector<std::string> hname = handler_.settings_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -210,7 +210,7 @@ void CentroidalProblem::setReferenceForce(const std::size_t t,
 const Eigen::VectorXd
 CentroidalProblem::getReferenceForce(const std::size_t t,
                                      const std::string &ee_name) {
-  std::vector<std::string> hname = handler_.getFeetNames();
+  std::vector<std::string> hname = handler_.settings_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -282,7 +282,7 @@ size_t CentroidalProblem::getContactSupport(const std::size_t t) {
                                    ->getDynamics<CentroidalFwdDynamics>();
 
   size_t active_contacts = 0;
-  for (auto name : handler_.getFeetNames()) {
+  for (auto name : handler_.settings_.getFeetNames()) {
     if (ode->contact_map_.getContactState(name)) {
       active_contacts += 1;
     }

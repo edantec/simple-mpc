@@ -33,7 +33,7 @@ void MPC::initialize(const MPCSettings &settings,
   settings_ = settings;
   problem_ = problem;
   std::map<std::string, Eigen::Vector3d> starting_poses;
-  for (auto const &name : problem_->getHandler().getFeetNames()) {
+  for (auto const &name : problem_->getHandler().settings_.getFeetNames()) {
     starting_poses.insert(
         {name, problem_->getHandler().getFootPose(name).translation()});
 
@@ -60,7 +60,7 @@ void MPC::initialize(const MPCSettings &settings,
   solver_->force_initial_condition_ = true;
   // solver_->reg_min = 1e-6;
 
-  ee_names_ = problem_->getHandler().getFeetNames();
+  ee_names_ = problem_->getHandler().settings_.getFeetNames();
   Eigen::VectorXd force_ref(
       problem_->getReferenceForce(0, problem_->getHandler().getFootName(0)));
 

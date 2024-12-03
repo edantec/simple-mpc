@@ -14,7 +14,7 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
 
 void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
   settings_ = settings;
-  nu_ = nv_ - 6 + settings_.force_size * (int)handler_.getFeetNames().size();
+  nu_ = nv_ - 6 + settings_.force_size * (int)handler_.settings_.getFeetNames().size();
   x0_ = handler_.getState();
   control_ref_.resize(nu_);
   control_ref_.setZero();
@@ -48,7 +48,7 @@ StageModel KinodynamicsProblem::createStage(
   rcost.addCost("centroidal_derivative_cost",
                 QuadraticResidualCost(space, centder_mom, settings_.w_centder));
 
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : handler_.settings_.getFeetNames()) {
     if (settings_.force_size == 6) {
       FramePlacementResidual frame_residual = FramePlacementResidual(
           space.ndx(), nu_, handler_.getModel(), contact_pose.at(name),
@@ -89,7 +89,7 @@ StageModel KinodynamicsProblem::createStage(
 
   Motion v_ref = Motion::Zero();
   int i = 0;
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : handler_.settings_.getFeetNames()) {
     if (contact_phase.at(name)) {
       FrameVelocityResidual frame_vel =
           FrameVelocityResidual(space.ndx(), nu_, handler_.getModel(), v_ref,
@@ -152,13 +152,13 @@ void KinodynamicsProblem::setReferencePose(const std::size_t t,
 void KinodynamicsProblem::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
-  if (pose_refs.size() != handler_.getFeetNames().size()) {
+  if (pose_refs.size() != handler_.settings_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
 
   CostStack *cs = getCostStack(t);
-  for (auto ee_name : handler_.getFeetNames()) {
+  for (auto ee_name : handler_.settings_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
     if (settings_.force_size == 6) {
@@ -207,7 +207,7 @@ KinodynamicsProblem::getReferencePose(const std::size_t t,
 
 void KinodynamicsProblem::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < handler_.getFeetNames().size(); i++) {
+  for (std::size_t i = 0; i < handler_.settings_.getFeetNames().size(); i++) {
     if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
@@ -227,7 +227,7 @@ void KinodynamicsProblem::setReferenceForces(
 void KinodynamicsProblem::setReferenceForce(const std::size_t i,
                                             const std::string &ee_name,
                                             const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = handler_.getFeetNames();
+  std::vector<std::string> hname = handler_.settings_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -239,7 +239,7 @@ void KinodynamicsProblem::setReferenceForce(const std::size_t i,
 const Eigen::VectorXd
 KinodynamicsProblem::getReferenceForce(const std::size_t i,
                                        const std::string &ee_name) {
-  std::vector<std::string> hname = handler_.getFeetNames();
+  std::vector<std::string> hname = handler_.settings_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();

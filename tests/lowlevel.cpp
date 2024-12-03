@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
 
   std::vector<pinocchio::SE3> foot_refs;
   std::vector<pinocchio::SE3> foot_refs_next;
-  for (auto const &name : handler.getFeetNames()) {
+  for (auto const &name : handler.settings_.getFeetNames()) {
     pinocchio::SE3 foot_ref = handler.getFootPose(name);
     foot_refs.push_back(foot_ref);
     foot_ref.translation()[0] += 0.1;

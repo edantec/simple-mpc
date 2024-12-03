@@ -26,13 +26,13 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
         "Contact phases and forces sequences do not have the same size");
   }
   std::map<std::string, bool> previous_phases;
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : handler_.settings_.getFeetNames()) {
     previous_phases.insert({name, true});
   }
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (std::size_t i = 0; i < contact_phases.size(); i++) {
     std::map<std::string, bool> land_constraint;
-    for (auto const &name : handler_.getFeetNames()) {
+    for (auto const &name : handler_.settings_getFeetNames()) {
       if (!previous_phases.at(name) and contact_phases[i].at(name))
         land_constraint.insert({name, true});
       else
@@ -93,12 +93,12 @@ void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
   Eigen::VectorXd force_ref(force_size);
   force_ref.setZero();
   force_ref[2] =
-      -handler_.getMass() * gravity / (double)handler_.getFeetNames().size();
+      -handler_.getMass() * gravity / (double)handler_.settings_.getFeetNames().size();
 
   std::map<std::string, bool> contact_phase;
   std::map<std::string, pinocchio::SE3> contact_pose;
   std::map<std::string, Eigen::VectorXd> contact_force;
-  for (auto &name : handler_.getFeetNames()) {
+  for (auto &name : handler_.settings_.getFeetNames()) {
     contact_phase.insert({name, true});
     contact_pose.insert({name, handler_.getFootPose(name)});
     contact_force.insert({name, force_ref});
