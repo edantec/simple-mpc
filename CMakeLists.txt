@@ -6,9 +6,6 @@ set(PROJECT_DESCRIPTION "MPC schemes for locomotion")
 set(PROJECT_URL https://github.com/edantec/${PROJECT_NAME})
 set(PROJECT_CUSTOM_HEADER_DIR "simple-mpc")
 
-# Project options
-option(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
-
 # Project configuration
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +14,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(PROJECT_USE_CMAKE_EXPORT True)
 
 include(FetchContent)
+include(CMakeDependentOption)
+
+# Project options
+option(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
+cmake_dependent_option(
+  GENERATE_PYTHON_STUBS
+  "Generate Python stubs"
+  OFF
+  BUILD_PYTHON_INTERFACE
+  ON
+)
 
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
