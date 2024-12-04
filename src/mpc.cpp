@@ -38,7 +38,7 @@ void MPC::initialize(const MPCSettings &settings,
         {name, problem_->getHandler().getFootPose(name).translation()});
 
     relative_feet_poses_.insert(
-        {name, problem_->getHandler().getRootFrame().inverse() *
+        {name, problem_->getHandler().getRootFramePose().inverse() *
                    problem_->getHandler().getFootPose(name)});
   }
   foot_trajectories_ =
@@ -268,10 +268,10 @@ void MPC::updateStepTrackerReferences() {
 
     twist_vect_[0] =
         -(problem_->getHandler().getRefFootPose(name).translation()[1] -
-          problem_->getHandler().getRootFrame().translation()[1]);
+          problem_->getHandler().getRootFramePose().translation()[1]);
     twist_vect_[1] =
         problem_->getHandler().getRefFootPose(name).translation()[0] -
-        problem_->getHandler().getRootFrame().translation()[0];
+        problem_->getHandler().getRootFramePose().translation()[0];
     next_pose_.head(2) =
         problem_->getHandler().getRefFootPose(name).translation().head(2);
     next_pose_.head(2) +=

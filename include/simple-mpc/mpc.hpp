@@ -135,7 +135,7 @@ public:
   };
 
   // getters and setters
-  MPCSettings &getSettings() { return settings_; }
+  MPCSettings &getModelHandler() { return settings_; }
 
   std::shared_ptr<Problem> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
