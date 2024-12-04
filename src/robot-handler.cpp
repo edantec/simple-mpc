@@ -110,6 +110,21 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &settings) {
 //   initialized_ = true;
 // }
 
+Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) {
+  const size_t nq = model_handler.model.nq;
+  const size_t nv = model_handler.model.nv;
+  const size_t ndx = 2* nv;
+  Eigen::VectorXd dx(nx);
+
+  // Difference over q
+  pinocchio::difference(model_handler.model, x1.head(nq), x2.head(nq), dx.head(model_handler.model.nv));
+
+  // Difference over v
+  dx.tail(nv) = x2.tail(nv) - x1.tail(nv);
+
+  return dx;
+}
+
 pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translation, std::string name) {
   auto placement = pinocchio::SE3::Identity();
   placement.translation() = translation;
@@ -171,8 +186,7 @@ void RobotDataHandler::updateJacobiansMassMatrix() {
   dccrba(model_handler.model, data, q_, v_);
 }
 
-const Eigen::VectorXd RobotDataHandler::shapeState(const Eigen::VectorXd &q,
-                                               const Eigen::VectorXd &v) {
+const Eigen::VectorXd RobotDataHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
   Eigen::VectorXd x = Eigen::VectorXd::Zero(model_handler.model.nq + model_handler.model.nv);
   if (q.size() == model_handler.model.nq && v.size() == model_handler.model.nv) {
     x.head<7>() = q.head<7>();
@@ -193,16 +207,6 @@ const Eigen::VectorXd RobotDataHandler::shapeState(const Eigen::VectorXd &q,
     throw std::runtime_error(
         "q and v must have the dimentions of the reduced or complete model.");
   }
-}
-
-Eigen::VectorXd RobotDataHandler::difference(const Eigen::VectorXd &x1,
-                                         const Eigen::VectorXd &x2) {
-  Eigen::VectorXd dx = Eigen::VectorXd::Zero(2 * dmodel_handler.model.nv);
-  pinocchio::difference(dmodel_handler.model, x1.head(dmodel_handler.model.nq), x2.head(dmodel_handler.model.nq),
-                        dx.head(dmodel_handler.model.nv));
-  dx.tail(dmodel_handler.model.nq) = x2.tail(dmodel_handler.model.nq) - x1.tail(dmodel_handler.model.nq);
-
-  return dx;
 }
 
 } // namespace simple_mpc

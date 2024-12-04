@@ -76,8 +76,24 @@ public:
   pinocchio::FrameIndex root_id;
 
 public:
-  // Helper function to augment the model
+  /**
+   * @brief Helper function to augment the model by adding frames fixed to the base
+   *
+   * @param[in] translation Position of the new frame in the base frame
+   * @param[in] name Name of the new frame
+   * @return pinocchio::FrameIndex Index of the created frame
+   */
   pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation, std::string name);
+
+  /**
+   * @brief Perform a finite difference on the sates.
+   *
+   * @param[in] x1 Initial state
+   * @param[in] x2 Desired state
+   * @return Eigen::VectorXd The vector that must be integrated during a unit of time to go from x1 to x2.
+   */
+  Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2);
+
 
   // Const getters
   size_t getFootIndex(const std::string &foot_name) const
@@ -145,11 +161,8 @@ public:
   void updateJacobiansMassMatrix();
 
   // Return reduced state from measures
-  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,
-                                   const Eigen::VectorXd &v);
+  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
 
-  Eigen::VectorXd difference(const Eigen::VectorXd &x1,
-                             const Eigen::VectorXd &x2);
   // Getters
   const SE3 &getRefFootPose(const std::string &foot_name) const
   {
