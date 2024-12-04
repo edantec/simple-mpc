@@ -123,7 +123,7 @@ public:
 
 class RobotDataHandler {
 private:
-  RobotModelHandler settings_;
+  RobotModelHandler model_handler;
   Data data;
 
   // State vectors
@@ -153,14 +153,14 @@ public:
   // Getters
   const SE3 &getRefFootPose(const std::string &foot_name) const
   {
-    return data.oMf[settings_.getRefFootId(foot_name)];
+    return data.oMf[model_handler.getRefFootId(foot_name)];
   };
   const SE3 &getFootPose(const std::string &foot_name) const
   {
-    return data.oMf[settings_.getFootId(foot_name)];
+    return data.oMf[model_handler.getFootId(foot_name)];
   };
 
-  const SE3 &getRootFrame() { return data.oMf[settings_.root_id]; }
+  const SE3 &getRootFrame() { return data.oMf[model_handler.root_id]; }
   const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
   const Data &getData() { return data; }
   const Eigen::VectorXd &getConfiguration() { return q_; }
@@ -168,7 +168,7 @@ public:
   const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
   const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
   const Eigen::VectorXd &getState() { return x_; }
-  const RobotModelHandler &getSettings() { return settings_; }
+  const RobotModelHandler &getSettings() { return model_handler; }
   const Eigen::Vector3d &getComPosition() { return data.com[0]; }
   const Eigen::MatrixXd &getMassMatrix() { return data.M; }
 };
