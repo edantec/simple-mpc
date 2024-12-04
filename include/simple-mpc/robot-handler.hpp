@@ -94,6 +94,15 @@ public:
    */
   Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2);
 
+  /**
+   * @brief Compute reduced state from measures by concatenating q,v of the reduced model.
+   *
+   * @param q Configuration vector of the full model
+   * @param v Velocity vector of the full model
+   * @return const Eigen::VectorXd State vector of the reduced model.
+   */
+  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
+
 
   // Const getters
   size_t getFootIndex(const std::string &foot_name) const
@@ -159,9 +168,6 @@ public:
   void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v, const bool updateJacobians);
   void updateInternalData(const bool updateJacobians);
   void updateJacobiansMassMatrix();
-
-  // Return reduced state from measures
-  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
 
   // Getters
   const SE3 &getRefFootPose(const std::string &foot_name) const

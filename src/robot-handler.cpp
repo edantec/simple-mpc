@@ -110,6 +110,40 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &settings) {
 //   initialized_ = true;
 // }
 
+const Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
+  const size_t nq_full = model_full.nq;
+  const size_t nv_full = model_full.nv;
+  const size_t nq = model.nq;
+  const size_t nv = model.nv;
+  const size_t nx = nq + nv;
+  Eigen::VectorXd x(nx);
+
+  assert(nq_full == q.size() && "Configuration vector has wrong size.");
+  assert(nv_full == v.size() && "Velocity vector has wrong size.");
+
+  // Floating base
+  x.head<7>() = q.head<7>();
+  x.segment<6>(nq) = v.head<6>();
+
+  // Copy each controlled joint to state vector
+  int iq = 7;
+  int iv = nq + 6;
+  for (unsigned long jointId : model_handler.controlled_joints_ids)
+  {
+    const size_t j_idx_q = model_full.idx_qs[jointId];
+    const size_t j_idx_v = model_full.idx_vs[jointId];
+    const size_t j_nq = model_full.nqs[jointId];
+    const size_t j_nv = model_full.nvs[jointId];
+
+    x.segment(iq, j_nq) = q.segment(j_idx_q, j_nq);
+    x.segment(iv, j_nv) = v.segment(j_idx_v, j_nv);
+
+    iq += j_nq;
+    iv += j_nv;
+  }
+  return x;
+}
+
 Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) {
   const size_t nq = model_handler.model.nq;
   const size_t nv = model_handler.model.nv;
@@ -184,29 +218,6 @@ void RobotDataHandler::updateJacobiansMassMatrix() {
   make_symmetric(data.M);
   nonLinearEffects(model_handler.model, data, q_, v_);
   dccrba(model_handler.model, data, q_, v_);
-}
-
-const Eigen::VectorXd RobotDataHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
-  Eigen::VectorXd x = Eigen::VectorXd::Zero(model_handler.model.nq + model_handler.model.nv);
-  if (q.size() == model_handler.model.nq && v.size() == model_handler.model.nv) {
-    x.head<7>() = q.head<7>();
-    x.segment<6>(model_handler.model.nq) = v.head<6>();
-
-    int i = 0;
-    for (unsigned long jointID : model_handler.controlled_joints_ids)
-      if (jointID > 1) {
-        x(i + 7) = q((long)jointID + 5);
-        x(model_handler.model.nq + i + 6) = v((long)jointID + 4);
-        i++;
-      }
-    return x;
-  } else if (q.size() == model_handler.model.nq && v.size() == model_handler.model.nv) {
-    x << q, v;
-    return x;
-  } else {
-    throw std::runtime_error(
-        "q and v must have the dimentions of the reduced or complete model.");
-  }
 }
 
 } // namespace simple_mpc
