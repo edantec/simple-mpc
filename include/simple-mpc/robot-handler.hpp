@@ -101,7 +101,7 @@ public:
    * @param v Velocity vector of the full model
    * @return const Eigen::VectorXd State vector of the reduced model.
    */
-  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
+  Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
 
 
   // Const getters
@@ -120,12 +120,12 @@ public:
     return feet_names;
   }
 
-  const FrameIndex &getFootId(const std::string &foot_name) const
+  FrameIndex getFootId(const std::string &foot_name) const
   {
     return feet_ids.at(getFootIndex(foot_name));
   }
 
-  const FrameIndex &getRefFootId(const std::string &foot_name) const
+  FrameIndex getRefFootId(const std::string &foot_name) const
   {
     return feet_ids.at(getFootIndex(foot_name));
   }
@@ -151,25 +151,14 @@ private:
   RobotModelHandler model_handler;
   Data data;
 
-  // State vectors
-  Eigen::VectorXd q_complete_, q_;
-  Eigen::VectorXd v_complete_, v_;
-  Eigen::VectorXd x_;
-  Eigen::VectorXd x_centroidal_;
-
 public:
-  RobotDataHandler();
-  RobotDataHandler(const RobotModelHandler &settings);
-  void initialize(const RobotModelHandler &settings);
-  bool initialized_ = false;
+  RobotDataHandler(const RobotModelHandler &model_handler);
 
   // Set new robot state
-  void updateConfiguration(const Eigen::VectorXd &q, const bool updateJacobians);
-  void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v, const bool updateJacobians);
-  void updateInternalData(const bool updateJacobians);
-  void updateJacobiansMassMatrix();
+  void updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians);
+  void updateJacobiansMassMatrix(const Eigen::VectorXd &x);
 
-  // Getters
+  // Const getters
   const SE3 &getRefFootPose(const std::string &foot_name) const
   {
     return data.oMf[model_handler.getRefFootId(foot_name)];
@@ -178,22 +167,18 @@ public:
   {
     return data.oMf[model_handler.getFootId(foot_name)];
   };
-  const SE3 &getRootFramePose() {
+  const SE3 &getRootFramePose() const {
     return data.oMf[model_handler.root_id];
   }
-
-  const Eigen::VectorXd &getConfiguration() { return q_; }
-  const Eigen::VectorXd &getVelocity() { return v_; }
-  const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
-  const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
-  const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
-  const Eigen::VectorXd &getState() { return x_; }
-
-  const Eigen::Vector3d &getComPosition() { return data.com[0]; }
-  const Eigen::MatrixXd &getMassMatrix() { return data.M; }
-
-  const RobotModelHandler &getModelHandler() { return model_handler; }
-  const Data &getData() { return data; }
+  const RobotModelHandler &getModelHandler() const
+  {
+    return model_handler;
+  }
+  const Data &getData() const
+  {
+    return data;
+  }
+  Eigen::VectorXd getCentroidalState() const;
 };
 
 } // namespace simple_mpc

@@ -105,12 +105,11 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &settings) {
 //       controlled_joints_ids_.push_back(rmodel_complete_.getJointId(joint_name));
 //     }
 //   }
-//   updateConfiguration(q_, true);
 //   computeMass();
 //   initialized_ = true;
 // }
 
-const Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
+Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
   const size_t nq_full = model_full.nq;
   const size_t nv_full = model_full.nv;
   const size_t nq = model.nq;
@@ -169,55 +168,39 @@ pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translat
   return frame_id;
 }
 
-void RobotDataHandler::updateConfiguration(const Eigen::VectorXd &q,
-                                       const bool updateJacobians) {
-  if (q.size() != model_handler.model.nq) {
-    throw std::runtime_error(
-        "q must have the dimensions of the robot configuration.");
-  }
-  q_ = q;
-  x_ << q_, v_;
-  updateInternalData(updateJacobians);
-}
+void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
+  const Eigen::Block q = x.head(model_handler.model.nq);
+  const Eigen::Block v = v.tail(model_handler.model.nq);
 
-void RobotDataHandler::updateState(const Eigen::VectorXd &q,
-                               const Eigen::VectorXd &v,
-                               const bool updateJacobians) {
-  if (q.size() != model_handler.model.nq) {
-    throw std::runtime_error(
-        "q must have the dimensions of the robot configuration.");
-  }
-  if (v.size() != model_handler.model.nv) {
-    throw std::runtime_error(
-        "v must have the dimensions of the robot velocity.");
-  }
-  q_ = q;
-  v_ = v;
-  x_ << q, v;
-  updateInternalData(updateJacobians);
-}
-
-void RobotDataHandler::updateInternalData(const bool updateJacobians) {
-  forwardKinematics(model_handler.model, data, q_);
+  forwardKinematics(model_handler.model, data, q);
   updateFramePlacements(model_handler.model, data);
-  com_position_ = centerOfMass(model_handler.model, data, q_, false);
-  computeCentroidalMomentum(model_handler.model, data, q_, v_);
-
-  x_centroidal_.head(3) = com_position_;
-  x_centroidal_.segment(3, 3) = data.hg.linear();
-  x_centroidal_.tail(3) = data.hg.angular();
+  computeCentroidalMomentum(model_handler.model, data, q, v);
 
   if (updateJacobians)
-    updateJacobiansMassMatrix();
+  {
+    updateJacobiansMassMatrix(x);
+  }
 }
 
-void RobotDataHandler::updateJacobiansMassMatrix() {
+void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
+  const Eigen::Block q = x.head(model_handler.model.nq);
+  const Eigen::Block v = v.tail(model_handler.model.nv);
+
   computeJointJacobians(model_handler.model, data);
-  computeJointJacobiansTimeVariation(model_handler.model, data, q_, v_);
-  crba(model_handler.model, data, q_);
+  computeJointJacobiansTimeVariation(model_handler.model, data, q, v);
+  crba(model_handler.model, data, q);
   make_symmetric(data.M);
-  nonLinearEffects(model_handler.model, data, q_, v_);
-  dccrba(model_handler.model, data, q_, v_);
+  nonLinearEffects(model_handler.model, data, q, v);
+  dccrba(model_handler.model, data, q, v);
+}
+
+Eigen::VectorXd getCentroidalState()
+{
+  Eigen::VectorXd x_centroidal(9);
+  x_centroidal.head(3) = centerOfMass(model_handler.model, data, q, false);
+  x_centroidal.segment(3, 3) = data.hg.linear();
+  x_centroidal.tail(3) = data.hg.angular();
+  return x_centroidal;
 }
 
 } // namespace simple_mpc
