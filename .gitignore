@@ -32,6 +32,5 @@
 *.app
 
 .cache/
-build/
-cmake/
+build*/
 /__pycache__/
