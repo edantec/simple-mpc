@@ -19,136 +19,30 @@ namespace simple_mpc {
 namespace python {
 namespace bp = boost::python;
 
-template <typename T>
-inline void py_list_to_std_vector(const bp::object &iterable,
-                                  std::vector<T> &out) {
-  out = std::vector<T>(boost::python::stl_input_iterator<T>(iterable),
-                       boost::python::stl_input_iterator<T>());
-}
-
-void initialize(RobotHandler &self, bp::dict settings) {
-  RobotHandlerSettings conf;
-  conf.robot_urdf = bp::extract<std::string>(settings["robot_urdf"]);
-  conf.robot_srdf = bp::extract<std::string>(settings["robot_srdf"]);
-  conf.root_name = bp::extract<std::string>(settings["root_name"]);
-  conf.base_configuration =
-      bp::extract<std::string>(settings["base_configuration"]);
-  py_list_to_std_vector(settings["controlled_joints_names"],
-                        conf.controlled_joints_names);
-  py_list_to_std_vector(settings["end_effector_names"],
-                        conf.end_effector_names);
-  py_list_to_std_vector(settings["feet_to_base_trans"],
-                        conf.feet_to_base_trans);
-  self.initialize(conf);
-}
-
-bp::dict getSettings(RobotHandler &self) {
-  RobotHandlerSettings conf = self.getSettings();
-  bp::dict settings;
-  settings["urdfPath"] = conf.urdf_path;
-  settings["srdfPath"] = conf.srdf_path;
-  settings["robot_description"] = conf.robot_description;
-  settings["root_name"] = conf.root_name;
-  settings["base_configuration"] = conf.base_configuration;
-
-  return settings;
-}
-
 void exposeHandler() {
-  bp::class_<RobotHandler>("RobotHandler", bp::init<>())
-      .def("initialize", &initialize)
-      .def("getSettings", &getSettings)
-      .def("updateConfiguration", &RobotHandler::updateConfiguration)
-      .def("updateState", &RobotHandler::updateState)
-      .def("updateInternalData", &RobotHandler::updateInternalData)
-      .def("updateJacobiansMassMatrix",
-           &RobotHandler::updateJacobiansMassMatrix)
-      .def("shapeState", &RobotHandler::shapeState)
-      .def("difference", &RobotHandler::difference)
-      .def("getModel",
-           bp::make_function(
-               &RobotHandler::getModel,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getCompleteModel",
-           bp::make_function(
-               &RobotHandler::getCompleteModel,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getData",
-           bp::make_function(
-               &RobotHandler::getData,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getComPosition",
-           bp::make_function(
-               &RobotHandler::getComPosition,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getConfiguration",
-           bp::make_function(
-               &RobotHandler::getConfiguration,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getCompleteConfiguration",
-           bp::make_function(
-               &RobotHandler::getCompleteConfiguration,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getVelocity",
-           bp::make_function(
-               &RobotHandler::getVelocity,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getState",
-           bp::make_function(
-               &RobotHandler::getState,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getCentroidalState",
-           bp::make_function(
-               &RobotHandler::getCentroidalState,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getSettings",
-           bp::make_function(
-               &RobotHandler::getSettings,
-               bp::return_value_policy<bp::reference_existing_object>()))
-      .def("getControlledJointsIDs",
-           bp::make_function(
-               &RobotHandler::getControlledJointsIDs,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getRootId",
-           bp::make_function(
-               &RobotHandler::getRootId,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getRootFrame",
-           bp::make_function(
-               &RobotHandler::getRootFrame,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getFootId",
-           bp::make_function(
-               &RobotHandler::getFootId,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getRefFootId",
-           bp::make_function(
-               &RobotHandler::getRefFootId,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getFeetNames",
-           bp::make_function(
-               &RobotHandler::getFeetNames,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getFeetIds",
-           bp::make_function(
-               &RobotHandler::getFeetIds,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getFootPose",
-           bp::make_function(
-               &RobotHandler::getFootPose,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getRefFootPose",
-           bp::make_function(
-               &RobotHandler::getRefFootPose,
-               bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getMass", bp::make_function(
-                          &RobotHandler::getMass,
-                          bp::return_value_policy<bp::copy_const_reference>()))
-      .def("getMassMatrix",
-           bp::make_function(
-               &RobotHandler::getMassMatrix,
-               bp::return_value_policy<bp::copy_const_reference>()));
+    bp::class_<RobotModelHandler>("RobotModelHandler", bp::init<>())
+        .def("addFrameToBase", bp::make_function(&RobotModelHandler::addFrameToBase))
+        .def("difference", bp::make_function(&RobotModelHandler::difference))
+        .def("shapeState", bp::make_function(&RobotModelHandler::shapeState))
+        .def("getFootIndex", bp::make_function(&RobotModelHandler::getFootIndex))
+        .def("getFootName", bp::make_function(&RobotModelHandler::getFootName))
+        .def("getFeetNames", bp::make_function(&RobotModelHandler::getFeetNames))
+        .def("getFootId", bp::make_function(&RobotModelHandler::getFootId))
+        .def("getRefFootId", bp::make_function(&RobotModelHandler::getRefFootId))
+        .def("getMass", bp::make_function(&RobotModelHandler::getMass))
+        .def("getModel", bp::make_function(&RobotModelHandler::getModel))
+        .def("getCompleteModel", bp::make_function(&RobotModelHandler::getCompleteModel))
 
+
+    bp::class_<RobotDataHandler>("RobotDataHandler", bp::init<>())
+        .def("updateInternalData", bp::make_function(&RobotDataHandler::updateInternalData))
+        .def("updateJacobiansMassMatrix", bp::make_function(&RobotDataHandler::updateJacobiansMassMatrix))
+        .def("getRefFootPose", bp::make_function(&RobotDataHandler::getRefFootPose))
+        .def("getFootPose", bp::make_function(&RobotDataHandler::getFootPose))
+        .def("getRootFramePose", bp::make_function(&RobotDataHandler::getRootFramePose))
+        .def("getModelHandler", bp::make_function(&RobotDataHandler::getModelHandler))
+        .def("getData", bp::make_function(&RobotDataHandler::getData))
+        .def("getCentroidalState", bp::make_function(&RobotDataHandler::getCentroidalState))
   return;
 }
 

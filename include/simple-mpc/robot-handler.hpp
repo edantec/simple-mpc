@@ -29,7 +29,7 @@ using namespace pinocchio;
  * and other useful items.
  */
 struct RobotModelHandler {
-public:
+private:
   /**
    * @brief Robot model with all joints unlocked
    */
