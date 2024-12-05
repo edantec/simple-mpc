@@ -76,8 +76,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 219);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(handler.getState().head(handler.getModel().nq),
-                handler.getState().tail(handler.getModel().nv));
+    mpc.iterate(handler.getState());
   }
 
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 160);
@@ -151,8 +150,7 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   mpc.generateCycleHorizon(contact_states);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(handler.getState().head(handler.getModel().nq),
-                handler.getState().tail(handler.getModel().nv));
+    mpc.iterate(handler.getState());
   }
 }
 
@@ -224,8 +222,7 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   mpc.generateCycleHorizon(contact_states);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(x_multibody.head(handler.getModel().nq),
-                x_multibody.tail(handler.getModel().nv));
+    mpc.iterate(x_multibody);
   }
 }
 

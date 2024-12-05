@@ -112,8 +112,7 @@ public:
       const std::vector<std::map<std::string, bool>> &contact_states);
 
   // Perform one iteration of MPC
-  void iterate(const Eigen::VectorXd &q_current,
-               const Eigen::VectorXd &v_current);
+  void iterate(const Eigen::VectorXd &x);
 
   void updateCycleTiming(const bool updateOnlyHorizon);
 
