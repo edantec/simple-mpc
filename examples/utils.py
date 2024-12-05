@@ -8,6 +8,7 @@ DEFAULT_SAVE_DIR = CURRENT_DIRECTORY + '/tmp'
 def save_trajectory(
     xs,
     us,
+    #uq,
     com,
     FL_force,
     FR_force,
@@ -32,6 +33,7 @@ def save_trajectory(
     simu_data = {}
     simu_data["xs"] = xs
     simu_data["us"] = us
+    #simu_data["uq"] = uq
     simu_data["com"] = com
     simu_data["FL_force"] = FL_force
     simu_data["FR_force"] = FR_force
@@ -70,20 +72,20 @@ def extract_forces(problem, workspace, id):
     force_RL = np.zeros(3)
     force_RR = np.zeros(3)
     contact_states = [False, False, False, False]
+    in_contact = problem.stages[id].dynamics.differential_dynamics.constraint_models.__len__()
 
-    if problem.stages[id].dynamics.differential_dynamics.constraint_models.__len__() == 2:
-        if problem.stages[id].dynamics.differential_dynamics.constraint_models[0].name == 'FL_foot':
-            force_FL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[0].contact_force.linear
-            force_RR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[1].contact_force.linear
-            contact_states = [True, False, False, True]
-        else:
-            force_FR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[0].contact_force.linear
-            force_RL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[1].contact_force.angular
-            contact_states = [False, True, True, False]
-    elif problem.stages[id].dynamics.differential_dynamics.constraint_models.__len__() == 4:
-        force_FL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[0].contact_force.linear
-        force_FR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[1].contact_force.linear
-        force_RL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[2].contact_force.linear
-        force_RR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[3].contact_force.linear
-        contact_states = [True, True, True, True]
+    for i in range(in_contact):
+        if problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'FL_foot':
+            contact_states[0] = True
+            force_FL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
+        elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'FR_foot':
+            contact_states[1] = True
+            force_FR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
+        elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'RL_foot':
+            contact_states[2] = True
+            force_RL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
+        elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'RR_foot':
+            contact_states[3] = True
+            force_RR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
+
     return force_FL, force_FR, force_RL, force_RR, contact_states

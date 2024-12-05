@@ -44,6 +44,7 @@ void initialize_ID(IDSolver &self, const bp::dict &settings,
   conf.kd = bp::extract<double>(settings["kd"]);
   conf.w_force = bp::extract<double>(settings["w_force"]);
   conf.w_acc = bp::extract<double>(settings["w_acc"]);
+  conf.w_tau = bp::extract<double>(settings["w_tau"]);
   conf.verbose = bp::extract<bool>(settings["verbose"]);
 
   self.initialize(conf, model);
@@ -83,22 +84,18 @@ void exposeIDSolver() {
   bp::class_<IDSolver>("IDSolver", bp::no_init)
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize_ID)
-      .def("solve_qp", &IDSolver::solve_qp,
-           bp::args("self", "data", "contact_state", "v", "a", "forces", "M"))
+      .def("solveQP", &IDSolver::solveQP,
+           bp::args("self", "data", "contact_state", "v", "a", "tau", "forces",
+                    "M"))
       .def("getA", &IDSolver::getA, bp::args("self"))
       .def("getA", &IDSolver::getA, bp::args("self"))
       .def("getH", &IDSolver::getH, bp::args("self"))
       .def("getC", &IDSolver::getC, bp::args("self"))
       .def("getb", &IDSolver::getb, bp::args("self"))
       .def("getg", &IDSolver::getg, bp::args("self"))
-      //.def("getQP",
-      //     bp::make_function(
-      //         &IDSolver::getQP,
-      //         bp::return_value_policy<bp::reference_existing_object>()))
       .add_property("solved_acc", &IDSolver::solved_acc_)
       .add_property("solved_forces", &IDSolver::solved_forces_)
       .add_property("solved_torque", &IDSolver::solved_torque_);
-  ;
 }
 
 void exposeIKIDSolver() {

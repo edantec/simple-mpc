@@ -19,7 +19,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-data_full = load_data("tmp/fulldynamics.npz") # kinodynamics_f6 fulldynamics centroidal_f6
+data_full = load_data("tmp/fulldynamics.npz") # kinodynamics fulldynamics centroidal_f6
 xs = data_full["xs"]
 us = data_full["us"]
 com = data_full["com"]
@@ -136,7 +136,6 @@ plt.legend(loc = "upper left")
 print("Mean power for fulldynamics is " + str(np.mean(power_full)))
 print("Dissipated energy for fulldynamics is " + str(np.sum(power_full) * 0.001))
 torque = [[] for i in range(3)]
-torque_ric = [[] for i in range(3)]
 for i in range(len(us)):
     torque[0].append(us[i][0])
     torque[1].append(us[i][1])

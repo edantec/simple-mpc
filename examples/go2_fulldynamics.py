@@ -1,9 +1,11 @@
 import numpy as np
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
+from simple_mpc import RobotHandler, FullDynamicsProblem, MPC, IDSolver
 import example_robot_data
 import time
 from utils import save_trajectory, extract_forces
+import copy
+import pinocchio as pin
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
@@ -53,6 +55,7 @@ design_conf = dict(
 )
 handler = RobotHandler()
 handler.initialize(design_conf)
+model = handler.getModel()
 
 force_size = 3
 nk = len(handler.getFeetNames())
@@ -69,7 +72,7 @@ w_legvel = [0.1, 0.1, 0.1]
 w_x = np.array(w_basepos + w_legpos * 4 + w_basevel + w_legvel * 4)
 w_cent_lin = np.array([0.0, 0.0, 0])
 w_cent_ang = np.array([0, 0, 0])
-w_forces_lin = np.array([0.001, 0.001, 0.001])
+w_forces_lin = np.array([0.0001, 0.0001, 0.0001])
 w_frame = np.diag(np.array([1000, 1000, 1000]))
 
 dt = 0.01
@@ -87,8 +90,8 @@ problem_conf = dict(
     qmin=handler.getModel().lowerPositionLimit[7:],
     qmax=handler.getModel().upperPositionLimit[7:],
     Kp_correction=np.array([0, 0, 0]),
-    Kd_correction=np.array([100, 100, 100]),
-    mu=1,
+    Kd_correction=np.array([0, 0, 0]),
+    mu=0.8,
     Lfoot=0.01,
     Wfoot=0.01,
     torque_limits=True,
@@ -158,6 +161,25 @@ contact_phases += [contact_phase_quadru] * int(T_ds / 2) """
 
 mpc.generateCycleHorizon(contact_phases)
 
+""" Initialize whole-body inverse dynamics QP"""
+contact_ids = handler.getFeetIds()
+id_conf = dict(
+    contact_ids=contact_ids,
+    x0=handler.getState(),
+    mu=0.8,
+    Lfoot=0.01,
+    Wfoot=0.01,
+    force_size=3,
+    kd=0,
+    w_force=0,
+    w_acc=0,
+    w_tau=1,
+    verbose=False,
+)
+
+qp = IDSolver()
+qp.initialize(id_conf, handler.getModel())
+
 """ Initialize simulation"""
 device = BulletRobot(
     design_conf["controlled_joints_names"],
@@ -188,7 +210,6 @@ device.showQuadrupedFeet(
 Tmpc = len(contact_phases)
 
 
-
 force_FL = []
 force_FR = []
 force_RL = []
@@ -210,7 +231,7 @@ L_measured = []
 v = np.zeros(6)
 v[0] = 0.2
 mpc.setVelocityBase(v)
-for t in range(2000):
+for t in range(300):
     print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -222,13 +243,13 @@ for t in range(2000):
         str(land_LF),
     ) """
 
-    if t == 1000:
+    """ if t == 1000:
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             #device.resetState(state_ref[s])
             time.sleep(0.1)
             print("s = " + str(s))
-        exit()
+        exit() """
 
     device.moveQuadrupedFeet(
         mpc.getReferencePose(0, "FL_foot").translation,
@@ -242,12 +263,19 @@ for t in range(2000):
     end = time.time()
     solve_time.append(end - start)
 
-    """ if t == 500:
-        mpc.switchToStand()
-    if t == 700:
-        mpc.switchToWalk(v) """
+    a0 = (
+        mpc.getSolver()
+        .workspace.problem_data.stage_data[0]
+        .dynamics_data.continuous_data.xdot[nv:]
+    )
+    a1 = (
+        mpc.getSolver()
+        .workspace.problem_data.stage_data[1]
+        .dynamics_data.continuous_data.xdot[nv:]
+    )
 
     FL_f, FR_f, RL_f, RR_f, contact_states = extract_forces(mpc.getTrajOptProblem(), mpc.getSolver().workspace, 0)
+    total_forces = np.concatenate((FL_f, FR_f, RL_f, RR_f))
     force_FL.append(FL_f)
     force_FR.append(FR_f)
     force_RL.append(RL_f)
@@ -264,10 +292,13 @@ for t in range(2000):
     com_measured.append(mpc.getHandler().getComPosition().copy())
     L_measured.append(mpc.getHandler().getData().hg.angular.copy())
 
+
     for j in range(N_simu):
         # time.sleep(0.01)
         u_interp = (N_simu - j) / N_simu * mpc.us[0] + j / N_simu * mpc.us[1]
+        a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
         x_interp = (N_simu - j) / N_simu * mpc.xs[0] + j / N_simu * mpc.xs[1]
+        K_interp = (N_simu - j) / N_simu * mpc.Ks[0] + j / N_simu * mpc.Ks[1]
         q_current, v_current = device.measureState()
 
         x_measured = np.concatenate((q_current, v_current))
@@ -280,9 +311,19 @@ for t in range(2000):
             x_measured, x_interp
         )
 
-        device.execute(current_torque)
+        qp.solveQP(
+            mpc.getHandler().getData(),
+            contact_states,
+            v_current,
+            a0,
+            current_torque,
+            total_forces,
+            mpc.getHandler().getMassMatrix(),
+        )
 
-        u_multibody.append(current_torque)
+        device.execute(qp.solved_torque)
+
+        u_multibody.append(copy.deepcopy(qp.solved_torque))
         x_multibody.append(x_measured)
 
 force_FL = np.array(force_FL)
@@ -301,6 +342,6 @@ RR_references = np.array(RR_references)
 com_measured = np.array(com_measured)
 L_measured = np.array(L_measured)
 
-""" save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
+save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
                 FL_measured, FR_measured, RL_measured, RR_measured,
-                FL_references, FR_references, RL_references, RR_references, L_measured, "fulldynamics") """
+                FL_references, FR_references, RL_references, RR_references, L_measured, "fulldynamics")

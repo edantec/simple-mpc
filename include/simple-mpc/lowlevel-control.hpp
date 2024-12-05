@@ -34,8 +34,9 @@ public:
   double Wfoot;    // Half-width of foot (if contact 6D)
   long force_size; // Dimension of contact forces
   double kd;       // Baumgarte coefficient
-  double w_force;  // Weight for force regularization
   double w_acc;    // Weight for acceleration regularization
+  double w_tau;    // Weight for torque regularization
+  double w_force;  // Weight for force regularization
   bool verbose;    // Print solver information
 };
 
@@ -79,8 +80,6 @@ protected:
   Eigen::VectorXd g_;
   Eigen::VectorXd l_;
   Eigen::VectorXd u_;
-  Eigen::Matrix3d baum_gains_;
-  Motion Jvel_;
 
   Eigen::MatrixXd Jc_;
   Eigen::VectorXd gamma_;
@@ -90,16 +89,18 @@ protected:
   void computeMatrice(pinocchio::Data &data,
                       const std::vector<bool> &contact_state,
                       const Eigen::VectorXd &v, const Eigen::VectorXd &a,
-                      const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
+                      const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
+                      const Eigen::MatrixXd &M);
 
 public:
   IDSolver();
   IDSolver(const IDSettings &settings, const pinocchio::Model &model);
   void initialize(const IDSettings &settings, const pinocchio::Model &model);
 
-  void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
-                const Eigen::VectorXd &v, const Eigen::VectorXd &a,
-                const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
+  void solveQP(pinocchio::Data &data, const std::vector<bool> &contact_state,
+               const Eigen::VectorXd &v, const Eigen::VectorXd &a,
+               const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
+               const Eigen::MatrixXd &M);
   proxqp::dense::Model<double> getQP() { return qp_->model; }
   Eigen::MatrixXd getA() { return qp_->model.A; }
   Eigen::MatrixXd getH() { return qp_->model.H; }

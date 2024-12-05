@@ -5,6 +5,7 @@
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 #include <aligator/utils/exceptions.hpp>
 #include <pinocchio/fwd.hpp>
+#include <pinocchio/multibody/fwd.hpp>
 #include <proxsuite-nlp/fwd.hpp>
 
 #include "simple-mpc/base-problem.hpp"
@@ -30,7 +31,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
-  prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
+  prox_settings_ = ProximalSettings(1e-9, 1e-10, 10);
   x0_ = handler_.getState();
   if (settings.force_size != settings.Kp_correction.size()) {
     throw std::runtime_error("Force must be of same size as Kp correction");
@@ -46,18 +47,18 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
     pinocchio::SE3 pl2 = handler_.getFootPose(name);
     if (settings_.force_size == 6) {
       pinocchio::RigidConstraintModel constraint_model =
-          pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_6D,
-                                          handler_.getModel(), joint_ids, pl1,
-                                          0, pl2, pinocchio::LOCAL);
+          pinocchio::RigidConstraintModel(
+              pinocchio::ContactType::CONTACT_6D, handler_.getModel(),
+              joint_ids, pl1, 0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
       constraint_model.corrector.Kp = settings.Kp_correction;
       constraint_model.corrector.Kd = settings.Kd_correction;
       constraint_model.name = name;
       constraint_models_.push_back(constraint_model);
     } else {
       pinocchio::RigidConstraintModel constraint_model =
-          pinocchio::RigidConstraintModel(pinocchio::ContactType::CONTACT_3D,
-                                          handler_.getModel(), joint_ids, pl1,
-                                          0, pl2, pinocchio::LOCAL);
+          pinocchio::RigidConstraintModel(
+              pinocchio::ContactType::CONTACT_3D, handler_.getModel(),
+              joint_ids, pl1, 0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
       constraint_model.corrector.Kp = settings.Kp_correction;
       constraint_model.corrector.Kd = settings.Kd_correction;
       constraint_model.name = name;
@@ -170,7 +171,7 @@ StageModel FullDynamicsProblem::createStage(
       if (land_constraint.at(name)) {
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
             space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-            handler_.getFootId(name), pinocchio::LOCAL);
+            handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
         stm.addConstraint(velocity_residual, EqualityConstraint());
       }
     } else if (settings_.force_size == 3 and contact_phase.at(name)) {
@@ -185,7 +186,7 @@ StageModel FullDynamicsProblem::createStage(
         std::vector<int> vel_id = {0, 1, 2};
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
             space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-            handler_.getFootId(name), pinocchio::LOCAL);
+            handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
         FunctionSliceXpr vel_slice =
             FunctionSliceXpr(velocity_residual, vel_id);
         stm.addConstraint(vel_slice, EqualityConstraint());
@@ -394,9 +395,9 @@ void FullDynamicsProblem::createTerminalConstraint() {
 
   Motion v_ref = Motion::Zero();
   for (auto const &name : handler_.getFeetNames()) {
-    FrameVelocityResidual frame_vel =
-        FrameVelocityResidual(ndx_, nu_, handler_.getModel(), v_ref,
-                              handler_.getFootId(name), pinocchio::LOCAL);
+    FrameVelocityResidual frame_vel = FrameVelocityResidual(
+        ndx_, nu_, handler_.getModel(), v_ref, handler_.getFootId(name),
+        pinocchio::LOCAL_WORLD_ALIGNED);
     if (settings_.force_size == 6)
       problem_->addTerminalConstraint(frame_vel, EqualityConstraint());
     else {

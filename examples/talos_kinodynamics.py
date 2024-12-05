@@ -144,8 +144,6 @@ mpc_conf = dict(
     max_iters=1,
     num_threads=8,
     swing_apex=0.15,
-    x_translation=0.0,
-    y_translation=0,
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
@@ -188,8 +186,9 @@ id_conf = dict(
     Wfoot=0.075,
     force_size=6,
     kd=0,
-    w_force=10000,
+    w_force=100,
     w_acc=1,
+    w_tau=0,
     verbose=False,
 )
 
@@ -288,11 +287,12 @@ for t in range(600):
             * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
             @ state_diff
         )
-        qp.solve_qp(
+        qp.solveQP(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
             a0,
+            np.zeros(12),
             forces,
             mpc.getHandler().getMassMatrix(),
         )

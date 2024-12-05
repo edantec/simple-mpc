@@ -22,6 +22,7 @@ BOOST_AUTO_TEST_CASE(ID_solver) {
   settings.kd = 10;
   settings.w_force = 1000;
   settings.w_acc = 1;
+  settings.w_tau = 0;
   settings.verbose = false;
 
   IDSolver ID_solver(settings, handler.getModel());
@@ -32,11 +33,12 @@ BOOST_AUTO_TEST_CASE(ID_solver) {
 
   Eigen::VectorXd v = Eigen::VectorXd::Random(handler.getModel().nv);
   Eigen::VectorXd a = Eigen::VectorXd::Random(handler.getModel().nv);
+  Eigen::VectorXd tau = Eigen::VectorXd::Zero(handler.getModel().nv - 6);
   Eigen::VectorXd forces = Eigen::VectorXd::Random(6 * 2);
 
   Eigen::MatrixXd M = handler.getMassMatrix();
   pinocchio::Data rdata = handler.getData();
-  ID_solver.solve_qp(rdata, contact_states, v, a, forces, M);
+  ID_solver.solveQP(rdata, contact_states, v, a, tau, forces, M);
 }
 
 BOOST_AUTO_TEST_CASE(IKID_solver) {

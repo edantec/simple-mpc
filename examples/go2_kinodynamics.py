@@ -176,6 +176,7 @@ id_conf = dict(
     kd=0,
     w_force=100,
     w_acc=1,
+    w_tau=0,
     verbose=False,
 )
 
@@ -231,7 +232,7 @@ N_simu = 10
 v = np.zeros(6)
 v[0] = 0.2
 mpc.setVelocityBase(v)
-for t in range(2000):
+for t in range(300):
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -318,11 +319,12 @@ for t in range(2000):
         forces1 = mpc.us[1][: nk * force_size]
         f_interp = (N_simu - j) / N_simu * forces + j / N_simu * forces1
 
-        qp.solve_qp(
+        qp.solveQP(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
             a_interp,
+            np.zeros(12),
             f_interp,
             mpc.getHandler().getMassMatrix(),
         )
@@ -348,6 +350,6 @@ RR_references = np.array(RR_references)
 com_measured = np.array(com_measured)
 L_measured = np.array(L_measured)
 
-""" save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
+save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
                 FL_measured, FR_measured, RL_measured, RR_measured,
-                FL_references, FR_references, RL_references, RR_references, L_measured, "kinodynamics") """
+                FL_references, FR_references, RL_references, RR_references, L_measured, "kinodynamics")
