@@ -143,6 +143,7 @@ public:
   CostStack *getTerminalCostStack();
   std::size_t getCostNumber();
   std::size_t getSize();
+  void updateState(const Eigen::VectorXd& x) { robot_data_handler_.updateInternalData(x, false); }
   std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
   const RobotDataHandler &getDataHandler() const { return robot_data_handler_; }
   const RobotModelHandler &getModelHandler() const { return robot_model_handler_; }

@@ -174,7 +174,7 @@ void MPC::generateCycleHorizon(
 
 void MPC::iterate(const Eigen::VectorXd &x) {
 
-  problem_->getDataHandler().updateInternalData(x, false);
+  problem_->updateState(x);
 
   // ~~TIMING~~ //
   recedeWithCycle();
