@@ -168,24 +168,24 @@ device = BulletRobot(
 device.initializeJoints(handler.getConfiguration())
 device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
-nq = mpc.getHandler().getModel().nq
-nv = mpc.getHandler().getModel().nv
+nq = mpc.getModelHandler().getModel().nq
+nv = mpc.getModelHandler().getModel().nv
 
-x_measured = mpc.getHandler().shapeState(q_current, v_current)
+x_measured = mpc.getModelHandler().shapeState(q_current, v_current)
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
 """ device.showQuadrupedFeet(
-    mpc.getHandler().getFootPose("FL_foot"),
-    mpc.getHandler().getFootPose("FR_foot"),
-    mpc.getHandler().getFootPose("RL_foot"),
-    mpc.getHandler().getFootPose("RR_foot"),
+    mpc.getDataHandler().getFootPose("FL_foot"),
+    mpc.getDataHandler().getFootPose("FR_foot"),
+    mpc.getDataHandler().getFootPose("RL_foot"),
+    mpc.getDataHandler().getFootPose("RR_foot"),
 ) """
 rmodel = handler.getModel()
-a1 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
-a2 = mpc.getHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
-a3 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
-a4 = mpc.getHandler().getData().oMf[rmodel.getFrameId("RR_thigh")]
+a1 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
+a2 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
+a3 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
+a4 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("RR_thigh")]
 a1.translation[2] = 0
 a2.translation[2] = 0
 a3.translation[2] = 0

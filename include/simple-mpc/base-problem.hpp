@@ -145,7 +145,8 @@ public:
   std::size_t getCostNumber();
   std::size_t getSize();
   std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
-  RobotDataHandler &getHandler() { return handler_; }
+  const RobotDataHandler &getDataHandler() const { return robot_data_handler_; }
+  const RobotModelHandler &getModelHandler() const { return robot_model_handler_; }
   int getNu() { return nu_; }
 
 protected:
@@ -158,7 +159,8 @@ protected:
   bool terminal_constraint_ = false;
 
   /// The robot model
-  RobotDataHandler handler_;
+  RobotDataHandler robot_data_handler_;
+  RobotModelHandler robot_model_handler_;
 
   /// The reference shooting problem storing all shooting nodes
   std::shared_ptr<TrajOptProblem> problem_;

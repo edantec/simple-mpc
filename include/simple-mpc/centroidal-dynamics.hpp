@@ -114,7 +114,7 @@ public:
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
 
-  CentroidalSettings getModelHandler() { return settings_; }
+  CentroidalSettings getSettings() { return settings_; }
 
 protected:
   CentroidalSettings settings_;

@@ -110,7 +110,7 @@ public:
   void computeControlFromForces(
       const std::map<std::string, Eigen::VectorXd> &force_refs);
 
-  KinodynamicsSettings getModelHandler() { return settings_; }
+  KinodynamicsSettings getSettings() { return settings_; }
 
 protected:
   KinodynamicsSettings settings_;

@@ -124,7 +124,7 @@ public:
                    const Eigen::VectorXd &pose_base) override;
   const Eigen::VectorXd getProblemState() override;
   size_t getContactSupport(const std::size_t t) override;
-  FullDynamicsSettings getModelHandler() { return settings_; }
+  FullDynamicsSettings getSettings() { return settings_; }
 
 protected:
   // Problem settings

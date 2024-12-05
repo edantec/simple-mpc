@@ -287,18 +287,18 @@ device = BulletRobot(
 device.initializeJoints(handler.getConfiguration())
 device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 q_current, v_current = device.measureState()
-nq = mpc.getHandler().getModel().nq
-nv = mpc.getHandler().getModel().nv
+nq = mpc.getModelHandler().getModel().nq
+nv = mpc.getModelHandler().getModel().nv
 
-x_measured = mpc.getHandler().shapeState(q_current, v_current)
+x_measured = mpc.getModelHandler().shapeState(q_current, v_current)
 q_current = x_measured[:nq]
 v_current = x_measured[nq:]
 
 device.showQuadrupedFeet(
-    mpc.getHandler().getFootPose("FL_foot"),
-    mpc.getHandler().getFootPose("FR_foot"),
-    mpc.getHandler().getFootPose("RL_foot"),
-    mpc.getHandler().getFootPose("RR_foot"),
+    mpc.getDataHandler().getFootPose("FL_foot"),
+    mpc.getDataHandler().getFootPose("FR_foot"),
+    mpc.getDataHandler().getFootPose("RL_foot"),
+    mpc.getDataHandler().getFootPose("RR_foot"),
 )
 space_multibody = manifolds.MultibodyPhaseSpace(handler.getModel())
 for t in range(1000):
@@ -330,7 +330,7 @@ for t in range(1000):
         .dynamics_data.continuous_data.xdot[3:9]
     )
     qp.computeDifferences(
-        mpc.getHandler().getData(), x_measured, foot_ref, foot_ref_next
+        mpc.getDataHandler().getData(), x_measured, foot_ref, foot_ref_next
     )
 
     device.moveQuadrupedFeet(
@@ -361,7 +361,7 @@ for t in range(1000):
     ) = compute_ID_references(
         space_multibody,
         handler.getModel(),
-        mpc.getHandler().getData(),
+        mpc.getDataHandler().getData(),
         contact_ids[0],
         contact_ids[1],
         contact_ids[2],
@@ -381,13 +381,13 @@ for t in range(1000):
     for j in range(10):
         time.sleep(0.001)
         q_current, v_current = device.measureState()
-        x_measured = mpc.getHandler().shapeState(q_current, v_current)
+        x_measured = mpc.getModelHandler().shapeState(q_current, v_current)
 
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        mpc.getHandler().updateState(q_current, v_current, True)
-        x_centroidal = mpc.getHandler().getCentroidalState()
+        mpc.getDataHandler().updateState(q_current, v_current, True)
+        x_centroidal = mpc.getDataHandler().getCentroidalState()
         state_diff = mpc.xs[0] - x_centroidal
 
         forces = (
@@ -398,16 +398,16 @@ for t in range(1000):
         )
 
         qp.solve_qp(
-            mpc.getHandler().getData(),
+            mpc.getDataHandler().getData(),
             contact_states,
             v_current,
             forces,
             dH,
-            mpc.getHandler().getMassMatrix(),
+            mpc.getDataHandler().getData().M,
         )
 
         """ new_acc, new_forces, torque = IKID_solver.solve(
-            mpc.getHandler().getData(),
+            mpc.getData.handler().getData(),
             contact_states,
             v_current,
             q_diff,
@@ -424,7 +424,7 @@ for t in range(1000):
             dbase_diff,
             forces,
             dH,
-            mpc.getHandler().getMassMatrix(),
+            mpc.getDataHandler().getData().M,
         ) """
 
         """ print(qp.solved_torque)

@@ -135,12 +135,13 @@ public:
   };
 
   // getters and setters
-  MPCSettings &getModelHandler() { return settings_; }
+  MPCSettings &getSettings() { return settings_; }
 
   std::shared_ptr<Problem> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
-  RobotDataHandler &getHandler() { return problem_->getHandler(); }
+  RobotDataHandler &getDataHandler() { return problem_->getDataHandler(); }
+  RobotModelHandler &getModelHandler() { return problem_->getModelHandler(); }
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }
