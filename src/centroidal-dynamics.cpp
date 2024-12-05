@@ -17,7 +17,7 @@ CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
 void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   settings_ = settings;
   nx_ = 9;
-  nu_ = (int)handler_.settings_.getFeetNames().size() * settings_.force_size;
+  nu_ = (int)robot_model_handler_.getFeetNames().size() * settings_.force_size;
   control_ref_.resize(nu_);
   control_ref_.setZero();
   com_ref_.setZero();
@@ -43,17 +43,17 @@ StageModel CentroidalProblem::createStage(
   computeControlFromForces(contact_force);
 
   ContactMap contact_map =
-      ContactMap(handler_.settings_.getFeetNames(), contact_states, contact_poses);
+      ContactMap(robot_model_handler_.getFeetNames(), contact_states, contact_poses);
 
   auto com_res = CentroidalCoMResidual(nx_, nu_, com_ref_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
 
   auto linear_acc = CentroidalAccelerationResidual(
-      space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
+      space.ndx(), nu_, robot_model_handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
   auto angular_acc = AngularAccelerationResidual(
-      space.ndx(), nu_, handler_.getMass(), settings_.gravity, contact_map,
+      space.ndx(), nu_, robot_model_handler_.getMass(), settings_.gravity, contact_map,
       settings_.force_size);
 
   rcost.addCost("com_cost",
@@ -74,14 +74,14 @@ StageModel CentroidalProblem::createStage(
       QuadraticResidualCost(space, angular_acc, settings_.w_angular_acc));
 
   CentroidalFwdDynamics ode =
-      CentroidalFwdDynamics(space, handler_.getMass(), settings_.gravity,
+      CentroidalFwdDynamics(space, robot_model_handler_.getMass(), settings_.gravity,
                             contact_map, settings_.force_size);
   IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.DT);
 
   StageModel stm = StageModel(rcost, dyn_model);
 
   int i = 0;
-  for (auto const &name : handler_.settings_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     if (contact_phase.at(name)) {
       if (settings_.force_size == 6) {
         CentroidalWrenchConeResidual wrench_residual =
@@ -102,13 +102,13 @@ StageModel CentroidalProblem::createStage(
 
 void CentroidalProblem::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < handler_.settings_.getFeetNames().size(); i++) {
-    if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
+  for (std::size_t i = 0; i < robot_model_handler_.getFeetNames().size(); i++) {
+    if (settings_.force_size != force_refs.at(robot_model_handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs.at(handler_.getFootName(i));
+        force_refs.at(robot_model_handler_.getFootName(i));
   }
 }
 
@@ -118,7 +118,7 @@ void CentroidalProblem::setReferencePoses(
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  if (pose_refs.size() != handler_.settings_.getFeetNames().size()) {
+  if (pose_refs.size() != robot_model_handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
@@ -132,7 +132,7 @@ void CentroidalProblem::setReferencePoses(
   }
   CostStack *cs = getCostStack(t);
 
-  for (auto ee_name : handler_.settings_.getFeetNames()) {
+  for (auto ee_name : robot_model_handler_.getFeetNames()) {
     QuadraticResidualCost *qrc1 =
         cs->getComponent<QuadraticResidualCost>("linear_acc_cost");
     QuadraticResidualCost *qrc2 =
@@ -198,7 +198,7 @@ void CentroidalProblem::setReferenceForces(
 void CentroidalProblem::setReferenceForce(const std::size_t t,
                                           const std::string &ee_name,
                                           const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = handler_.settings_.getFeetNames();
+  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -210,7 +210,7 @@ void CentroidalProblem::setReferenceForce(const std::size_t t,
 const Eigen::VectorXd
 CentroidalProblem::getReferenceForce(const std::size_t t,
                                      const std::string &ee_name) {
-  std::vector<std::string> hname = handler_.settings_.getFeetNames();
+  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -231,8 +231,8 @@ const Eigen::VectorXd CentroidalProblem::getVelocityBase(const std::size_t t) {
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  v.head(3) = cfm->getReference() / handler_.getMass();
-  v.tail(3) = cfa->getReference() / handler_.getMass();
+  v.head(3) = cfm->getReference() / robot_model_handler_.getMass();
+  v.tail(3) = cfa->getReference() / robot_model_handler_.getMass();
   return v;
 }
 
@@ -247,8 +247,8 @@ void CentroidalProblem::setVelocityBase(const std::size_t t,
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  cfm->setReference(velocity_base.head(3) * handler_.getMass());
-  cfa->setReference(velocity_base.tail(3) * handler_.getMass());
+  cfm->setReference(velocity_base.head(3) * robot_model_handler_.getMass());
+  cfa->setReference(velocity_base.tail(3) * robot_model_handler_.getMass());
 }
 
 const Eigen::VectorXd CentroidalProblem::getPoseBase(const std::size_t t) {
@@ -273,7 +273,7 @@ void CentroidalProblem::setPoseBase(const std::size_t t,
 }
 
 const Eigen::VectorXd CentroidalProblem::getProblemState() {
-  return handler_.getCentroidalState();
+  return robot_data_handler_.getCentroidalState();
 }
 
 size_t CentroidalProblem::getContactSupport(const std::size_t t) {
@@ -282,7 +282,7 @@ size_t CentroidalProblem::getContactSupport(const std::size_t t) {
                                    ->getDynamics<CentroidalFwdDynamics>();
 
   size_t active_contacts = 0;
-  for (auto name : handler_.settings_.getFeetNames()) {
+  for (auto name : robot_model_handler_.getFeetNames()) {
     if (ode->contact_map_.getContactState(name)) {
       active_contacts += 1;
     }
@@ -310,7 +310,7 @@ void CentroidalProblem::createTerminalConstraint() {
     throw std::runtime_error("Create problem first!");
   }
   CentroidalCoMResidual com_cstr =
-      CentroidalCoMResidual(ndx_, nu_, handler_.getComPosition());
+      CentroidalCoMResidual(ndx_, nu_, robot_data_handler_.getData().com[0]);
 
   // problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
   terminal_constraint_ = false;
