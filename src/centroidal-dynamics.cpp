@@ -5,12 +5,14 @@
 namespace simple_mpc {
 using namespace aligator;
 
-CentroidalProblem::CentroidalProblem(const RobotDataHandler &handler)
-    : Base(handler) {}
+CentroidalProblem::CentroidalProblem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler)
+: Base(model_handler, data_handler)
+{
+}
 
-CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
-                                     const RobotDataHandler &handler)
-    : Base(handler) {
+CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler)
+: CentroidalProblem(model_handler, data_handler)
+{
   initialize(settings);
 }
 

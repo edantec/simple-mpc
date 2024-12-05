@@ -65,10 +65,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  CentroidalProblem();
-  CentroidalProblem(const RobotDataHandler &handler);
-  CentroidalProblem(const CentroidalSettings &settings,
-                    const RobotDataHandler &handler);
+  CentroidalProblem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
+  CentroidalProblem(const CentroidalSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
   void initialize(const CentroidalSettings &settings);
   virtual ~CentroidalProblem() {};
 

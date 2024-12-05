@@ -69,7 +69,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// Constructor
-  Problem();
   Problem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
   virtual ~Problem();
 

@@ -62,10 +62,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  KinodynamicsProblem();
-  KinodynamicsProblem(const RobotDataHandler &handler);
-  KinodynamicsProblem(const KinodynamicsSettings &settings,
-                      const RobotDataHandler &handler);
+  KinodynamicsProblem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
+  KinodynamicsProblem(const KinodynamicsSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
   void initialize(const KinodynamicsSettings &settings);
   virtual ~KinodynamicsProblem() {};
 

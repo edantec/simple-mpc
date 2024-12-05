@@ -80,10 +80,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructors
-  FullDynamicsProblem();
-  FullDynamicsProblem(const RobotDataHandler &handler);
-  FullDynamicsProblem(const FullDynamicsSettings &settings,
-                      const RobotDataHandler &handler);
+  FullDynamicsProblem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
+  FullDynamicsProblem(const FullDynamicsSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 
