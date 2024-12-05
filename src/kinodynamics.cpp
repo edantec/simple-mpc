@@ -40,7 +40,7 @@ StageModel KinodynamicsProblem::createStage(
       space.ndx(), nu_, robot_model_handler_.getModel(), Eigen::VectorXd::Zero(6));
   auto centder_mom = CentroidalMomentumDerivativeResidual(
       space.ndx(), robot_model_handler_.getModel(), settings_.gravity, contact_states,
-      settings_.getFeetIds(), settings_.force_size);
+      robot_model_handler_.getFeetIds(), settings_.force_size);
   rcost.addCost("state_cost",
                 QuadraticStateCost(space, nu_, x0_, settings_.w_x));
   rcost.addCost("control_cost",

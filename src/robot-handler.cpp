@@ -111,7 +111,8 @@ namespace simple_mpc {
 //   initialized_ = true;
 // }
 
-Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) {
+Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) const
+{
   const size_t nq_full = model_full.nq;
   const size_t nv_full = model_full.nv;
   const size_t nq = model.nq;
@@ -129,7 +130,7 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
   // Copy each controlled joint to state vector
   int iq = 7;
   int iv = nq + 6;
-  for (unsigned long jointId : model_handler.controlled_joints_ids)
+  for (unsigned long jointId : controlled_joints_ids)
   {
     const size_t j_idx_q = model_full.idx_qs[jointId];
     const size_t j_idx_v = model_full.idx_vs[jointId];
@@ -145,14 +146,16 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
   return x;
 }
 
-Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) {
-  const size_t nq = model_handler.getModel().nq;
-  const size_t nv = model_handler.getModel().nv;
+Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const
+{
+  const size_t nq = model.nq;
+  const size_t nv = model.nv;
   const size_t ndx = 2* nv;
-  Eigen::VectorXd dx(nx);
+
+  Eigen::VectorXd dx(ndx);
 
   // Difference over q
-  pinocchio::difference(model_handler.getModel(), x1.head(nq), x2.head(nq), dx.head(model_handler.getModel().nv));
+  pinocchio::difference(model, x1.head(nq), x2.head(nq), dx.head(nv));
 
   // Difference over v
   dx.tail(nv) = x2.tail(nv) - x1.tail(nv);
@@ -178,7 +181,7 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)
 
 void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
   const Eigen::Block q = x.head(model_handler.getModel().nq);
-  const Eigen::Block v = v.tail(model_handler.getModel().nq);
+  const Eigen::Block v = x.tail(model_handler.getModel().nv);
 
   forwardKinematics(model_handler.getModel(), data, q);
   updateFramePlacements(model_handler.getModel(), data);
@@ -192,7 +195,7 @@ void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool u
 
 void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
   const Eigen::Block q = x.head(model_handler.getModel().nq);
-  const Eigen::Block v = v.tail(model_handler.getModel().nv);
+  const Eigen::Block v = x.tail(model_handler.getModel().nv);
 
   computeJointJacobians(model_handler.getModel(), data);
   computeJointJacobiansTimeVariation(model_handler.getModel(), data, q, v);
@@ -202,10 +205,10 @@ void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
   dccrba(model_handler.getModel(), data, q, v);
 }
 
-Eigen::VectorXd RobotDataHandler::getCentroidalState()
+Eigen::VectorXd RobotDataHandler::getCentroidalState() const
 {
   Eigen::VectorXd x_centroidal(9);
-  x_centroidal.head(3) = centerOfMass(model_handler.getModel(), data, q, false);
+  x_centroidal.head(3) = data.com[0];
   x_centroidal.segment(3, 3) = data.hg.linear();
   x_centroidal.tail(3) = data.hg.angular();
   return x_centroidal;
