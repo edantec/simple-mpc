@@ -24,6 +24,7 @@ void exposeHandler() {
         .def("addFrameToBase", bp::make_function(&RobotModelHandler::addFrameToBase))
         .def("difference", bp::make_function(&RobotModelHandler::difference))
         .def("shapeState", bp::make_function(&RobotModelHandler::shapeState))
+        .def("getRootFrameId", bp::make_function(&RobotModelHandler::getRootFrameId))
         .def("getFootIndex", bp::make_function(&RobotModelHandler::getFootIndex))
         .def("getFootName", bp::make_function(&RobotModelHandler::getFootName))
         .def("getFeetNames", bp::make_function(&RobotModelHandler::getFeetNames))

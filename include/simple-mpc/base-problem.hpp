@@ -70,7 +70,7 @@ public:
 
   /// Constructor
   Problem();
-  Problem(const RobotDataHandler &handler);
+  Problem(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
   virtual ~Problem();
 
   /// Virtual functions defined in child classes

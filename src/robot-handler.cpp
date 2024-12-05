@@ -7,11 +7,13 @@
 #include <pinocchio/parsers/srdf.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 namespace simple_mpc {
-RobotDataHandler::RobotDataHandler() {}
 
-RobotDataHandler::RobotDataHandler(const RobotModelHandler &settings) {
-  initialize(settings);
-}
+  RobotModelHandler::RobotModelHandler(const Model& model, const std::vector<std::string>& feet_names, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names)
+  : model_full(model)
+  , feet_names(feet_names)
+  {
+
+  }
 
 // void RobotDataHandler::initialize(const RobotModelHandler &settings) {
 //   model_handler = settings;
@@ -144,13 +146,13 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
 }
 
 Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) {
-  const size_t nq = model_handler.model.nq;
-  const size_t nv = model_handler.model.nv;
+  const size_t nq = model_handler.getModel().nq;
+  const size_t nv = model_handler.getModel().nv;
   const size_t ndx = 2* nv;
   Eigen::VectorXd dx(nx);
 
   // Difference over q
-  pinocchio::difference(model_handler.model, x1.head(nq), x2.head(nq), dx.head(model_handler.model.nv));
+  pinocchio::difference(model_handler.getModel(), x1.head(nq), x2.head(nq), dx.head(model_handler.getModel().nv));
 
   // Difference over v
   dx.tail(nv) = x2.tail(nv) - x1.tail(nv);
@@ -168,13 +170,19 @@ pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translat
   return frame_id;
 }
 
-void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
-  const Eigen::Block q = x.head(model_handler.model.nq);
-  const Eigen::Block v = v.tail(model_handler.model.nq);
+RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)
+: model_handler(model_handler)
+, data(model_handler.getModel())
+{
+}
 
-  forwardKinematics(model_handler.model, data, q);
-  updateFramePlacements(model_handler.model, data);
-  computeCentroidalMomentum(model_handler.model, data, q, v);
+void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
+  const Eigen::Block q = x.head(model_handler.getModel().nq);
+  const Eigen::Block v = v.tail(model_handler.getModel().nq);
+
+  forwardKinematics(model_handler.getModel(), data, q);
+  updateFramePlacements(model_handler.getModel(), data);
+  computeCentroidalMomentum(model_handler.getModel(), data, q, v);
 
   if (updateJacobians)
   {
@@ -183,21 +191,21 @@ void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool u
 }
 
 void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
-  const Eigen::Block q = x.head(model_handler.model.nq);
-  const Eigen::Block v = v.tail(model_handler.model.nv);
+  const Eigen::Block q = x.head(model_handler.getModel().nq);
+  const Eigen::Block v = v.tail(model_handler.getModel().nv);
 
-  computeJointJacobians(model_handler.model, data);
-  computeJointJacobiansTimeVariation(model_handler.model, data, q, v);
-  crba(model_handler.model, data, q);
+  computeJointJacobians(model_handler.getModel(), data);
+  computeJointJacobiansTimeVariation(model_handler.getModel(), data, q, v);
+  crba(model_handler.getModel(), data, q);
   make_symmetric(data.M);
-  nonLinearEffects(model_handler.model, data, q, v);
-  dccrba(model_handler.model, data, q, v);
+  nonLinearEffects(model_handler.getModel(), data, q, v);
+  dccrba(model_handler.getModel(), data, q, v);
 }
 
-Eigen::VectorXd getCentroidalState()
+Eigen::VectorXd RobotDataHandler::getCentroidalState()
 {
   Eigen::VectorXd x_centroidal(9);
-  x_centroidal.head(3) = centerOfMass(model_handler.model, data, q, false);
+  x_centroidal.head(3) = centerOfMass(model_handler.getModel(), data, q, false);
   x_centroidal.segment(3, 3) = data.hg.linear();
   x_centroidal.tail(3) = data.hg.angular();
   return x_centroidal;

@@ -77,6 +77,16 @@ private:
 
 public:
   /**
+   * @brief Construct a new Robot Model Handler object
+   *
+   * @param model Model of the full robot
+   * @param feet_names Name of the frames corresponding to the feet (e.g. can be used for contact with the ground)
+   * @param reference_configuration_name Reference configuration to use
+   * @param locked_joint_names List of joints to lock (values will be fixed at the reference configuration)
+   */
+  RobotModelHandler(const Model& model, const std::vector<std::string>& feet_names, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names = {});
+
+  /**
    * @brief Helper function to augment the model by adding frames fixed to the base
    *
    * @param[in] translation Position of the new frame in the base frame
@@ -118,6 +128,11 @@ public:
   const std::vector<std::string> &getFeetNames() const
   {
     return feet_names;
+  }
+
+  FrameIndex getRootFrameId() const
+  {
+    return root_id;
   }
 
   FrameIndex getFootId(const std::string &foot_name) const
@@ -168,7 +183,7 @@ public:
     return data.oMf[model_handler.getFootId(foot_name)];
   };
   const SE3 &getRootFramePose() const {
-    return data.oMf[model_handler.root_id];
+    return data.oMf[model_handler.getRootFrameId()];
   }
   const RobotModelHandler &getModelHandler() const
   {
