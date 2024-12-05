@@ -102,7 +102,7 @@ public:
    * @param[in] x2 Desired state
    * @return Eigen::VectorXd The vector that must be integrated during a unit of time to go from x1 to x2.
    */
-  Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2);
+  Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const;
 
   /**
    * @brief Compute reduced state from measures by concatenating q,v of the reduced model.
@@ -111,13 +111,18 @@ public:
    * @param v Velocity vector of the full model
    * @return const Eigen::VectorXd State vector of the reduced model.
    */
-  Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v);
+  Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) const;
 
 
   // Const getters
-  size_t getFootIndex(const std::string &foot_name) const
+  size_t getFootNb(const std::string &foot_name) const
   {
-    std::find(feet_names.begin(), feet_names.end(), foot_name) - feet_names.begin();
+    return std::find(feet_names.begin(), feet_names.end(), foot_name) - feet_names.begin();
+  }
+
+  const std::vector<FrameIndex>& getFeetIds() const
+  {
+    return feet_ids;
   }
 
   const std::string &getFootName(size_t i) const
@@ -137,12 +142,12 @@ public:
 
   FrameIndex getFootId(const std::string &foot_name) const
   {
-    return feet_ids.at(getFootIndex(foot_name));
+    return feet_ids.at(getFootNb(foot_name));
   }
 
   FrameIndex getRefFootId(const std::string &foot_name) const
   {
-    return feet_ids.at(getFootIndex(foot_name));
+    return feet_ids.at(getFootNb(foot_name));
   }
 
   double getMass() const
@@ -150,12 +155,12 @@ public:
     return mass;
   }
 
-  const Model &getModel()
+  const Model& getModel() const
   {
     return model;
   }
 
-  const Model &getCompleteModel()
+  const Model& getCompleteModel() const
   {
     return model_full;
   }

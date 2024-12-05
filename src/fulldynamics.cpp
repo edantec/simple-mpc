@@ -380,11 +380,11 @@ void FullDynamicsProblem::createTerminalConstraint() {
     throw std::runtime_error("Create problem first!");
   }
   CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
-      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler.getData().com[0]);
+      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler_.getData().com[0]);
 
-  double tau = sqrt(robot_data_handler.getData().com[0][2] / 9.81);
+  double tau = sqrt(robot_data_handler_.getData().com[0][2] / 9.81);
   DCMPositionResidual dcm_cstr = DCMPositionResidual(
-      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler.getData().com[0], tau);
+      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler_.getData().com[0], tau);
 
   problem_->addTerminalConstraint(dcm_cstr, EqualityConstraint());
 
