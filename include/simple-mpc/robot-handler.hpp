@@ -66,9 +66,9 @@ private:
   std::vector<FrameIndex> ref_feet_ids;
 
   /**
-   * @brief Name of the configuration to use as reference
+   * @brief Reference configuration and velocity (most probably null velocity) to use
    */
-  Eigen::VectorXd reference_configuration;
+  Eigen::VectorXd reference_state;
 
   /**
    * @brief Root frame id
@@ -115,6 +115,10 @@ public:
 
 
   // Const getters
+  const Eigen::VectorXd& getReferenceState() const
+  {
+    return reference_state;
+  }
   size_t getFootNb(const std::string &foot_name) const
   {
     return std::find(feet_names.begin(), feet_names.end(), foot_name) - feet_names.begin();

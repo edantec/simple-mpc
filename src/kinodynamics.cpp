@@ -17,7 +17,7 @@ KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings, c
 void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
   settings_ = settings;
   nu_ = nv_ - 6 + settings_.force_size * (int)robot_model_handler_.getFeetNames().size();
-  x0_ = handler_.getState();
+  x0_ = robot_model_handler_.getReferenceState();
   control_ref_.resize(nu_);
   control_ref_.setZero();
 }
@@ -286,7 +286,7 @@ void KinodynamicsProblem::setPoseBase(const std::size_t t,
 }
 
 const Eigen::VectorXd KinodynamicsProblem::getProblemState() {
-  return handler_.getState();
+  return x0_;
 }
 
 size_t KinodynamicsProblem::getContactSupport(const std::size_t t) {

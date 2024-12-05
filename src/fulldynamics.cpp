@@ -33,7 +33,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 1);
-  x0_ = handler_.getState();
+  x0_ = robot_model_handler_.getReferenceState();
 
   for (auto const &name : robot_model_handler_.getFeetNames()) {
     auto frame_ids = robot_model_handler_.getFootId(name);
@@ -348,7 +348,7 @@ void FullDynamicsProblem::setPoseBase(const std::size_t t,
 }
 
 const Eigen::VectorXd FullDynamicsProblem::getProblemState() {
-  return handler_.getState();
+  return x0_;
 }
 
 size_t FullDynamicsProblem::getContactSupport(const std::size_t t) {
