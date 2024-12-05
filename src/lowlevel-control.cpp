@@ -30,7 +30,7 @@ void IDSolver::initialize(const IDSettings &settings,
     nforcein_ = 9;
   else
     nforcein_ = 5;
-  int nin = nforcein_ * nk_;
+  int nin = nforcein_ * nk_ + model_.nv - 6;
 
   // Initialize QP matrices
   A_ = Eigen::MatrixXd::Zero(neq, n);
@@ -110,6 +110,8 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
   // Reset matrices
   Jc_.setZero();
   gamma_.setZero();
+  l_.head(nforcein_ * nk_).setZero();
+  C_.block(0, 0, nforcein_ * nk_, model_.nv + force_dim_).setZero();
 
   // Update diff torque lower and upper limits
   l_.tail(model_.nv - 6) = -model_.effortLimit.tail(model_.nv - 6) - tau;

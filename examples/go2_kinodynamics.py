@@ -281,6 +281,10 @@ for t in range(300):
         .workspace.problem_data.stage_data[1]
         .dynamics_data.continuous_data.xdot[nv:]
     )
+    a0[6:] = mpc.us[0][nk * force_size :]
+    a1[6:] = mpc.us[1][nk * force_size :]
+    forces0 = mpc.us[0][: nk * force_size]
+    forces1 = mpc.us[1][: nk * force_size]
     contact_states = (
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
     )
@@ -312,12 +316,8 @@ for t in range(300):
         x_measured = np.concatenate((q_current, v_current))
         mpc.getHandler().updateState(q_current, v_current, True)
 
-        a0[6:] = mpc.us[0][nk * force_size :]
-        a1[6:] = mpc.us[1][nk * force_size :]
         a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
-        forces = mpc.us[0][: nk * force_size]
-        forces1 = mpc.us[1][: nk * force_size]
-        f_interp = (N_simu - j) / N_simu * forces + j / N_simu * forces1
+        f_interp = (N_simu - j) / N_simu * forces0 + j / N_simu * forces1
 
         qp.solveQP(
             mpc.getHandler().getData(),

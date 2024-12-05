@@ -186,7 +186,7 @@ id_conf = dict(
     Wfoot=0.075,
     force_size=6,
     kd=0,
-    w_force=100,
+    w_force=1,
     w_acc=1,
     w_tau=0,
     verbose=False,
@@ -249,6 +249,15 @@ for t in range(600):
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[nv:]
     )
+    a1 = (
+        mpc.getSolver()
+        .workspace.problem_data.stage_data[1]
+        .dynamics_data.continuous_data.xdot[nv:]
+    )
+    a0[6:] = mpc.us[0][nk * force_size :]
+    a1[6:] = mpc.us[1][nk * force_size :]
+    forces0 = mpc.us[0][: nk * force_size]
+    forces1 = mpc.us[1][: nk * force_size]
     contact_states = (
         mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
     )
@@ -275,26 +284,19 @@ for t in range(600):
 
         state_diff = mpc.getHandler().difference(x_measured, mpc.xs[0])
         mpc.getHandler().updateState(q_current, v_current, True)
-        a0[6:] = (
-            mpc.us[0][nk * force_size :]
-            - 1
-            * mpc.getSolver().results.controlFeedbacks()[0][nk * force_size :]
-            @ state_diff
-        )
-        forces = (
-            mpc.us[0][: nk * force_size]
-            - 1
-            * mpc.getSolver().results.controlFeedbacks()[0][: nk * force_size]
-            @ state_diff
-        )
+
+        a_interp = (10 - j) / 10 * a0 + j / 10 * a1
+        f_interp = (10 - j) / 10 * forces0 + j / 10 * forces1
+
         qp.solveQP(
             mpc.getHandler().getData(),
             contact_states,
             v_current,
-            a0,
+            a_interp,
             np.zeros(12),
-            forces,
+            f_interp,
             mpc.getHandler().getMassMatrix(),
         )
+        print(qp.solved_torque)
 
         device.execute(qp.solved_torque)
