@@ -6,9 +6,6 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/python.hpp>
-#include <boost/python/enum.hpp>
-#include <boost/python/return_internal_reference.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <pinocchio/algorithm/model.hpp>
 #include <pinocchio/multibody/fwd.hpp>
@@ -24,33 +21,34 @@ void exposeHandler() {
         bp::init<const pinocchio::Model&, const std::vector<std::string>&, const std::string&, const std::vector<std::string>&>(
             bp::args("self", "model", "feet_names", "reference_configuration_name", "locked_joint_names")
         ))
-        .def("addFrameToBase", bp::make_function(&RobotModelHandler::addFrameToBase))
-        .def("difference", bp::make_function(&RobotModelHandler::difference))
-        .def("shapeState", bp::make_function(&RobotModelHandler::shapeState))
-        .def("getRootFrameId", bp::make_function(&RobotModelHandler::getRootFrameId))
-        .def("getReferenceState", bp::make_function(&RobotModelHandler::getReferenceState))
-        .def("getFootNb", bp::make_function(&RobotModelHandler::getFootNb))
-        .def("getFeetIds", bp::make_function(&RobotModelHandler::getFeetIds))
-        .def("getFootName", bp::make_function(&RobotModelHandler::getFootName))
-        .def("getFeetNames", bp::make_function(&RobotModelHandler::getFeetNames))
-        .def("getRootFrameId", bp::make_function(&RobotModelHandler::getRootFrameId))
-        .def("getFootId", bp::make_function(&RobotModelHandler::getFootId))
-        .def("getRefFootId", bp::make_function(&RobotModelHandler::getRefFootId))
-        .def("getMass", bp::make_function(&RobotModelHandler::getMass))
-        .def("getModel", bp::make_function(&RobotModelHandler::getModel))
-        .def("getCompleteModel", bp::make_function(&RobotModelHandler::getCompleteModel))
+        .def("addFrameToBase", &RobotModelHandler::addFrameToBase)
+        .def("difference", &RobotModelHandler::difference)
+        .def("shapeState", &RobotModelHandler::shapeState)
+        .def("getRootFrameId", &RobotModelHandler::getRootFrameId)
+        .def("getReferenceState", &RobotModelHandler::getReferenceState, bp::return_internal_reference<>())
+        .def("getFootNb", &RobotModelHandler::getFootNb)
+        .def("getFeetIds", &RobotModelHandler::getFeetIds, bp::return_internal_reference<>())
+        .def("getFootName", &RobotModelHandler::getFootName, bp::return_internal_reference<>())
+        .def("getFeetNames", &RobotModelHandler::getFeetNames, bp::return_internal_reference<>())
+        .def("getRootFrameId", &RobotModelHandler::getRootFrameId)
+        .def("getFootId", &RobotModelHandler::getFootId)
+        .def("getRefFootId", &RobotModelHandler::getRefFootId)
+        .def("getMass", &RobotModelHandler::getMass)
+        .def("getModel", &RobotModelHandler::getModel, bp::return_internal_reference<>())
+        .def("getCompleteModel", &RobotModelHandler::getCompleteModel, bp::return_internal_reference<>())
     ;
 
+    ENABLE_SPECIFIC_MATRIX_TYPE(RobotDataHandler::CentroidalStateVector);
 
     bp::class_<RobotDataHandler>("RobotDataHandler", bp::init<const RobotModelHandler&>(bp::args("self", "model_handler")))
-        .def("updateInternalData", bp::make_function(&RobotDataHandler::updateInternalData))
-        .def("updateJacobiansMassMatrix", bp::make_function(&RobotDataHandler::updateJacobiansMassMatrix))
-        .def("getRefFootPose", bp::make_function(&RobotDataHandler::getRefFootPose))
-        .def("getFootPose", bp::make_function(&RobotDataHandler::getFootPose))
-        .def("getRootFramePose", bp::make_function(&RobotDataHandler::getRootFramePose))
-        .def("getModelHandler", bp::make_function(&RobotDataHandler::getModelHandler))
-        .def("getData", bp::make_function(&RobotDataHandler::getData))
-        .def("getCentroidalState", bp::make_function(&RobotDataHandler::getCentroidalState))
+        .def("updateInternalData", &RobotDataHandler::updateInternalData)
+        .def("updateJacobiansMassMatrix", &RobotDataHandler::updateJacobiansMassMatrix)
+        .def("getRefFootPose", &RobotDataHandler::getRefFootPose, bp::return_internal_reference<>())
+        .def("getFootPose", &RobotDataHandler::getFootPose, bp::return_internal_reference<>())
+        .def("getRootFramePose", &RobotDataHandler::getRootFramePose, bp::return_internal_reference<>())
+        .def("getModelHandler", &RobotDataHandler::getModelHandler, bp::return_internal_reference<>())
+        .def("getData", &RobotDataHandler::getData, bp::return_internal_reference<>())
+        .def("getCentroidalState", &RobotDataHandler::getCentroidalState)
     ;
   return;
 }

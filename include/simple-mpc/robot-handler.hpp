@@ -171,6 +171,9 @@ public:
 };
 
 class RobotDataHandler {
+public:
+  typedef Eigen::Matrix<double,9,1> CentroidalStateVector;
+
 private:
   RobotModelHandler model_handler;
   Data data;
@@ -202,7 +205,7 @@ public:
   {
     return data;
   }
-  Eigen::VectorXd getCentroidalState() const;
+  RobotDataHandler::CentroidalStateVector getCentroidalState() const;
 };
 
 } // namespace simple_mpc

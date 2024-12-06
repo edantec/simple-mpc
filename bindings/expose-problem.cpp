@@ -12,9 +12,6 @@
 #include <pinocchio/bindings/python/utils/pickle-map.hpp>
 #include <pinocchio/fwd.hpp>
 
-#include <boost/python.hpp>
-#include <boost/python/enum.hpp>
-#include <boost/python/return_internal_reference.hpp>
 #include <fmt/format.h>
 
 #include "problems.hpp"

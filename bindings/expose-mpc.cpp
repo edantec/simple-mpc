@@ -9,9 +9,6 @@
 #include <pinocchio/bindings/python/utils/pickle-map.hpp>
 #include <pinocchio/fwd.hpp>
 
-#include <boost/python.hpp>
-#include <boost/python/enum.hpp>
-#include <boost/python/register_ptr_to_python.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>

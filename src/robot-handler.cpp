@@ -205,9 +205,9 @@ void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
   dccrba(model_handler.getModel(), data, q, v);
 }
 
-Eigen::VectorXd RobotDataHandler::getCentroidalState() const
+RobotDataHandler::CentroidalStateVector RobotDataHandler::getCentroidalState() const
 {
-  Eigen::VectorXd x_centroidal(9);
+  RobotDataHandler::CentroidalStateVector x_centroidal;
   x_centroidal.head(3) = data.com[0];
   x_centroidal.segment(3, 3) = data.hg.linear();
   x_centroidal.tail(3) = data.hg.angular();
