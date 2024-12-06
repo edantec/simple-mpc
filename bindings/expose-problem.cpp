@@ -31,7 +31,7 @@ using eigenpy::StdVectorPythonVisitor;
 void exposeBaseProblem() {
   bp::register_ptr_to_python<std::shared_ptr<Problem>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
-      .def(bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      .def(bp::init<const RobotModelHandler &, const RobotDataHandler &>(bp::args("self", "model_handler", "data_handler")))
       .def("createStage", bp::pure_virtual(&Problem::createStage),
            bp::args("self", "contact_map", "force_refs", "land_constraint"))
       .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
@@ -217,7 +217,7 @@ void exposeFullDynamicsProblem() {
 
   bp::class_<PyFullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "FullDynamicsProblem",
-      bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      bp::init<const RobotModelHandler &, const RobotDataHandler &>(bp::args("self", "model_handler", "data_handler")))
       .def("initialize", &initializeFull, bp::args("self", "settings"))
       .def("getSettings", &getSettingsFull)
       .def("initialize",
@@ -382,7 +382,7 @@ void exposeCentroidalProblem() {
 
   bp::class_<PyCentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
       "CentroidalProblem",
-      bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      bp::init<const RobotModelHandler &, const RobotDataHandler &>(bp::args("self", "model_handler", "data_handler")))
       .def("initialize", &initializeCent, bp::args("self", "settings"))
       .def("getSettings", &getSettingsCent)
       .def("initialize",
@@ -559,7 +559,7 @@ void exposeKinodynamicsProblem() {
 
   bp::class_<PyKinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "KinodynamicsProblem",
-      bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      bp::init<const RobotModelHandler &, const RobotDataHandler &>(bp::args("self", "model_handler", "data_handler")))
       .def("initialize", &initializeKino, bp::args("self", "settings"))
       .def("getSettings", &getSettingsKino)
       .def("initialize",

@@ -20,22 +20,29 @@ namespace python {
 namespace bp = boost::python;
 
 void exposeHandler() {
-    bp::class_<RobotModelHandler>("RobotModelHandler", bp::init<>())
+    bp::class_<RobotModelHandler>("RobotModelHandler",
+        bp::init<const pinocchio::Model&, const std::vector<std::string>&, const std::string&, const std::vector<std::string>&>(
+            bp::args("self", "model", "feet_names", "reference_configuration_name", "locked_joint_names")
+        ))
         .def("addFrameToBase", bp::make_function(&RobotModelHandler::addFrameToBase))
         .def("difference", bp::make_function(&RobotModelHandler::difference))
         .def("shapeState", bp::make_function(&RobotModelHandler::shapeState))
         .def("getRootFrameId", bp::make_function(&RobotModelHandler::getRootFrameId))
-        .def("getFootIndex", bp::make_function(&RobotModelHandler::getFootIndex))
+        .def("getReferenceState", bp::make_function(&RobotModelHandler::getReferenceState))
+        .def("getFootNb", bp::make_function(&RobotModelHandler::getFootNb))
+        .def("getFeetIds", bp::make_function(&RobotModelHandler::getFeetIds))
         .def("getFootName", bp::make_function(&RobotModelHandler::getFootName))
         .def("getFeetNames", bp::make_function(&RobotModelHandler::getFeetNames))
+        .def("getRootFrameId", bp::make_function(&RobotModelHandler::getRootFrameId))
         .def("getFootId", bp::make_function(&RobotModelHandler::getFootId))
         .def("getRefFootId", bp::make_function(&RobotModelHandler::getRefFootId))
         .def("getMass", bp::make_function(&RobotModelHandler::getMass))
         .def("getModel", bp::make_function(&RobotModelHandler::getModel))
         .def("getCompleteModel", bp::make_function(&RobotModelHandler::getCompleteModel))
+    ;
 
 
-    bp::class_<RobotDataHandler>("RobotDataHandler", bp::init<>())
+    bp::class_<RobotDataHandler>("RobotDataHandler", bp::init<const RobotModelHandler&>(bp::args("self", "model_handler")))
         .def("updateInternalData", bp::make_function(&RobotDataHandler::updateInternalData))
         .def("updateJacobiansMassMatrix", bp::make_function(&RobotDataHandler::updateJacobiansMassMatrix))
         .def("getRefFootPose", bp::make_function(&RobotDataHandler::getRefFootPose))
@@ -44,6 +51,7 @@ void exposeHandler() {
         .def("getModelHandler", bp::make_function(&RobotDataHandler::getModelHandler))
         .def("getData", bp::make_function(&RobotDataHandler::getData))
         .def("getCentroidalState", bp::make_function(&RobotDataHandler::getCentroidalState))
+    ;
   return;
 }
 
