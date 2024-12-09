@@ -112,7 +112,7 @@ public:
 
   // Setter and getter for control reference
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref);
-  const Eigen::VectorXd getReferenceControl(const std::size_t t);
+  ConstVectorRef getReferenceControl(const std::size_t t);
 
   // Getter for various objects and quantities
   CostStack *getCostStack(std::size_t t);

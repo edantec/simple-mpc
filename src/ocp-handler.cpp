@@ -54,7 +54,7 @@ void OCPHandler::setReferenceControl(const std::size_t t,
   qc->setTarget(u_ref);
 }
 
-const Eigen::VectorXd OCPHandler::getReferenceControl(const std::size_t t) {
+ConstVectorRef OCPHandler::getReferenceControl(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticControlCost *qc =
       cs->getComponent<QuadraticControlCost>("control_cost");
