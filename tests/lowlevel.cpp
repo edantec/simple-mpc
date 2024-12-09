@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE(lowlevel)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(ID_solver) {
-  RobotDataHandler handler = getTalosHandler();
+  RobotDataHandler handler = getTalosModelHandler();
 
   IDSettings settings;
   settings.contact_ids = handler.getFeetIds();
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(ID_solver) {
 }
 
 BOOST_AUTO_TEST_CASE(IKID_solver) {
-  RobotDataHandler handler = getTalosHandler();
+  RobotDataHandler handler = getTalosModelHandler();
   std::vector<FrameIndex> vec_base;
   std::vector<Eigen::VectorXd> Kp;
   std::vector<Eigen::VectorXd> Kd;

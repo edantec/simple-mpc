@@ -1,43 +1,59 @@
 #include <boost/test/unit_test.hpp>
 
-#include "simple-mpc/centroidal-dynamics.hpp"
-#include "simple-mpc/fulldynamics.hpp"
-#include "simple-mpc/fwd.hpp"
-#include "simple-mpc/kinodynamics.hpp"
 #include "simple-mpc/robot-handler.hpp"
+#include <pinocchio/fwd.hpp>
+#include <pinocchio/parsers/urdf.hpp>
+#include <pinocchio/parsers/srdf.hpp>
 
 using namespace simple_mpc;
 
-RobotDataHandler getTalosHandler() {
-  RobotModelHandler settings;
-  settings.urdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
-  settings.srdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
+RobotModelHandler getTalosModelHandler() {
+    // Load model from example robot data
+    Model model;
+    std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
+    std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
 
-  settings.controlled_joints_names = {
-      "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
-      "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
-      "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
-      "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint",
-      "leg_right_6_joint", "torso_1_joint",     "torso_2_joint",
-      "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",
-      "arm_left_4_joint",  "arm_right_1_joint", "arm_right_2_joint",
-      "arm_right_3_joint", "arm_right_4_joint",
-  };
-  settings.end_effector_names = {"left_sole_link", "right_sole_link"};
-  Eigen::Vector3d left_foot_trans;
-  Eigen::Vector3d right_foot_trans;
-  left_foot_trans << 0., 0.1, 0.;
-  right_foot_trans << 0., -0.1, 0.;
-  settings.feet_to_base_trans = {left_foot_trans, right_foot_trans};
-  settings.base_configuration = "half_sitting";
-  settings.root_name = "root_joint";
-  settings.load_rotor = true;
+    pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
 
-  RobotDataHandler handler(settings);
+    srdf::loadReferenceConfigurations(model, srdf_path, false);
+    srdf::loadRotorParameters(model, srdf_path, false);
 
-  return handler;
+    // Lock joint list
+    const std::vector<std::string> controlled_joints_names {
+        "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
+        "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
+        "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
+        "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint",
+        "leg_right_6_joint", "torso_1_joint",     "torso_2_joint",
+        "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",
+        "arm_left_4_joint",  "arm_right_1_joint", "arm_right_2_joint",
+        "arm_right_3_joint", "arm_right_4_joint",
+    };
+
+    std::vector<std::string> locked_joints_names {model.names};
+    locked_joints_names.erase(
+        std::remove_if(locked_joints_names.begin(), locked_joints_names.end(),
+            [&controlled_joints_names](const std::string& name)
+            {
+                return std::find(controlled_joints_names.begin(), controlled_joints_names.end(), name) != controlled_joints_names.end();
+            }
+        ), locked_joints_names.end()
+    );
+
+    // Feet list
+    const std::vector<std::string> feet_names {"left_sole_link", "right_sole_link"};
+
+    // Feet reference transform
+    const SE3 left_foot_trans(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.));
+    const SE3 right_foot_trans(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.));
+
+    //
+    const std::string reference_configuration = "half_sitting";
+    const std::string base_name = "root_joint";
+
+    RobotModelHandler handler(model, reference_configuration, base_name, locked_joints_names);
+
+    return handler;
 }
 
 RobotDataHandler getSoloHandler() {
