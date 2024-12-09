@@ -10,11 +10,12 @@
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
-#include <pinocchio/bindings/python/utils/pickle-map.hpp>
-#include <pinocchio/fwd.hpp>
 
-#include "problems.hpp"
-#include "simple-mpc/base-problem.hpp"
+#include "simple-mpc/centroidal-dynamics.hpp"
+#include "simple-mpc/fulldynamics.hpp"
+#include "simple-mpc/kinodynamics.hpp"
+#include "simple-mpc/python/py-ocp-handler.hpp"
+
 #include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
@@ -25,17 +26,16 @@ using ContactMap = ContactMapTpl<double>;
 void exposeBaseProblem() {
   bp::register_ptr_to_python<std::shared_ptr<Problem>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
-      .def(bp::init<const RobotHandler &>(bp::args("self", "handler")))
+      .def(bp::init<const RobotHandler &>(("self"_a, "handler")))
       .def("createStage", bp::pure_virtual(&Problem::createStage),
-           bp::args("self", "contact_map", "force_refs", "land_constraint"))
+           ("self"_a, "contact_map", "force_refs", "land_constraint"))
       .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
-           bp::args("self"))
+           "self"_a)
       .def("createTerminalConstraint",
-           bp::pure_virtual(&Problem::createTerminalConstraint),
-           bp::args("self"))
+           bp::pure_virtual(&Problem::createTerminalConstraint), "self"_a)
       .def("updateTerminalConstraint",
            bp::pure_virtual(&Problem::updateTerminalConstraint),
-           bp::args("self", "com_ref"))
+           ("self"_a, "com_ref"))
       .def("setReferencePose", bp::pure_virtual(&Problem::setReferencePose),
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("setReferencePoses", bp::pure_virtual(&Problem::setReferencePoses),
@@ -70,7 +70,7 @@ void exposeBaseProblem() {
            bp::args("self", "t", "u_ref"))
       .def("getReferenceControl", &Problem::getReferenceControl,
            bp::args("self", "t"))
-      .def("getProblem", &Problem::getProblem, bp::args("self"));
+      .def("getProblem", &Problem::getProblem, "self"_a);
 }
 
 void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
@@ -113,10 +113,10 @@ StageModel createFullStage(FullDynamicsProblem &self,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
-  bp::list phase_keys = bp::list(phase_dict.keys());
-  bp::list pose_keys = bp::list(pose_dict.keys());
-  bp::list force_keys = bp::list(force_dict.keys());
-  bp::list land_keys = bp::list(land_dict.keys());
+  bp::list phase_keys(phase_dict.keys());
+  bp::list pose_keys(pose_dict.keys());
+  bp::list force_keys(force_dict.keys());
+  bp::list land_keys(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
@@ -192,10 +192,6 @@ void createFullProblem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
   self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
-TrajOptProblem getFullProblem(FullDynamicsProblem &self) {
-  return *self.getProblem();
-}
-
 void exposeFullDynamicsProblem() {
   bp::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
   StdVectorPythonVisitor<std::vector<ContactMap>, true>::expose(
@@ -216,7 +212,7 @@ void exposeFullDynamicsProblem() {
       std::allocator<std::pair<const std::string, bool>>,
       true>::expose("StdMap_bool");
 
-  bp::class_<PyFullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<FullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "FullDynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeFull, bp::args("self", "settings"))
@@ -226,42 +222,7 @@ void exposeFullDynamicsProblem() {
                &FullDynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createFullStage)
-      .def("createProblem", &createFullProblem)
-      .def("setReferencePose", &FullDynamicsProblem::setReferencePose,
-           bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("setReferencePoses", &FullDynamicsProblem::setReferencePoses,
-           bp::args("self", "t", "pose_refs"))
-      .def("setTerminalReferencePose",
-           &FullDynamicsProblem::setTerminalReferencePose,
-           bp::args("self", "ee_name", "pose_ref"))
-      .def("setReferenceForces", &FullDynamicsProblem::setReferenceForces,
-           bp::args("self", "t", "force_refs"))
-      .def("setReferenceForce", &FullDynamicsProblem::setReferenceForce,
-           bp::args("self", "t", "ee_name", "force_ref"))
-      .def("getReferencePose", &FullDynamicsProblem::getReferencePose,
-           bp::args("self", "t", "cost_name"))
-      .def("getReferenceForce", &FullDynamicsProblem::getReferenceForce,
-           bp::args("self", "t", "cost_name"))
-      .def("setVelocityBase", &FullDynamicsProblem::setVelocityBase,
-           bp::args("self", "t", "velocity_base"))
-      .def("getVelocityBase", &FullDynamicsProblem::getVelocityBase,
-           bp::args("self", "t"))
-      .def("setPoseBase", &FullDynamicsProblem::setPoseBase,
-           bp::args("self", "t", "pose_base"))
-      .def("getPoseBase", &FullDynamicsProblem::getPoseBase,
-           bp::args("self", "t"))
-      .def("getProblemState", &FullDynamicsProblem::getProblemState,
-           bp::args("self"))
-      .def("getContactSupport", &FullDynamicsProblem::getContactSupport,
-           bp::args("self", "t"))
-      .def("createTerminalCost", &FullDynamicsProblem::createTerminalCost,
-           bp::args("self"))
-      .def("updateTerminalConstraint",
-           &FullDynamicsProblem::updateTerminalConstraint,
-           bp::args("self", "com_ref"))
-      .def("createTerminalConstraint",
-           &FullDynamicsProblem::createTerminalConstraint, bp::args("self"))
-      .def("getProblem", &getFullProblem);
+      .def("createProblem", &createFullProblem);
 }
 
 void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
@@ -359,10 +320,6 @@ void createCentProblem(CentroidalProblem &self, const Eigen::VectorXd &x0,
   self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
-TrajOptProblem getCentProblem(FullDynamicsProblem &self) {
-  return *self.getProblem();
-}
-
 void exposeCentroidalProblem() {
   bp::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
 
@@ -381,7 +338,7 @@ void exposeCentroidalProblem() {
       std::allocator<std::pair<const std::string, bool>>,
       true>::expose("StdMap_bool");
 
-  bp::class_<PyCentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<CentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
       "CentroidalProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeCent, bp::args("self", "settings"))
@@ -391,42 +348,7 @@ void exposeCentroidalProblem() {
                &CentroidalProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createCentStage)
-      .def("createProblem", &createCentProblem)
-      .def("setReferencePose", &CentroidalProblem::setReferencePose,
-           bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("setReferencePoses", &CentroidalProblem::setReferencePoses,
-           bp::args("self", "t", "pose_refs"))
-      .def("setTerminalReferencePose",
-           &CentroidalProblem::setTerminalReferencePose,
-           bp::args("self", "ee_name", "pose_ref"))
-      .def("setReferenceForces", &CentroidalProblem::setReferenceForces,
-           bp::args("self", "t", "force_refs"))
-      .def("setReferenceForce", &CentroidalProblem::setReferenceForce,
-           bp::args("self", "t", "ee_name", "force_ref"))
-      .def("getReferencePose", &CentroidalProblem::getReferencePose,
-           bp::args("self", "t", "cost_name"))
-      .def("getReferenceForce", &CentroidalProblem::getReferenceForce,
-           bp::args("self", "t", "cost_name"))
-      .def("setVelocityBase", &CentroidalProblem::setVelocityBase,
-           bp::args("self", "t", "velocity_base"))
-      .def("getVelocityBase", &CentroidalProblem::getVelocityBase,
-           bp::args("self", "t"))
-      .def("setPoseBase", &CentroidalProblem::setPoseBase,
-           bp::args("self", "t", "pose_base"))
-      .def("getPoseBase", &CentroidalProblem::getPoseBase,
-           bp::args("self", "t"))
-      .def("getProblemState", &CentroidalProblem::getProblemState,
-           bp::args("self"))
-      .def("getContactSupport", &CentroidalProblem::getContactSupport,
-           bp::args("self", "t"))
-      .def("createTerminalCost", &CentroidalProblem::createTerminalCost,
-           bp::args("self"))
-      .def("createTerminalConstraint",
-           &CentroidalProblem::createTerminalConstraint, bp::args("self"))
-      .def("updateTerminalConstraint",
-           &CentroidalProblem::updateTerminalConstraint,
-           bp::args("self", "com_ref"))
-      .def("getProblem", &getCentProblem);
+      .def("createProblem", &createCentProblem);
 }
 
 void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
@@ -533,13 +455,8 @@ void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
   self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
 }
 
-TrajOptProblem getKinoProblem(KinodynamicsProblem &self) {
-  return *self.getProblem();
-}
-
 void exposeKinodynamicsProblem() {
-  bp::register_ptr_to_python<boost::shared_ptr<PyKinodynamicsProblem>>();
-  bp::register_ptr_to_python<boost::shared_ptr<KinodynamicsProblem>>();
+  bp::register_ptr_to_python<shared_ptr<KinodynamicsProblem>>();
 
   eigenpy::python::StdMapPythonVisitor<
       std::string, Eigen::VectorXd, std::less<std::string>,
@@ -556,7 +473,7 @@ void exposeKinodynamicsProblem() {
       std::allocator<std::pair<const std::string, bool>>,
       true>::expose("StdMap_bool");
 
-  bp::class_<PyKinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<KinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeKino, bp::args("self", "settings"))
@@ -567,41 +484,11 @@ void exposeKinodynamicsProblem() {
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createKinoStage)
       .def("createProblem", &createKinoProblem)
-      .def("setReferencePose", &KinodynamicsProblem::setReferencePose,
-           bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("setReferencePoses", &KinodynamicsProblem::setReferencePoses,
-           bp::args("self", "t", "pose_refs"))
-      .def("setTerminalReferencePose",
-           &KinodynamicsProblem::setTerminalReferencePose,
-           bp::args("self", "ee_name", "pose_ref"))
-      .def("setReferenceForces", &KinodynamicsProblem::setReferenceForces,
-           bp::args("self", "t", "force_refs"))
-      .def("setReferenceForce", &KinodynamicsProblem::setReferenceForce,
-           bp::args("self", "t", "ee_name", "force_ref"))
-      .def("getReferencePose", &KinodynamicsProblem::getReferencePose,
-           bp::args("self", "t", "cost_name"))
-      .def("getReferenceForce", &KinodynamicsProblem::getReferenceForce,
-           bp::args("self", "t", "cost_name"))
-      .def("setVelocityBase", &KinodynamicsProblem::setVelocityBase,
-           bp::args("self", "t", "velocity_base"))
-      .def("getVelocityBase", &KinodynamicsProblem::getVelocityBase,
-           bp::args("self", "t"))
-      .def("setPoseBase", &KinodynamicsProblem::setPoseBase,
-           bp::args("self", "t", "pose_base"))
-      .def("getPoseBase", &KinodynamicsProblem::getPoseBase,
-           bp::args("self", "t"))
-      .def("getProblemState", &KinodynamicsProblem::getProblemState,
-           bp::args("self"))
-      .def("getContactSupport", &KinodynamicsProblem::getContactSupport,
-           bp::args("self", "t"))
-      .def("createTerminalCost", &KinodynamicsProblem::createTerminalCost,
-           bp::args("self"))
       .def("createTerminalConstraint",
            &KinodynamicsProblem::createTerminalConstraint, bp::args("self"))
       .def("updateTerminalConstraint",
            &KinodynamicsProblem::updateTerminalConstraint,
-           bp::args("self", "com_ref"))
-      .def("getProblem", &getKinoProblem);
+           bp::args("self", "com_ref"));
 }
 } // namespace python
 } // namespace simple_mpc

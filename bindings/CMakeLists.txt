@@ -10,7 +10,6 @@ set(
   expose-problem.cpp
   expose-mpc.cpp
   expose-lowlevel.cpp
-  problems.hpp
 )
 
 python3_add_library(${PY_NAME}_pywrap MODULE WITH_SOABI ${${PY_NAME}_SOURCES})
