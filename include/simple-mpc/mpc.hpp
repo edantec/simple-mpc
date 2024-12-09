@@ -5,12 +5,11 @@
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
-
-#ifndef SIMPLE_MPC_MPC_HPP_
-#define SIMPLE_MPC_MPC_HPP_
+#pragma once
 
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
+#include "simple-mpc/deprecated.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
 #include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
@@ -50,8 +49,6 @@ class MPC {
 protected:
   enum LocomotionType { WALKING, STANDING, MOTION };
 
-  MPCSettings settings_;
-  std::shared_ptr<OCPHandler> problem_;
   std::vector<std::map<std::string, bool>> contact_states_;
   std::vector<std::shared_ptr<StageModel>> cycle_horizon_;
   std::vector<std::shared_ptr<StageData>> cycle_horizon_data_;
@@ -72,12 +69,15 @@ protected:
   bool time_to_solve_ddp_ = false;
   Eigen::Vector3d com0_;
   LocomotionType now_;
-  Eigen::VectorXd velocity_base_;
-  Eigen::VectorXd pose_base_;
-  Eigen::Vector3d next_pose_;
-  Eigen::Vector3d twist_vect_;
 
 public:
+  Vector6d velocity_base_;
+  Vector7d pose_base_;
+  Eigen::Vector3d next_pose_;
+  Eigen::Vector3d twist_vect_;
+  MPCSettings settings_;
+  std::shared_ptr<OCPHandler> ocp_handler_;
+
   MPC();
   MPC(const MPCSettings &settings, std::shared_ptr<OCPHandler> problem);
   void initialize(const MPCSettings &settings,
@@ -105,23 +105,33 @@ public:
                                 const pinocchio::SE3 &pose_ref);
 
   const pinocchio::SE3 getReferencePose(const std::size_t t,
-                                        const std::string &ee_name);
+                                        const std::string &ee_name) const;
 
-  void setVelocityBase(const Eigen::VectorXd &velocity_base) {
-    velocity_base_ = velocity_base;
-  };
-  void setPoseBase(const Eigen::VectorXd pose_ref);
-  const Eigen::VectorXd getPoseBase(const std::size_t t) {
-    return problem_->getPoseBase(t);
+  SIMPLE_MPC_DEPRECATED void setVelocityBase(const Vector6d &v) {
+    velocity_base_ = v;
+  }
+
+  void setPoseBaseFromSE3(const pin::SE3 &pose_ref) {
+    Eigen::Map<pin::SE3::Quaternion> q{pose_base_.tail<4>().data()};
+    pose_base_.head<3>() = pose_ref.translation();
+    q = pose_ref.rotation();
+  }
+  SIMPLE_MPC_DEPRECATED void setPoseBase(const Vector7d &pose_ref) {
+    pose_base_ = pose_ref;
+  }
+
+  ConstVectorRef getPoseBase(const std::size_t t) const {
+    return ocp_handler_->getPoseBase(t);
   }
 
   // getters and setters
-  MPCSettings &getSettings() { return settings_; }
+  TrajOptProblem &getTrajOptProblem() { return ocp_handler_->getProblem(); }
 
-  std::shared_ptr<OCPHandler> getProblem() { return problem_; }
-  TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
-  RobotHandler &getHandler() { return problem_->getHandler(); }
+  const SolverProxDDP &getSolver() const { return *solver_; }
+
+  RobotHandler &getHandler() { return ocp_handler_->getHandler(); }
+
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }
@@ -141,7 +151,7 @@ public:
     }
   }
 
-  void switchToWalk(const Eigen::VectorXd &velocity_base);
+  void switchToWalk(const Vector6d &velocity_base);
 
   void switchToStand();
 
@@ -161,9 +171,3 @@ public:
 };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_HPP_

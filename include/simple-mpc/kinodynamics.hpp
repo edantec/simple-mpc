@@ -58,6 +58,7 @@ public:
   KinodynamicsProblem(const RobotHandler &handler);
   KinodynamicsProblem(const KinodynamicsSettings &settings,
                       const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsProblem);
   void initialize(const KinodynamicsSettings &settings);
   virtual ~KinodynamicsProblem() {};
 

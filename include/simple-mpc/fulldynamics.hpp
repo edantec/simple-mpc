@@ -70,6 +70,7 @@ public:
   FullDynamicsProblem(const RobotHandler &handler);
   FullDynamicsProblem(const FullDynamicsSettings &settings,
                       const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsProblem);
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 

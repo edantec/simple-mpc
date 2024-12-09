@@ -60,6 +60,7 @@ public:
   CentroidalProblem(const RobotHandler &handler);
   CentroidalProblem(const CentroidalSettings &settings,
                     const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalProblem);
   void initialize(const CentroidalSettings &settings);
   virtual ~CentroidalProblem() {};
 

@@ -5,7 +5,8 @@ using namespace aligator;
 
 OCPHandler::~OCPHandler() {}
 
-OCPHandler::OCPHandler(const RobotHandler &handler) : handler_(handler) {
+OCPHandler::OCPHandler(const RobotHandler &handler)
+    : handler_(handler), problem_(nullptr) {
   nq_ = handler_.getModel().nq;
   nv_ = handler_.getModel().nv;
   ndx_ = 2 * handler_.getModel().nv;
@@ -62,7 +63,7 @@ ConstVectorRef OCPHandler::getReferenceControl(const std::size_t t) {
 }
 
 CostStack *OCPHandler::getCostStack(std::size_t t) {
-  if (t >= problem_->stages_.size()) {
+  if (t >= getSize()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
   CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[t]->cost_);
@@ -76,12 +77,10 @@ CostStack *OCPHandler::getTerminalCostStack() {
   return cs;
 }
 
-std::size_t OCPHandler::getCostNumber() {
+std::size_t OCPHandler::getCostNumber() const {
   CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[0]->cost_);
   return cs->components_.size();
 }
-
-std::size_t OCPHandler::getSize() { return problem_->stages_.size(); }
 
 void OCPHandler::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
                                const int force_size, const double gravity,
@@ -112,8 +111,8 @@ void OCPHandler::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
   std::vector<xyz::polymorphic<StageModel>> stage_models =
       createStages(contact_phases, contact_poses, contact_forces);
 
-  problem_ =
-      std::make_shared<TrajOptProblem>(x0, stage_models, createTerminalCost());
+  problem_ = std::make_unique<TrajOptProblem>(x0, std::move(stage_models),
+                                              createTerminalCost());
   problem_initialized_ = true;
 
   if (terminal_constraint) {

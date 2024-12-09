@@ -36,6 +36,10 @@ using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
+#define SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(Type)                             \
+  Type(Type &&) = default;                                                     \
+  Type &operator=(Type &&) = default
+
 ///
 /// @brief Base abstract class for all MPC problems.
 ///
@@ -45,6 +49,7 @@ public:
 
   /// Constructor
   explicit OCPHandler(const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(OCPHandler);
   virtual ~OCPHandler();
 
   /// Virtual functions defined in child classes
@@ -117,10 +122,21 @@ public:
   // Getter for various objects and quantities
   CostStack *getCostStack(std::size_t t);
   CostStack *getTerminalCostStack();
-  std::size_t getCostNumber();
-  std::size_t getSize();
-  std::shared_ptr<TrajOptProblem> getProblem() { return problem_; }
+  std::size_t getCostNumber() const;
+  std::size_t getSize() const { return problem_->numSteps(); }
+
+  TrajOptProblem &getProblem() {
+    assert(problem_);
+    return *problem_;
+  }
+
+  const TrajOptProblem &getProblem() const {
+    assert(problem_);
+    return *problem_;
+  }
+
   RobotHandler &getHandler() { return handler_; }
+  const RobotHandler &getHandler() const { return handler_; }
   int getNu() { return nu_; }
 
 protected:
@@ -136,7 +152,7 @@ protected:
   RobotHandler handler_;
 
   /// The reference shooting problem storing all shooting nodes
-  std::shared_ptr<TrajOptProblem> problem_;
+  std::unique_ptr<TrajOptProblem> problem_;
 
   // Vector reference for control cost
   Eigen::VectorXd control_ref_;

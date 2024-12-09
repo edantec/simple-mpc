@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
                           true);
 
   CostStack *csp =
-      dynamic_cast<CostStack *>(&*fdproblem.getProblem()->stages_[0]->cost_);
+      dynamic_cast<CostStack *>(&*fdproblem.getProblem().stages_[0]->cost_);
   QuadraticControlCost *cc =
       csp->getComponent<QuadraticControlCost>("control_cost");
   QuadraticResidualCost *crc =
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   QuadraticResidualCost *cpc =
       csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
-  BOOST_CHECK_EQUAL(fdproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(fdproblem.getSize(), 100);
   BOOST_CHECK_EQUAL(fdproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
                           true);
 
   CostStack *csp =
-      dynamic_cast<CostStack *>(&*knproblem.getProblem()->stages_[0]->cost_);
+      dynamic_cast<CostStack *>(&*knproblem.getProblem().stages_[0]->cost_);
   QuadraticControlCost *cc =
       csp->getComponent<QuadraticControlCost>("control_cost");
   QuadraticResidualCost *crc =
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
-  BOOST_CHECK_EQUAL(knproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(knproblem.getSize(), 100);
 
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
   knproblem.setReferencePose(4, "left_sole_link", pose_left_random);
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
                          settings.gravity[2], true);
 
   CostStack *csp =
-      dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);
+      dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
   QuadraticControlCost *cc =
       csp->getComponent<QuadraticControlCost>("control_cost");
   QuadraticResidualCost *crc =
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
-  BOOST_CHECK_EQUAL(cproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(cproblem.getSize(), 100);
 
   force_refs.at("left_sole_link")[1] = 1;
   force_refs.at("right_sole_link")[0] = 1;
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
                          settings.gravity[2], true);
 
   CostStack *csp =
-      dynamic_cast<CostStack *>(&*cproblem.getProblem()->stages_[0]->cost_);
+      dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
   QuadraticControlCost *cc =
       csp->getComponent<QuadraticControlCost>("control_cost");
   QuadraticResidualCost *crc =
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
-  BOOST_CHECK_EQUAL(cproblem.getProblem()->stages_.size(), 100);
+  BOOST_CHECK_EQUAL(cproblem.getSize(), 100);
 
   force_refs.at("FR_FOOT")[1] = 1;
   force_refs.at("FL_FOOT")[0] = 1;

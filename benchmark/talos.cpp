@@ -11,7 +11,7 @@ using simple_mpc::FullDynamicsProblem;
 using simple_mpc::FullDynamicsSettings;
 using simple_mpc::MPC;
 using simple_mpc::MPCSettings;
-using simple_mpc::Problem;
+using simple_mpc::OCPHandler;
 
 int main() {
   RobotHandlerSettings settings;
@@ -86,11 +86,11 @@ int main() {
   problem_settings.Lfoot = 0.1;
   problem_settings.Wfoot = 0.075;
 
-  FullDynamicsProblem problem = FullDynamicsProblem(handler);
+  FullDynamicsProblem problem(handler);
   problem.initialize(problem_settings);
   problem.createProblem(handler.getState(), T, 6, problem_settings.gravity[2]);
 
-  std::shared_ptr<Problem> problemPtr =
+  std::shared_ptr<OCPHandler> problemPtr =
       std::make_shared<FullDynamicsProblem>(problem);
 
   MPCSettings mpc_settings;
@@ -100,7 +100,7 @@ int main() {
   mpc_settings.max_iters = 1;
   mpc_settings.num_threads = 2;
 
-  MPC mpc = MPC(mpc_settings, problemPtr);
+  MPC mpc{mpc_settings, problemPtr};
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;

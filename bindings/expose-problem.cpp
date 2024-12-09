@@ -11,7 +11,6 @@
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 
-#include "simple-mpc/centroidal-dynamics.hpp"
 #include "simple-mpc/python/py-ocp-handler.hpp"
 
 #include "simple-mpc/fwd.hpp"
@@ -21,7 +20,6 @@ namespace python {
 namespace bp = boost::python;
 using eigenpy::StdVectorPythonVisitor;
 using eigenpy::python::StdMapPythonVisitor;
-using ContactMap = ContactMapTpl<double>;
 
 void exposeContainers() {
   StdMapPythonVisitor<
@@ -94,7 +92,10 @@ void exposeOcpHandler() {
            ("self"_a, "t", "u_ref"))
       .def("getReferenceControl", &OCPHandler::getReferenceControl,
            ("self"_a, "t"))
-      .def("getProblem", &OCPHandler::getProblem, "self"_a);
+      .def(
+          "getProblem",
+          +[](OCPHandler &ocp) { return boost::ref(ocp.getProblem()); },
+          "self"_a);
 
   exposeContainers();
 }
