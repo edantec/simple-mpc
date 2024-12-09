@@ -30,4 +30,12 @@ class OCPHandler;
 class IDSolver;
 class IKIDSolver;
 
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+using VectorRef = Eigen::Ref<VectorXd>;
+using ConstVectorRef = Eigen::Ref<const VectorXd>;
+
+using Vector6d = Eigen::Matrix<double, 6, 1>;
+using Vector7d = Eigen::Matrix<double, 7, 1>;
+
 } // namespace simple_mpc
