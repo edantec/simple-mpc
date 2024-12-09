@@ -17,7 +17,6 @@
 #include "simple-mpc/fwd.hpp"
 #include <pinocchio/multibody/fwd.hpp>
 #include <proxsuite/proxqp/dense/dense.hpp>
-#include <proxsuite/proxqp/dense/wrapper.hpp>
 
 namespace simple_mpc {
 using namespace proxsuite;
