@@ -26,8 +26,6 @@ typedef Eigen::Matrix<double, 6, 1> eVector6;
 typedef Eigen::Matrix<double, 4, 1> eVector4;
 typedef Eigen::Vector3d eVector3;
 typedef Eigen::Vector2d eVector2;
-typedef std::shared_ptr<aligator::FramePlacementResidualTpl<double>>
-    framePlacement;
 
 // MPC
 struct Settings;

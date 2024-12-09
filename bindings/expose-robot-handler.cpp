@@ -6,9 +6,6 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/python.hpp>
-#include <boost/python/enum.hpp>
-#include <boost/python/return_internal_reference.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <pinocchio/algorithm/model.hpp>
 #include <pinocchio/multibody/fwd.hpp>

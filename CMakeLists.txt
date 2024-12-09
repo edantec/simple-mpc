@@ -5,6 +5,7 @@ set(PROJECT_NAME simple-mpc)
 set(PROJECT_DESCRIPTION "MPC schemes for locomotion")
 set(PROJECT_URL https://github.com/edantec/${PROJECT_NAME})
 set(PROJECT_CUSTOM_HEADER_DIR "simple-mpc")
+set(PROJECT_CUSTOM_HEADER_EXTENSION "hpp")
 
 # Project configuration
 set(CMAKE_CXX_STANDARD 17)
@@ -18,6 +19,7 @@ include(CMakeDependentOption)
 
 # Project options
 option(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
+option(BUILD_BENCHMARK "Build benchmarks" OFF)
 cmake_dependent_option(
   GENERATE_PYTHON_STUBS
   "Generate Python stubs"
@@ -117,10 +119,6 @@ set_target_properties(
   ${PROJECT_NAME}
   PROPERTIES LINKER_LANGUAGE CXX INSTALL_RPATH "\$ORIGIN"
 )
-
-if(SUFFIX_SO_VERSION)
-  set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION})
-endif()
 
 # Unit tests
 if(BUILD_TESTING)

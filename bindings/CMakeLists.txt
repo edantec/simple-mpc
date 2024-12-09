@@ -5,7 +5,7 @@ add_project_dependency(eigenpy 2.7.10 REQUIRED)
 
 set(
   ${PY_NAME}_SOURCES
-  main.cpp
+  module.cpp
   expose-robot-handler.cpp
   expose-problem.cpp
   expose-mpc.cpp
@@ -20,8 +20,6 @@ set_target_properties(
   PROPERTIES
     INSTALL_RPATH "\$ORIGIN/../../.."
     LIBRARY_OUTPUT_DIRECTORY ${PY_NAME}
-    PREFIX ""
-    SUFFIX ${PYTHON_EXT_SUFFIX}
 )
 install(TARGETS ${PY_NAME}_pywrap DESTINATION ${${PY_NAME}_INSTALL_DIR})
 
