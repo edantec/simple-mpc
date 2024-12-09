@@ -1,8 +1,8 @@
 /// @copyright Copyright (C) 2024 INRIA
 #pragma once
 
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/python.hpp"
 
 namespace simple_mpc {

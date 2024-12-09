@@ -1,5 +1,4 @@
-#include "simple-mpc/base-problem.hpp"
-#include <stdexcept>
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;

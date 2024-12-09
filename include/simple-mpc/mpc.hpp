@@ -11,8 +11,9 @@
 
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
+#include "simple-mpc/ocp-handler.hpp"
+#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;

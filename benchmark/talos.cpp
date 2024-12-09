@@ -1,6 +1,6 @@
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/mpc.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
 using simple_mpc::ContactMap;

@@ -9,7 +9,7 @@
 
 #include <pinocchio/algorithm/proximal.hpp>
 
-#include "simple-mpc/base-problem.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;

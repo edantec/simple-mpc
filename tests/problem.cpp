@@ -1,10 +1,10 @@
 #include <boost/test/unit_test.hpp>
 
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/centroidal-dynamics.hpp"
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/kinodynamics.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
 #include "test_utils.cpp"
 
