@@ -115,8 +115,8 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
   C_.block(0, 0, nforcein_ * nk_, model_.nv + force_dim_).setZero();
 
   // Update diff torque lower and upper limits
-  l_.tail(model_.nv - 6) = -model_.effortLimit.tail(model_.nv - 6) - tau;
-  u_.tail(model_.nv - 6) = model_.effortLimit.tail(model_.nv - 6) - tau;
+  l_.tail(model_.nv - 6) = model_.lowerEffortLimit.tail(model_.nv - 6) - tau;
+  u_.tail(model_.nv - 6) = model_.upperEffortLimit.tail(model_.nv - 6) - tau;
 
   // Update the problem with respect to current set of contacts
   for (long i = 0; i < nk_; i++) {
@@ -254,11 +254,11 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   l_box_.resize(n);
   l_box_.setOnes();
   l_box_ *= -100000;
-  l_box_.tail(model.nv - 6) = -model.effortLimit.tail(model.nv - 6);
+  l_box_.tail(model.nv - 6) = model.lowerEffortLimit.tail(model.nv - 6);
   u_box_.resize(n);
   u_box_.setOnes();
   u_box_ *= 100000;
-  u_box_.tail(model.nv - 6) = model.effortLimit.tail(model.nv - 6);
+  u_box_.tail(model.nv - 6) = model.upperEffortLimit.tail(model.nv - 6);
 
   Cmin_.resize(nforcein_, settings.force_size);
   if (settings.force_size == 3) {
