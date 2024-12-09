@@ -1,8 +1,7 @@
 #pragma once
 
 #include <pinocchio/fwd.hpp>
-
-#include <boost/python.hpp>
+#include <eigenpy/eigenpy.hpp>
 
 namespace simple_mpc {
 namespace python {
