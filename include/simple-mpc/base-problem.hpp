@@ -17,7 +17,8 @@
 #include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
 #include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 #ifndef ALIGATOR_PINOCCHIO_V3
-#error "aligator no compile with pin v3"
+#error                                                                         \
+    "aligator was not compiled with Pinocchio 3 support. simple-mpc requires Pinocchio 3 features in aligator."
 #endif
 
 namespace simple_mpc {
