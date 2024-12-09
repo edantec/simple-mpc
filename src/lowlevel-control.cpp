@@ -6,6 +6,7 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 #include "simple-mpc/lowlevel-control.hpp"
+#include <pinocchio/algorithm/frames.hpp>
 #include <proxsuite/proxqp/settings.hpp>
 
 namespace simple_mpc {
@@ -114,8 +115,8 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
   C_.block(0, 0, nforcein_ * nk_, model_.nv + force_dim_).setZero();
 
   // Update diff torque lower and upper limits
-  l_.tail(model_.nv - 6) = -model_.effortLimit.tail(model_.nv - 6) - tau;
-  u_.tail(model_.nv - 6) = model_.effortLimit.tail(model_.nv - 6) - tau;
+  l_.tail(model_.nv - 6) = model_.lowerEffortLimit.tail(model_.nv - 6) - tau;
+  u_.tail(model_.nv - 6) = model_.upperEffortLimit.tail(model_.nv - 6) - tau;
 
   // Update the problem with respect to current set of contacts
   for (long i = 0; i < nk_; i++) {
@@ -123,10 +124,10 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
     if (contact_state[(size_t)i]) {
       getFrameJacobianTimeVariation(model_, data,
                                     settings_.contact_ids[(size_t)i],
-                                    LOCAL_WORLD_ALIGNED, Jdot_);
+                                    pin::LOCAL_WORLD_ALIGNED, Jdot_);
       Jc_.middleRows(i * settings_.force_size, settings_.force_size) =
           getFrameJacobian(model_, data, settings_.contact_ids[(size_t)i],
-                           LOCAL_WORLD_ALIGNED)
+                           pin::LOCAL_WORLD_ALIGNED)
               .topRows(settings_.force_size);
       gamma_.segment(i * settings_.force_size, settings_.force_size) =
           Jdot_.topRows(settings_.force_size) * v;
@@ -253,11 +254,11 @@ void IKIDSolver::initialize(const IKIDSettings &settings,
   l_box_.resize(n);
   l_box_.setOnes();
   l_box_ *= -100000;
-  l_box_.tail(model.nv - 6) = -model.effortLimit.tail(model.nv - 6);
+  l_box_.tail(model.nv - 6) = model.lowerEffortLimit.tail(model.nv - 6);
   u_box_.resize(n);
   u_box_.setOnes();
   u_box_ *= 100000;
-  u_box_.tail(model.nv - 6) = model.effortLimit.tail(model.nv - 6);
+  u_box_.tail(model.nv - 6) = model.upperEffortLimit.tail(model.nv - 6);
 
   Cmin_.resize(nforcein_, settings.force_size);
   if (settings.force_size == 3) {
@@ -315,23 +316,24 @@ void IKIDSolver::computeDifferences(
     FrameIndex id = settings_.contact_ids[i];
     foot_diffs_[i].head(3) =
         foot_refs[i].translation() - data.oMf[id].translation();
-    foot_diffs_[i].tail(3) =
-        -log3(foot_refs[i].rotation().transpose() * data.oMf[id].rotation());
+    foot_diffs_[i].tail(3) = -pin::log3(foot_refs[i].rotation().transpose() *
+                                        data.oMf[id].rotation());
 
     dfoot_diffs_[i].head(3) =
         (foot_refs_next[i].translation() - foot_refs[i].translation()) /
             settings_.dt -
-        getFrameVelocity(model_, data, id, LOCAL).linear();
+        pin::getFrameVelocity(model_, data, id, pin::LOCAL).linear();
     dfoot_diffs_[i].tail(3) =
-        log3(foot_refs[i].rotation().transpose() *
-             foot_refs_next[i].rotation()) /
+        pin::log3(foot_refs[i].rotation().transpose() *
+                  foot_refs_next[i].rotation()) /
             settings_.dt -
-        getFrameVelocity(model_, data, id, LOCAL).angular();
+        pin::getFrameVelocity(model_, data, id, pin::LOCAL).angular();
   }
   for (size_t i = 0; i < settings_.fixed_frame_ids.size(); i++) {
     FrameIndex id = settings_.fixed_frame_ids[i];
-    frame_diffs_[i] = -log3(data.oMf[id].rotation());
-    dframe_diffs_[i] = -getFrameVelocity(model_, data, id, LOCAL).angular();
+    frame_diffs_[i] = -pin::log3(data.oMf[id].rotation());
+    dframe_diffs_[i] =
+        -pin::getFrameVelocity(model_, data, id, pin::LOCAL).angular();
   }
 }
 
@@ -365,8 +367,8 @@ void IKIDSolver::computeMatrice(pinocchio::Data &data,
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {
     dJfoot_.setZero();
     FrameIndex id = settings_.contact_ids[i];
-    Jfoot_ = getFrameJacobian(model_, data, id, LOCAL);
-    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJfoot_);
+    Jfoot_ = getFrameJacobian(model_, data, id, pin::LOCAL);
+    getFrameJacobianTimeVariation(model_, data, id, pin::LOCAL, dJfoot_);
 
     H_.topLeftCorner(model_.nv, model_.nv) += settings_.w_footpose *
                                               Jfoot_.topRows(fs_).transpose() *
@@ -413,8 +415,8 @@ void IKIDSolver::computeMatrice(pinocchio::Data &data,
   for (size_t i = 0; i < settings_.fixed_frame_ids.size(); i++) {
     dJframe_.setZero();
     FrameIndex id = settings_.fixed_frame_ids[i];
-    Jframe_ = getFrameJacobian(model_, data, id, LOCAL).bottomRows(3);
-    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJframe_);
+    Jframe_ = pin::getFrameJacobian(model_, data, id, pin::LOCAL).bottomRows(3);
+    pin::getFrameJacobianTimeVariation(model_, data, id, pin::LOCAL, dJframe_);
 
     H_.topLeftCorner(model_.nv, model_.nv) +=
         settings_.w_baserot * Jframe_.transpose() * Jframe_;

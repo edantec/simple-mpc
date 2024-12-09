@@ -5,26 +5,22 @@
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
+/**
+ * @file lowlevel-control.hpp
+ * @brief Build a low-level control for kinodynamics
+ * and centroidal MPC schemes
+ */
 
 #ifndef SIMPLE_MPC_LOWLEVEL_CONTROL_HPP_
 #define SIMPLE_MPC_LOWLEVEL_CONTROL_HPP_
 
 #include "simple-mpc/fwd.hpp"
-#include <Eigen/Cholesky>
-#include <Eigen/Core>
 #include <pinocchio/multibody/fwd.hpp>
-#include <proxsuite/linalg/veg/util/dbg.hpp>
 #include <proxsuite/proxqp/dense/dense.hpp>
-#include <proxsuite/proxqp/dense/wrapper.hpp>
 
 namespace simple_mpc {
 using namespace proxsuite;
-using namespace pinocchio;
-using Manifold = aligator::ManifoldAbstractTpl<double>;
-/**
- * @brief Build a low-level control for kinodynamics
- * and centroidal MPC schemes
- */
+using pin::SE3;
 
 struct IDSettings {
 public:
@@ -136,7 +132,7 @@ protected:
   Eigen::VectorXd u_;
   Eigen::VectorXd l_box_;
   Eigen::VectorXd u_box_;
-  Motion Jvel_;
+  pin::Motion Jvel_;
 
   Eigen::MatrixXd Jfoot_;
   Eigen::MatrixXd dJfoot_;

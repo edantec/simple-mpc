@@ -67,7 +67,7 @@ int main() {
 
   problem_settings.x0 = handler.getState();
   problem_settings.u0 = u0;
-  problem_settings.DT = 0.01;
+  problem_settings.timestep = 0.01;
   problem_settings.w_x = Eigen::MatrixXd::Zero(ndx, ndx);
   problem_settings.w_x.diagonal() = w_x_vec;
   problem_settings.w_u = Eigen::MatrixXd::Identity(nu, nu) * 1e-4;
@@ -78,8 +78,8 @@ int main() {
   problem_settings.w_forces = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_forces.diagonal() = w_forces;
   problem_settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
-  problem_settings.umin = -handler.getModel().effortLimit.tail(nu);
-  problem_settings.umax = handler.getModel().effortLimit.tail(nu);
+  problem_settings.umin = handler.getModel().lowerEffortLimit.tail(nu);
+  problem_settings.umax = handler.getModel().upperEffortLimit.tail(nu);
   problem_settings.qmin = handler.getModel().lowerPositionLimit.tail(nu);
   problem_settings.qmax = handler.getModel().upperPositionLimit.tail(nu);
   problem_settings.mu = 0.8;
@@ -135,7 +135,7 @@ int main() {
     contact_states.push_back(contact_state);
   }
 
-  mpc.generateFullHorizon(contact_states);
+  mpc.generateCycleHorizon(contact_states);
 
   return 0;
 }
