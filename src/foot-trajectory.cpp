@@ -6,13 +6,11 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ndcurves/bezier_curve.h>
-#include <ndcurves/fwd.h>
-#include <pinocchio/fwd.hpp>
-
 #include "simple-mpc/foot-trajectory.hpp"
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
+#include <ndcurves/bezier_curve.h>
+#include <ndcurves/exact_cubic.h>
+#include <ndcurves/se3_curve.h>
+#include <ndcurves/so3_linear.h>
 #include <pinocchio/spatial/se3.hpp>
 
 namespace simple_mpc {

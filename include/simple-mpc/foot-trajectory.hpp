@@ -10,12 +10,8 @@
 #define SIMPLE_MPC_FOOTTRAJ_HPP_
 
 #include "simple-mpc/fwd.hpp"
-#include <ndcurves/bezier_curve.h>
-#include <ndcurves/exact_cubic.h>
 #include <ndcurves/fwd.h>
 #include <ndcurves/piecewise_curve.h>
-#include <ndcurves/se3_curve.h>
-#include <ndcurves/so3_linear.h>
 
 namespace simple_mpc {
 /**
