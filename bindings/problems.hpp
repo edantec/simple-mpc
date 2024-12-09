@@ -15,7 +15,7 @@ namespace bp = boost::python;
 
 namespace internal {
 template <typename ret_type>
-ret_type suppress_if_void(boost::python::detail::method_result &&o) {
+ret_type suppress_if_void(bp::detail::method_result &&o) {
   if constexpr (!std::is_void_v<ret_type>) {
     return o;
   } else {
@@ -53,8 +53,8 @@ ret_type suppress_if_void(boost::python::detail::method_result &&o) {
 template <typename T>
 inline void py_list_to_std_vector(const bp::object &iterable,
                                   std::vector<T> &out) {
-  out = std::vector<T>(boost::python::stl_input_iterator<T>(iterable),
-                       boost::python::stl_input_iterator<T>());
+  out = std::vector<T>(bp::stl_input_iterator<T>(iterable),
+                       bp::stl_input_iterator<T>());
 }
 
 template <class T> bp::list std_vector_to_py_list(const std::vector<T> &v) {

@@ -35,9 +35,9 @@ using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 
-/// 
+///
 /// @brief Base abstract class for all MPC problems.
-/// 
+///
 class Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

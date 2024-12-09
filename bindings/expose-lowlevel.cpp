@@ -20,8 +20,8 @@ namespace bp = boost::python;
 template <typename T>
 inline void py_list_to_std_vector(const bp::object &iterable,
                                   std::vector<T> &out) {
-  out = std::vector<T>(boost::python::stl_input_iterator<T>(iterable),
-                       boost::python::stl_input_iterator<T>());
+  out = std::vector<T>(bp::stl_input_iterator<T>(iterable),
+                       bp::stl_input_iterator<T>());
 }
 
 void initialize_ID(IDSolver &self, const bp::dict &settings,

@@ -113,16 +113,16 @@ StageModel createFullStage(FullDynamicsProblem &self,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
-  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
-  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
-  boost::python::list force_keys = boost::python::list(force_dict.keys());
-  boost::python::list land_keys = boost::python::list(land_dict.keys());
+  bp::list phase_keys = bp::list(phase_dict.keys());
+  bp::list pose_keys = bp::list(pose_dict.keys());
+  bp::list force_keys = bp::list(force_dict.keys());
+  bp::list land_keys = bp::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
   std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
-    boost::python::extract<std::string> extractor(phase_keys[i]);
+    bp::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(phase_dict[key]);
@@ -130,7 +130,7 @@ StageModel createFullStage(FullDynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(pose_keys); ++i) {
-    boost::python::extract<std::string> extractor(pose_keys[i]);
+    bp::extract<std::string> extractor(pose_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
@@ -138,7 +138,7 @@ StageModel createFullStage(FullDynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(force_keys); ++i) {
-    boost::python::extract<std::string> extractor(force_keys[i]);
+    bp::extract<std::string> extractor(force_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
@@ -146,7 +146,7 @@ StageModel createFullStage(FullDynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(land_keys); ++i) {
-    boost::python::extract<std::string> extractor(land_keys[i]);
+    bp::extract<std::string> extractor(land_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(land_dict[key]);
@@ -197,7 +197,7 @@ TrajOptProblem getFullProblem(FullDynamicsProblem &self) {
 }
 
 void exposeFullDynamicsProblem() {
-  boost::python::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
+  bp::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
   StdVectorPythonVisitor<std::vector<ContactMap>, true>::expose(
       "StdVec_ContactMap_double");
 
@@ -288,16 +288,16 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
-  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
-  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
-  boost::python::list force_keys = boost::python::list(force_dict.keys());
-  boost::python::list land_keys = boost::python::list(land_dict.keys());
+  bp::list phase_keys = bp::list(phase_dict.keys());
+  bp::list pose_keys = bp::list(pose_dict.keys());
+  bp::list force_keys = bp::list(force_dict.keys());
+  bp::list land_keys = bp::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
   std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
-    boost::python::extract<std::string> extractor(phase_keys[i]);
+    bp::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(phase_dict[key]);
@@ -305,7 +305,7 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
     }
   }
   for (int i = 0; i < len(pose_keys); ++i) {
-    boost::python::extract<std::string> extractor(pose_keys[i]);
+    bp::extract<std::string> extractor(pose_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
@@ -313,7 +313,7 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
     }
   }
   for (int i = 0; i < len(force_keys); ++i) {
-    boost::python::extract<std::string> extractor(force_keys[i]);
+    bp::extract<std::string> extractor(force_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
@@ -321,7 +321,7 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
     }
   }
   for (int i = 0; i < len(land_keys); ++i) {
-    boost::python::extract<std::string> extractor(land_keys[i]);
+    bp::extract<std::string> extractor(land_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(land_dict[key]);
@@ -364,7 +364,7 @@ TrajOptProblem getCentProblem(FullDynamicsProblem &self) {
 }
 
 void exposeCentroidalProblem() {
-  boost::python::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
+  bp::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
 
   eigenpy::python::StdMapPythonVisitor<
       std::string, Eigen::VectorXd, std::less<std::string>,
@@ -481,16 +481,16 @@ StageModel createKinoStage(KinodynamicsProblem &self,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
-  boost::python::list phase_keys = boost::python::list(phase_dict.keys());
-  boost::python::list pose_keys = boost::python::list(pose_dict.keys());
-  boost::python::list force_keys = boost::python::list(force_dict.keys());
-  boost::python::list land_keys = boost::python::list(land_dict.keys());
+  bp::list phase_keys = bp::list(phase_dict.keys());
+  bp::list pose_keys = bp::list(pose_dict.keys());
+  bp::list force_keys = bp::list(force_dict.keys());
+  bp::list land_keys = bp::list(land_dict.keys());
   std::map<std::string, bool> phase_contact;
   std::map<std::string, pinocchio::SE3> pose_contact;
   std::map<std::string, Eigen::VectorXd> force_contact;
   std::map<std::string, bool> land_constraint;
   for (int i = 0; i < len(phase_keys); ++i) {
-    boost::python::extract<std::string> extractor(phase_keys[i]);
+    bp::extract<std::string> extractor(phase_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(phase_dict[key]);
@@ -498,7 +498,7 @@ StageModel createKinoStage(KinodynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(pose_keys); ++i) {
-    boost::python::extract<std::string> extractor(pose_keys[i]);
+    bp::extract<std::string> extractor(pose_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       pinocchio::SE3 ff = bp::extract<pinocchio::SE3>(pose_dict[key]);
@@ -506,7 +506,7 @@ StageModel createKinoStage(KinodynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(force_keys); ++i) {
-    boost::python::extract<std::string> extractor(force_keys[i]);
+    bp::extract<std::string> extractor(force_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       Eigen::VectorXd ff = bp::extract<Eigen::VectorXd>(force_dict[key]);
@@ -514,7 +514,7 @@ StageModel createKinoStage(KinodynamicsProblem &self,
     }
   }
   for (int i = 0; i < len(land_keys); ++i) {
-    boost::python::extract<std::string> extractor(land_keys[i]);
+    bp::extract<std::string> extractor(land_keys[i]);
     if (extractor.check()) {
       std::string key = extractor();
       bool ff = bp::extract<bool>(land_dict[key]);
@@ -538,10 +538,8 @@ TrajOptProblem getKinoProblem(KinodynamicsProblem &self) {
 }
 
 void exposeKinodynamicsProblem() {
-  boost::python::register_ptr_to_python<
-      boost::shared_ptr<PyKinodynamicsProblem>>();
-  boost::python::register_ptr_to_python<
-      boost::shared_ptr<KinodynamicsProblem>>();
+  bp::register_ptr_to_python<boost::shared_ptr<PyKinodynamicsProblem>>();
+  bp::register_ptr_to_python<boost::shared_ptr<KinodynamicsProblem>>();
 
   eigenpy::python::StdMapPythonVisitor<
       std::string, Eigen::VectorXd, std::less<std::string>,
