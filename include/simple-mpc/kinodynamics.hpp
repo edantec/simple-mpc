@@ -47,8 +47,8 @@ struct KinodynamicsSettings {
   bool force_cone;
 };
 
-class KinodynamicsProblem : public Problem {
-  using Base = Problem;
+class KinodynamicsProblem : public OCPHandler {
+  using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

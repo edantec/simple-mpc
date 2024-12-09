@@ -51,7 +51,7 @@ protected:
   enum LocomotionType { WALKING, STANDING, MOTION };
 
   MPCSettings settings_;
-  std::shared_ptr<Problem> problem_;
+  std::shared_ptr<OCPHandler> problem_;
   std::vector<std::map<std::string, bool>> contact_states_;
   std::vector<std::shared_ptr<StageModel>> cycle_horizon_;
   std::vector<std::shared_ptr<StageData>> cycle_horizon_data_;
@@ -79,9 +79,9 @@ protected:
 
 public:
   MPC();
-  MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem);
+  MPC(const MPCSettings &settings, std::shared_ptr<OCPHandler> problem);
   void initialize(const MPCSettings &settings,
-                  std::shared_ptr<Problem> problem);
+                  std::shared_ptr<OCPHandler> problem);
 
   // Generate the cycle walking problem along which we will iterate
   // the receding horizon
@@ -118,7 +118,7 @@ public:
   // getters and setters
   MPCSettings &getSettings() { return settings_; }
 
-  std::shared_ptr<Problem> getProblem() { return problem_; }
+  std::shared_ptr<OCPHandler> getProblem() { return problem_; }
   TrajOptProblem &getTrajOptProblem() { return *problem_->getProblem(); }
   SolverProxDDP &getSolver() { return *solver_; }
   RobotHandler &getHandler() { return problem_->getHandler(); }

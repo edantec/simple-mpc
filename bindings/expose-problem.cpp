@@ -43,53 +43,58 @@ void exposeContainers() {
 }
 
 void exposeBaseProblem() {
-  bp::register_ptr_to_python<std::shared_ptr<Problem>>();
+  bp::register_ptr_to_python<std::shared_ptr<OCPHandler>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
       .def(bp::init<const RobotHandler &>(("self"_a, "robot_handler")))
-      .def("createStage", bp::pure_virtual(&Problem::createStage),
+      .def("createStage", bp::pure_virtual(&OCPHandler::createStage),
            ("self"_a, "contact_map", "force_refs", "land_constraint"))
-      .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
-           "self"_a)
+      .def("createTerminalCost",
+           bp::pure_virtual(&OCPHandler::createTerminalCost), "self"_a)
       .def("createTerminalConstraint",
-           bp::pure_virtual(&Problem::createTerminalConstraint), "self"_a)
+           bp::pure_virtual(&OCPHandler::createTerminalConstraint), "self"_a)
       .def("updateTerminalConstraint",
-           bp::pure_virtual(&Problem::updateTerminalConstraint),
+           bp::pure_virtual(&OCPHandler::updateTerminalConstraint),
            ("self"_a, "com_ref"))
-      .def("setReferencePose", bp::pure_virtual(&Problem::setReferencePose),
+      .def("setReferencePose", bp::pure_virtual(&OCPHandler::setReferencePose),
            bp::args("self", "t", "ee_name", "pose_ref"))
-      .def("setReferencePoses", bp::pure_virtual(&Problem::setReferencePoses),
+      .def("setReferencePoses",
+           bp::pure_virtual(&OCPHandler::setReferencePoses),
            bp::args("self", "t", "pose_refs"))
       .def("setTerminalReferencePose",
-           bp::pure_virtual(&Problem::setTerminalReferencePose),
+           bp::pure_virtual(&OCPHandler::setTerminalReferencePose),
            bp::args("self", "ee_name", "pose_ref"))
-      .def("getReferencePose", bp::pure_virtual(&Problem::getReferencePose),
+      .def("getReferencePose", bp::pure_virtual(&OCPHandler::getReferencePose),
            bp::args("self", "t", "ee_name"))
-      .def("setReferenceForces", bp::pure_virtual(&Problem::setReferenceForces),
+      .def("setReferenceForces",
+           bp::pure_virtual(&OCPHandler::setReferenceForces),
            bp::args("self", "t", "force_refs"))
-      .def("setReferenceForce", bp::pure_virtual(&Problem::setReferenceForce),
+      .def("setReferenceForce",
+           bp::pure_virtual(&OCPHandler::setReferenceForce),
            bp::args("self", "t", "ee_name", "force_ref"))
-      .def("getReferenceForce", bp::pure_virtual(&Problem::getReferenceForce),
+      .def("getReferenceForce",
+           bp::pure_virtual(&OCPHandler::getReferenceForce),
            bp::args("self", "t", "ee_name"))
-      .def("setVelocityBase", bp::pure_virtual(&Problem::setVelocityBase),
+      .def("setVelocityBase", bp::pure_virtual(&OCPHandler::setVelocityBase),
            bp::args("self", "t", "velocity_base"))
-      .def("getVelocityBase", bp::pure_virtual(&Problem::getVelocityBase),
+      .def("getVelocityBase", bp::pure_virtual(&OCPHandler::getVelocityBase),
            bp::args("self", "t"))
-      .def("setPoseBase", bp::pure_virtual(&Problem::setPoseBase),
+      .def("setPoseBase", bp::pure_virtual(&OCPHandler::setPoseBase),
            bp::args("self", "t", "pose_base"))
-      .def("getPoseBase", bp::pure_virtual(&Problem::getPoseBase),
+      .def("getPoseBase", bp::pure_virtual(&OCPHandler::getPoseBase),
            bp::args("self", "t"))
-      .def("getProblemState", bp::pure_virtual(&Problem::getProblemState),
+      .def("getProblemState", bp::pure_virtual(&OCPHandler::getProblemState),
            bp::args("self"))
-      .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
+      .def("getContactSupport",
+           bp::pure_virtual(&OCPHandler::getContactSupport),
            bp::args("self", "t"))
-      .def("createProblem", &Problem::createProblem,
+      .def("createProblem", &OCPHandler::createProblem,
            ("self"_a, "x0", "horizon", "force_size", "gravity",
             "terminal_constraint"))
-      .def("setReferenceControl", &Problem::setReferenceControl,
+      .def("setReferenceControl", &OCPHandler::setReferenceControl,
            ("self"_a, "t", "u_ref"))
-      .def("getReferenceControl", &Problem::getReferenceControl,
+      .def("getReferenceControl", &OCPHandler::getReferenceControl,
            ("self"_a, "t"))
-      .def("getProblem", &Problem::getProblem, "self"_a);
+      .def("getProblem", &OCPHandler::getProblem, "self"_a);
 
   exposeContainers();
 }

@@ -3,16 +3,16 @@
 namespace simple_mpc {
 using namespace aligator;
 
-Problem::~Problem() {}
+OCPHandler::~OCPHandler() {}
 
-Problem::Problem(const RobotHandler &handler) : handler_(handler) {
+OCPHandler::OCPHandler(const RobotHandler &handler) : handler_(handler) {
   nq_ = handler_.getModel().nq;
   nv_ = handler_.getModel().nv;
   ndx_ = 2 * handler_.getModel().nv;
   nu_ = nv_ - 6;
 }
 
-std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
+std::vector<xyz::polymorphic<StageModel>> OCPHandler::createStages(
     const std::vector<std::map<std::string, bool>> &contact_phases,
     const std::vector<std::map<std::string, pinocchio::SE3>> &contact_poses,
     const std::vector<std::map<std::string, Eigen::VectorXd>> &contact_forces) {
@@ -39,29 +39,29 @@ std::vector<xyz::polymorphic<StageModel>> Problem::createStages(
     }
     StageModel stage = createStage(contact_phases[i], contact_poses[i],
                                    contact_forces[i], land_constraint);
-    stage_models.push_back(stage);
+    stage_models.push_back(std::move(stage));
     previous_phases = contact_phases[i];
   }
 
   return stage_models;
 }
 
-void Problem::setReferenceControl(const std::size_t t,
-                                  const Eigen::VectorXd &u_ref) {
+void OCPHandler::setReferenceControl(const std::size_t t,
+                                     const Eigen::VectorXd &u_ref) {
   CostStack *cs = getCostStack(t);
   QuadraticControlCost *qc =
       cs->getComponent<QuadraticControlCost>("control_cost");
   qc->setTarget(u_ref);
 }
 
-const Eigen::VectorXd Problem::getReferenceControl(const std::size_t t) {
+const Eigen::VectorXd OCPHandler::getReferenceControl(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticControlCost *qc =
       cs->getComponent<QuadraticControlCost>("control_cost");
   return qc->getTarget();
 }
 
-CostStack *Problem::getCostStack(std::size_t t) {
+CostStack *OCPHandler::getCostStack(std::size_t t) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -70,22 +70,22 @@ CostStack *Problem::getCostStack(std::size_t t) {
   return cs;
 }
 
-CostStack *Problem::getTerminalCostStack() {
+CostStack *OCPHandler::getTerminalCostStack() {
   CostStack *cs = dynamic_cast<CostStack *>(&*problem_->term_cost_);
 
   return cs;
 }
 
-std::size_t Problem::getCostNumber() {
+std::size_t OCPHandler::getCostNumber() {
   CostStack *cs = dynamic_cast<CostStack *>(&*problem_->stages_[0]->cost_);
   return cs->components_.size();
 }
 
-std::size_t Problem::getSize() { return problem_->stages_.size(); }
+std::size_t OCPHandler::getSize() { return problem_->stages_.size(); }
 
-void Problem::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
-                            const int force_size, const double gravity,
-                            const bool terminal_constraint = false) {
+void OCPHandler::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
+                               const int force_size, const double gravity,
+                               const bool terminal_constraint = false) {
   std::vector<std::map<std::string, bool>> contact_phases;
   std::vector<std::map<std::string, pinocchio::SE3>> contact_poses;
   std::vector<std::map<std::string, Eigen::VectorXd>> contact_forces;

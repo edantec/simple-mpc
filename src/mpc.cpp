@@ -15,12 +15,12 @@ constexpr std::size_t maxiters = 100;
 
 MPC::MPC() {}
 
-MPC::MPC(const MPCSettings &settings, std::shared_ptr<Problem> problem) {
+MPC::MPC(const MPCSettings &settings, std::shared_ptr<OCPHandler> problem) {
   initialize(settings, problem);
 }
 
 void MPC::initialize(const MPCSettings &settings,
-                     std::shared_ptr<Problem> problem) {
+                     std::shared_ptr<OCPHandler> problem) {
   settings_ = settings;
   problem_ = problem;
   std::map<std::string, Eigen::Vector3d> starting_poses;

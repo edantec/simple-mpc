@@ -13,7 +13,7 @@
 
 namespace simple_mpc {
 using namespace aligator;
-using Base = Problem;
+using Base = OCPHandler;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 
 /**
@@ -61,7 +61,7 @@ public:
   Eigen::VectorXd Kd_correction;
 };
 
-class FullDynamicsProblem : public Problem {
+class FullDynamicsProblem : public OCPHandler {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

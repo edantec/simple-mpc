@@ -49,8 +49,8 @@ struct CentroidalSettings {
   int force_size;
 };
 
-class CentroidalProblem : public Problem {
-  using Base = Problem;
+class CentroidalProblem : public OCPHandler {
+  using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

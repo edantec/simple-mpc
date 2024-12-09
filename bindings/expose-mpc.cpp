@@ -20,7 +20,7 @@ namespace bp = boost::python;
 using eigenpy::StdVectorPythonVisitor;
 
 void initialize(MPC &self, const bp::dict &settings,
-                std::shared_ptr<Problem> problem) {
+                std::shared_ptr<OCPHandler> problem) {
   MPCSettings conf;
 
   conf.ddpIteration = bp::extract<int>(settings["ddpIteration"]);

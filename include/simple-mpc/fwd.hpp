@@ -30,7 +30,7 @@ class RobotHandler;
 class FullDynamicsProblem;
 class KinodynamicsProblem;
 class CentroidalProblem;
-class Problem;
+class OCPHandler;
 class IDSolver;
 class IKIDSolver;
 

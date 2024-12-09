@@ -39,13 +39,13 @@ using FunctionSliceXpr = FunctionSliceXprTpl<double>;
 ///
 /// @brief Base abstract class for all MPC problems.
 ///
-class Problem {
+class OCPHandler {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// Constructor
-  explicit Problem(const RobotHandler &handler);
-  virtual ~Problem();
+  explicit OCPHandler(const RobotHandler &handler);
+  virtual ~OCPHandler();
 
   /// Virtual functions defined in child classes
 
