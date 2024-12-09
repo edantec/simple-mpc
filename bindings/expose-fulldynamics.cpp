@@ -118,13 +118,6 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   return settings;
 }
 
-void createFullProblem(FullDynamicsProblem &self, const Eigen::VectorXd &x0,
-                       const size_t horizon, const int force_size,
-                       const double gravity, const bool terminal_constraint) {
-
-  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
-}
-
 void exposeFullDynamicsProblem() {
   bp::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
 
@@ -137,8 +130,7 @@ void exposeFullDynamicsProblem() {
            bp::make_function(
                &FullDynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &createFullStage)
-      .def("createProblem", &createFullProblem);
+      .def("createStage", &createFullStage);
 }
 
 } // namespace simple_mpc::python

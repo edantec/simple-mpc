@@ -45,7 +45,7 @@ void exposeContainers() {
 void exposeBaseProblem() {
   bp::register_ptr_to_python<std::shared_ptr<Problem>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
-      .def(bp::init<const RobotHandler &>(("self"_a, "handler")))
+      .def(bp::init<const RobotHandler &>(("self"_a, "robot_handler")))
       .def("createStage", bp::pure_virtual(&Problem::createStage),
            ("self"_a, "contact_map", "force_refs", "land_constraint"))
       .def("createTerminalCost", bp::pure_virtual(&Problem::createTerminalCost),
@@ -83,12 +83,12 @@ void exposeBaseProblem() {
       .def("getContactSupport", bp::pure_virtual(&Problem::getContactSupport),
            bp::args("self", "t"))
       .def("createProblem", &Problem::createProblem,
-           bp::args("self", "x0", "horizon", "force_size", "gravity",
-                    "terminal_constraint"))
+           ("self"_a, "x0", "horizon", "force_size", "gravity",
+            "terminal_constraint"))
       .def("setReferenceControl", &Problem::setReferenceControl,
-           bp::args("self", "t", "u_ref"))
+           ("self"_a, "t", "u_ref"))
       .def("getReferenceControl", &Problem::getReferenceControl,
-           bp::args("self", "t"))
+           ("self"_a, "t"))
       .def("getProblem", &Problem::getProblem, "self"_a);
 
   exposeContainers();

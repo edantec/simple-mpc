@@ -103,13 +103,6 @@ StageModel createKinoStage(KinodynamicsProblem &self,
                           land_constraint);
 }
 
-void createKinoProblem(KinodynamicsProblem &self, const Eigen::VectorXd &x0,
-                       const size_t horizon, const int force_size,
-                       const double gravity, const bool terminal_constraint) {
-
-  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
-}
-
 void exposeKinodynamicsProblem() {
   bp::register_ptr_to_python<shared_ptr<KinodynamicsProblem>>();
 
@@ -122,8 +115,7 @@ void exposeKinodynamicsProblem() {
            bp::make_function(
                &KinodynamicsProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &createKinoStage)
-      .def("createProblem", &createKinoProblem);
+      .def("createStage", &createKinoStage);
 }
 
 } // namespace simple_mpc::python

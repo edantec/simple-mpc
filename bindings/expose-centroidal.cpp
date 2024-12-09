@@ -93,13 +93,6 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
   return settings;
 }
 
-void createCentProblem(CentroidalProblem &self, const Eigen::VectorXd &x0,
-                       const size_t horizon, const int force_size,
-                       const double gravity, const bool terminal_constraint) {
-
-  self.createProblem(x0, horizon, force_size, gravity, terminal_constraint);
-}
-
 void exposeCentroidalProblem() {
   bp::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
 
@@ -112,8 +105,7 @@ void exposeCentroidalProblem() {
            bp::make_function(
                &CentroidalProblem::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
-      .def("createStage", &createCentStage)
-      .def("createProblem", &createCentProblem);
+      .def("createStage", &createCentStage);
 }
 
 } // namespace simple_mpc::python
