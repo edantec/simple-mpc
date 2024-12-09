@@ -43,7 +43,7 @@ void MPC::initialize(const MPCSettings &settings,
   }
   foot_trajectories_ =
       FootTrajectory(starting_poses, settings_.swing_apex, settings_.T_fly,
-                     settings_.T_contact, settings_.T);
+                     settings_.T_contact, problem_->getSize());
 
   foot_trajectories_.updateApex(settings.swing_apex);
   x0_ = problem_->getProblemState();
@@ -218,7 +218,7 @@ void MPC::iterate(const Eigen::VectorXd &q_current,
 
 void MPC::recedeWithCycle() {
   if (now_ == WALKING or
-      problem_->getContactSupport(settings_.T - 1) < ee_names_.size()) {
+      problem_->getContactSupport(problem_->getSize() - 1) < ee_names_.size()) {
 
     problem_->getProblem()->replaceStageCircular(*cycle_horizon_[0]);
     solver_->cycleProblem(*problem_->getProblem(), cycle_horizon_data_[0]);

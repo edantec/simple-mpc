@@ -117,7 +117,6 @@ mpc_conf = dict(
     swing_apex=0.15,
     T_fly=T_ss,
     T_contact=T_ds,
-    T=T,
     timestep=dt,
 )
 

@@ -156,10 +156,10 @@ T = 100
 
 problem = CentroidalProblem(handler)
 problem.initialize(problem_conf)
-problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2])
+problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2], False)
 
 T_ds = 50
-T_ss = 50
+T_ss = 2
 
 mpc_conf = dict(
     ddpIteration=1,
@@ -168,11 +168,10 @@ mpc_conf = dict(
     mu_init=1e-8,
     max_iters=1,
     num_threads=2,
-    swing_apex=0.15,
+    swing_apex=0.,
     T_fly=T_ss,
     T_contact=T_ds,
-    T=T,
-    dt=problem_conf["timestep"]
+    timestep=problem_conf["timestep"]
 )
 
 mpc = MPC()

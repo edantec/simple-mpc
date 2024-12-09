@@ -40,7 +40,6 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.swing_apex = bp::extract<double>(settings["swing_apex"]);
   conf.T_fly = bp::extract<int>(settings["T_fly"]);
   conf.T_contact = bp::extract<int>(settings["T_contact"]);
-  conf.T = bp::extract<std::size_t>(settings["T"]);
   conf.timestep = bp::extract<double>(settings["timestep"]);
 
   self.initialize(conf, problem);
@@ -58,7 +57,6 @@ bp::dict getSettings(MPC &self) {
   settings["swing_apex"] = conf.swing_apex;
   settings["T_fly"] = conf.T_fly;
   settings["T_contact"] = conf.T_contact;
-  settings["T"] = conf.T;
   settings["timestep"] = conf.timestep;
 
   return settings;
