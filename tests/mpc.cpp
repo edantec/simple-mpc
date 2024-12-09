@@ -16,12 +16,11 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   RobotHandler handler = getTalosHandler();
 
   FullDynamicsSettings settings = getFullDynamicsSettings(handler);
-  FullDynamicsProblem fdproblem(settings, handler);
+  auto problem = std::make_shared<FullDynamicsProblem>(settings, handler);
+  FullDynamicsProblem &fdproblem = *problem;
 
-  size_t T = 100;
+  const size_t T = 100;
   fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2], true);
-  std::shared_ptr<Problem> problem =
-      std::make_shared<FullDynamicsProblem>(fdproblem);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;
@@ -89,17 +88,15 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   RobotHandler handler = getTalosHandler();
 
   KinodynamicsSettings settings = getKinodynamicsSettings(handler);
-  KinodynamicsProblem kinoproblem(settings, handler);
-  std::size_t T = 100;
-  double support_force = -handler.getMass() * settings.gravity[2];
+  auto problem = std::make_shared<KinodynamicsProblem>(settings, handler);
+  KinodynamicsProblem &kinoproblem = *problem;
+  const std::size_t T = 100;
+  const double support_force = -handler.getMass() * settings.gravity[2];
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force, 0, 0, 0;
 
   kinoproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2],
                             true);
-
-  std::shared_ptr<Problem> problem =
-      std::make_shared<KinodynamicsProblem>(kinoproblem);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;
@@ -159,20 +156,19 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   RobotHandler handler = getTalosHandler();
 
   CentroidalSettings settings = getCentroidalSettings();
-  CentroidalProblem centproblem(settings, handler);
+  auto problem = std::make_shared<CentroidalProblem>(settings, handler);
+  CentroidalProblem &centproblem = *problem;
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
-  double support_force = -handler.getMass() * settings.gravity[2];
-  std::size_t T = 100;
+  const double support_force = -handler.getMass() * settings.gravity[2];
+  const std::size_t T = 100;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force / 2., 0, 0, 0;
   Eigen::VectorXd x_multibody = handler.getState();
 
   centproblem.createProblem(handler.getCentroidalState(), T, 6,
                             -settings.gravity[2], false);
-  std::shared_ptr<Problem> problem =
-      std::make_shared<CentroidalProblem>(centproblem);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;

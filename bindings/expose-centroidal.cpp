@@ -96,7 +96,7 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
 void exposeCentroidalProblem() {
   bp::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
 
-  bp::class_<CentroidalProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<CentroidalProblem, bp::bases<OCPHandler>, boost::noncopyable>(
       "CentroidalProblem",
       bp::init<const RobotHandler &>(("self"_a, "handler")))
       .def("initialize", &initializeCent, ("self"_a, "settings"))

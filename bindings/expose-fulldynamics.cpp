@@ -121,7 +121,7 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
 void exposeFullDynamicsProblem() {
   bp::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
 
-  bp::class_<FullDynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<FullDynamicsProblem, bp::bases<OCPHandler>, boost::noncopyable>(
       "FullDynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeFull, bp::args("self", "settings"))

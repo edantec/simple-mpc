@@ -13,6 +13,7 @@
 #include <eigenpy/std-vector.hpp>
 
 #include "simple-mpc/mpc.hpp"
+#include "simple-mpc/python.hpp"
 
 namespace simple_mpc {
 namespace python {
@@ -20,7 +21,7 @@ namespace bp = boost::python;
 using eigenpy::StdVectorPythonVisitor;
 
 void initialize(MPC &self, const bp::dict &settings,
-                std::shared_ptr<Problem> problem) {
+                std::shared_ptr<OCPHandler> problem) {
   MPCSettings conf;
 
   conf.ddpIteration = bp::extract<int>(settings["ddpIteration"]);
@@ -41,7 +42,7 @@ void initialize(MPC &self, const bp::dict &settings,
 }
 
 bp::dict getSettings(MPC &self) {
-  MPCSettings conf = self.getSettings();
+  MPCSettings &conf = self.settings_;
   bp::dict settings;
   settings["ddpIteration"] = conf.ddpIteration;
   settings["support_force"] = conf.support_force;
@@ -68,6 +69,7 @@ void exposeMPC() {
 
   bp::class_<MPC>("MPC", bp::no_init)
       .def(bp::init<>(bp::args("self")))
+      .def_readonly("ocp_handler", &MPC::ocp_handler_)
       .def("initialize", &initialize)
       .def("getSettings", &getSettings)
       .def("generateCycleHorizon", &MPC::generateCycleHorizon,
@@ -79,28 +81,26 @@ void exposeMPC() {
            bp::args("self", "t", "ee_name"))
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
-      .def("setVelocityBase", &MPC::setVelocityBase,
-           bp::args("self", "velocity_base"))
-      .def("setPoseBase", &MPC::setPoseBase, bp::args("self", "pose_base"))
-      .def("getPoseBase", &MPC::getPoseBase, bp::args("self", "t"))
-      .def("switchToWalk", &MPC::switchToWalk,
-           bp::args("self", "velocity_base"))
-      .def("switchToStand", &MPC::switchToStand, bp::args("self"))
+      .def_readwrite("velocity_base", &MPC::velocity_base_)
+      .def("setPoseBase", &MPC::setPoseBase, ("self"_a, "pose_base"))
+      .def("getPoseBase", &MPC::getPoseBase, ("self"_a, "t"))
+      .def("switchToWalk", &MPC::switchToWalk, ("self"_a, "velocity_base"))
+      .def("switchToStand", &MPC::switchToStand, "self"_a)
       .def("getFootTakeoffCycle", &MPC::getFootTakeoffCycle,
-           bp::args("self", "ee_name"))
-      .def("getFootLandCycle", &MPC::getFootLandCycle,
-           bp::args("self", "ee_name"))
+           ("self"_a, "ee_name"))
+      .def("getFootLandCycle", &MPC::getFootLandCycle, ("self"_a, "ee_name"))
       .def("getCyclingContactState", &MPC::getCyclingContactState,
-           bp::args("self", "t", "ee_name"))
-      .def("getHandler", &MPC::getHandler, bp::args("self"),
+           ("self"_a, "t", "ee_name"))
+      .def("getHandler", &MPC::getHandler, "self"_a,
            bp::return_internal_reference<>(), "Get the robot handler.")
-      .def("getTrajOptProblem", &MPC::getTrajOptProblem, bp::args("self"),
+      .def("getTrajOptProblem", &MPC::getTrajOptProblem, "self"_a,
            bp::return_internal_reference<>(),
            "Get the trajectory optimal problem.")
-      .def("getCycleHorizon", &MPC::getCycleHorizon, bp::args("self"),
+      .def("getCycleHorizon", &MPC::getCycleHorizon, "self"_a,
            bp::return_internal_reference<>(), "Get the cycle horizon.")
-      .def("getSolver", &MPC::getSolver, bp::args("self"),
-           bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
+      .def(
+          "getSolver", +[](MPC &mpc) { return boost::ref(mpc.getSolver()); },
+          "self"_a, "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("Ks", &MPC::Ks_);

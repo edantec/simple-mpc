@@ -9,11 +9,11 @@
 
 #include <pinocchio/algorithm/proximal.hpp>
 
-#include "simple-mpc/base-problem.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
-using Base = Problem;
+using Base = OCPHandler;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
 
 /**
@@ -61,7 +61,7 @@ public:
   Eigen::VectorXd Kd_correction;
 };
 
-class FullDynamicsProblem : public Problem {
+class FullDynamicsProblem : public OCPHandler {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -70,6 +70,7 @@ public:
   FullDynamicsProblem(const RobotHandler &handler);
   FullDynamicsProblem(const FullDynamicsSettings &settings,
                       const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsProblem);
   void initialize(const FullDynamicsSettings &settings);
   virtual ~FullDynamicsProblem() {}
 

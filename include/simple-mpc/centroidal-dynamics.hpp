@@ -7,7 +7,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "simple-mpc/base-problem.hpp"
+#include <aligator/modelling/centroidal/angular-acceleration.hpp>
+#include <aligator/modelling/centroidal/angular-momentum.hpp>
+#include <aligator/modelling/centroidal/centroidal-acceleration.hpp>
+#include <aligator/modelling/centroidal/centroidal-translation.hxx>
+#include <aligator/modelling/centroidal/linear-momentum.hpp>
+#include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+
+#include "simple-mpc/fwd.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -41,8 +49,8 @@ struct CentroidalSettings {
   int force_size;
 };
 
-class CentroidalProblem : public Problem {
-  using Base = Problem;
+class CentroidalProblem : public OCPHandler {
+  using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,6 +60,7 @@ public:
   CentroidalProblem(const RobotHandler &handler);
   CentroidalProblem(const CentroidalSettings &settings,
                     const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalProblem);
   void initialize(const CentroidalSettings &settings);
   virtual ~CentroidalProblem() {};
 

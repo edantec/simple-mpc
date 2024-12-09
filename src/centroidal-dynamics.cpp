@@ -20,7 +20,6 @@ using AngularAccelerationResidual = AngularAccelerationResidualTpl<double>;
 using LinearMomentumResidual = LinearMomentumResidualTpl<double>;
 using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
 using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
-using ContactMap = ContactMapTpl<double>;
 using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
 using CentroidalFrictionConeResidual =
     CentroidalFrictionConeResidualTpl<double>;

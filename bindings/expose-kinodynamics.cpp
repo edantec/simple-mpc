@@ -106,7 +106,7 @@ StageModel createKinoStage(KinodynamicsProblem &self,
 void exposeKinodynamicsProblem() {
   bp::register_ptr_to_python<shared_ptr<KinodynamicsProblem>>();
 
-  bp::class_<KinodynamicsProblem, bp::bases<Problem>, boost::noncopyable>(
+  bp::class_<KinodynamicsProblem, bp::bases<OCPHandler>, boost::noncopyable>(
       "KinodynamicsProblem",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeKino, bp::args("self", "settings"))
