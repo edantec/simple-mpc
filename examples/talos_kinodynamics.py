@@ -124,7 +124,7 @@ problem_conf = dict(
     Lfoot=0.1,
     Wfoot=0.075,
     kinematics_limits=True,
-    force_cone=True,
+    force_cone=False,
 )
 
 T = 100
@@ -148,15 +148,12 @@ mpc_conf = dict(
     T_contact=T_ds,
     T=T,
     dt=0.01,
-    kinematics_limits=True,
-    force_cone=True,
 )
 
 mpc = MPC()
 mpc.initialize(mpc_conf, problem)
 
 """ Define contact sequence throughout horizon"""
-total_steps = 3
 contact_phase_double = {
     "left_sole_link": True,
     "right_sole_link": True,
@@ -186,7 +183,7 @@ id_conf = dict(
     Wfoot=0.075,
     force_size=6,
     kd=0,
-    w_force=1,
+    w_force=100,
     w_acc=1,
     w_tau=0,
     verbose=False,
@@ -267,14 +264,6 @@ for t in range(600):
         mpc.getReferencePose(0, "right_sole_link").translation,
     )
 
-    """ if t == 60:
-        top=mpc.getTrajOptProblem()
-        exit()
-        for s in range(T):
-            device.resetState(mpc.xs[s][:nq])
-            time.sleep(0.1)
-            print("s = " + str(s))
-        exit()  """
     for j in range(10):
         q_current, v_current = device.measureState()
         x_measured = mpc.getHandler().shapeState(q_current, v_current)
@@ -293,10 +282,9 @@ for t in range(600):
             contact_states,
             v_current,
             a_interp,
-            np.zeros(12),
+            np.zeros(nu),
             f_interp,
             mpc.getHandler().getMassMatrix(),
         )
-        print(qp.solved_torque)
 
         device.execute(qp.solved_torque)
