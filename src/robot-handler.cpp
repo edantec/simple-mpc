@@ -8,7 +8,7 @@
 #include <pinocchio/parsers/urdf.hpp>
 namespace simple_mpc {
 
-  RobotModelHandler::RobotModelHandler(const Model& model, const std::vector<std::string>& feet_names, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names)
+  RobotModelHandler::RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names, const std::string& base_frame_name, const std::vector<std::string>& feet_names)
   : model_full_(model)
   , feet_names_(feet_names)
   {
@@ -31,7 +31,7 @@ namespace simple_mpc {
     model_ = buildReducedModel(model_full_, locked_joint_ids, model_full_.referenceConfigurations[reference_configuration_name]);
 
     // Root frame id
-    root_id_ = model_.getFrameId(model_handler_.root_name); // TODO: Which root name ?
+    base_id_ = model_.getFrameId(base_frame_name);
 
     // Add feet reference frames
     for(size_t i = 0; i < feet_names_.size(); i++) {
@@ -101,7 +101,7 @@ pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translat
   auto placement = pinocchio::SE3::Identity();
   placement.translation() = translation;
 
-  auto new_frame = pinocchio::Frame(name, model_.frames[root_id_].parentJoint, root_id_, placement, pinocchio::OP_FRAME);
+  auto new_frame = pinocchio::Frame(name, model_.frames[base_id_].parentJoint, base_id_, placement, pinocchio::OP_FRAME);
   auto frame_id = model_.addFrame(new_frame);
 
   return frame_id;

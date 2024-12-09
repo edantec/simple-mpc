@@ -51,6 +51,11 @@ private:
   std::vector<unsigned long> controlled_joints_ids_;
 
   /**
+   * @brief Reference configuration and velocity (most probably null velocity) to use
+   */
+  Eigen::VectorXd reference_state_;
+
+  /**
    * @brief Names of the frames to be in contact with the environment
    */
   std::vector<std::string> feet_names_;
@@ -66,14 +71,9 @@ private:
   std::vector<FrameIndex> ref_feet_ids_;
 
   /**
-   * @brief Reference configuration and velocity (most probably null velocity) to use
+   * @brief Base frame id
    */
-  Eigen::VectorXd reference_state_;
-
-  /**
-   * @brief Root frame id
-   */
-  pinocchio::FrameIndex root_id_;
+  pinocchio::FrameIndex base_id_;
 
 public:
   /**
@@ -139,9 +139,9 @@ public:
     return feet_names_;
   }
 
-  FrameIndex getRootFrameId() const
+  FrameIndex getBaseFrameId() const
   {
-    return root_id_;
+    return base_id_;
   }
 
   FrameIndex getFootId(const std::string &foot_name) const
@@ -195,7 +195,7 @@ public:
     return data_.oMf[model_handler_.getFootId(foot_name)];
   };
   const SE3 &getRootFramePose() const {
-    return data_.oMf[model_handler_.getRootFrameId()];
+    return data_.oMf[model_handler_.getBaseFrameId()];
   }
   const RobotModelHandler &getModelHandler() const
   {
