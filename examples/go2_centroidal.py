@@ -139,9 +139,7 @@ w_angular_acc = 1 * np.eye(3)
 w_com = 1 * np.eye(3)
 
 problem_conf = dict(
-    x0=x0,
-    u0=u0,
-    DT=0.01,
+    timestep=0.01,
     w_u=w_u,
     w_com=w_com,
     w_linear_mom=w_linear_mom,
@@ -174,9 +172,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    x_translation=0.0,
-    y_translation=0.0,
-    dt=0.01
+    dt=problem_conf["timestep"]
 )
 
 mpc = MPC()

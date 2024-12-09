@@ -45,7 +45,7 @@ using FlyHighResidual = FlyHighResidualTpl<double>;
 struct FullDynamicsSettings {
 public:
   // timestep in problem shooting nodes
-  double DT;
+  double timestep;
 
   // Cost function weights
   Eigen::MatrixXd w_x;      // State

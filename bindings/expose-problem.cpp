@@ -81,7 +81,7 @@ void exposeBaseProblem() {
 
 void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   FullDynamicsSettings conf;
-  conf.DT = bp::extract<double>(settings["DT"]);
+  conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
@@ -167,7 +167,7 @@ StageModel createFullStage(FullDynamicsProblem &self,
 bp::dict getSettingsFull(FullDynamicsProblem &self) {
   FullDynamicsSettings conf = self.getSettings();
   bp::dict settings;
-  settings["DT"] = conf.DT;
+  settings["timestep"] = conf.timestep;
   settings["w_x"] = conf.w_x;
   settings["w_u"] = conf.w_u;
   settings["w_cent"] = conf.w_cent;
@@ -272,7 +272,7 @@ void exposeFullDynamicsProblem() {
 
 void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   CentroidalSettings conf;
-  conf.DT = bp::extract<double>(settings["DT"]);
+  conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_com = bp::extract<Eigen::Matrix3d>(settings["w_com"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_linear_mom = bp::extract<Eigen::Matrix3d>(settings["w_linear_mom"]);
@@ -342,7 +342,7 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
 bp::dict getSettingsCent(CentroidalProblem &self) {
   CentroidalSettings conf = self.getSettings();
   bp::dict settings;
-  settings["DT"] = conf.DT;
+  settings["timestep"] = conf.timestep;
   settings["w_com"] = conf.w_com;
   settings["w_u"] = conf.w_u;
   settings["w_linear_mom"] = conf.w_linear_mom;
@@ -437,7 +437,7 @@ void exposeCentroidalProblem() {
 
 void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   KinodynamicsSettings conf;
-  conf.DT = bp::extract<double>(settings["DT"]);
+  conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
   conf.w_u = bp::extract<Eigen::MatrixXd>(settings["w_u"]);
   conf.w_cent = bp::extract<Eigen::MatrixXd>(settings["w_cent"]);
@@ -463,7 +463,7 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
 bp::dict getSettingsKino(KinodynamicsProblem &self) {
   KinodynamicsSettings conf = self.getSettings();
   bp::dict settings;
-  settings["DT"] = conf.DT;
+  settings["timestep"] = conf.timestep;
   settings["w_x"] = conf.w_x;
   settings["w_u"] = conf.w_u;
   settings["w_cent"] = conf.w_cent;

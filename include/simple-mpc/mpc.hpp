@@ -67,7 +67,7 @@ public:
   int T_fly = 80;
   int T_contact = 20;
   size_t T = 100;
-  double dt = 0.01;
+  double timestep = 0.01;
 };
 class MPC {
 

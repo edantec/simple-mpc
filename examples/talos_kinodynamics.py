@@ -108,7 +108,7 @@ w_centder_ang = np.ones(3) * 0.1
 w_centder = np.diag(np.concatenate((w_centder_lin, w_centder_ang)))
 
 problem_conf = dict(
-    DT=0.01,
+    timestep=0.01,
     w_x=w_x,
     w_u=w_u,
     w_cent=w_cent,
@@ -147,7 +147,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    dt=0.01,
+    timestep=problem_conf["timestep"],
 )
 
 mpc = MPC()

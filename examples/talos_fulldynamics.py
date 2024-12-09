@@ -92,7 +92,7 @@ w_forces_ang = np.ones(3) * 0.001
 gravity = np.array([0, 0, -9.81])
 
 problem_conf = dict(
-    DT=0.01,
+    timestep=0.01,
     w_x=np.diag(w_x),
     w_u=np.eye(nu) * 1e-4,
     w_cent=np.diag(np.concatenate((w_cent_lin, w_cent_ang))),
@@ -134,7 +134,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    dt=0.01,
+    timestep=problem_conf["timestep"],
 )
 
 mpc = MPC()

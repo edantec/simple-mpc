@@ -41,7 +41,7 @@ void initialize(MPC &self, const bp::dict &settings,
   conf.T_fly = bp::extract<int>(settings["T_fly"]);
   conf.T_contact = bp::extract<int>(settings["T_contact"]);
   conf.T = bp::extract<std::size_t>(settings["T"]);
-  conf.dt = bp::extract<double>(settings["dt"]);
+  conf.timestep = bp::extract<double>(settings["timestep"]);
 
   self.initialize(conf, problem);
 }
@@ -59,7 +59,7 @@ bp::dict getSettings(MPC &self) {
   settings["T_fly"] = conf.T_fly;
   settings["T_contact"] = conf.T_contact;
   settings["T"] = conf.T;
-  settings["dt"] = conf.dt;
+  settings["timestep"] = conf.timestep;
 
   return settings;
 }

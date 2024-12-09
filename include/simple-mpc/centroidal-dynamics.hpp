@@ -40,7 +40,7 @@ using ContactMap = ContactMapTpl<double>;
 
 struct CentroidalSettings {
   // timestep in problem shooting nodes
-  double DT;
+  double timestep;
 
   // Cost function weights
   Eigen::MatrixXd w_u;           // Control

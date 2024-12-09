@@ -135,7 +135,7 @@ StageModel FullDynamicsProblem::createStage(
   MultibodyConstraintFwdDynamics ode = MultibodyConstraintFwdDynamics(
       space, actuation_matrix_, cms, prox_settings_);
   IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+      IntegratorSemiImplEuler(ode, settings_.timestep);
 
   StageModel stm = StageModel(rcost, dyn_model);
 

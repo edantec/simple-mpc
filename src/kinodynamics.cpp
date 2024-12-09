@@ -72,7 +72,7 @@ StageModel KinodynamicsProblem::createStage(
       space, handler_.getModel(), settings_.gravity, contact_states,
       handler_.getFeetIds(), settings_.force_size);
   IntegratorSemiImplEuler dyn_model =
-      IntegratorSemiImplEuler(ode, settings_.DT);
+      IntegratorSemiImplEuler(ode, settings_.timestep);
   StageModel stm = StageModel(rcost, dyn_model);
 
   if (settings_.kinematics_limits) {

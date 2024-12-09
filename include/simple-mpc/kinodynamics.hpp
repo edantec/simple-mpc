@@ -30,7 +30,7 @@ using CentroidalMomentumDerivativeResidual =
 
 struct KinodynamicsSettings {
   /// timestep in problem shooting nodes
-  double DT;
+  double timestep;
 
   // Cost function weights
   Eigen::MatrixXd w_x;       // State

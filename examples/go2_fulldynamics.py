@@ -77,7 +77,7 @@ w_frame = np.diag(np.array([1000, 1000, 1000]))
 
 dt = 0.01
 problem_conf = dict(
-    DT=dt,
+    timestep=dt,
     w_x=np.diag(w_x),
     w_u=np.eye(u0.size) * 1e-4,
     w_cent=np.diag(np.concatenate((w_cent_lin, w_cent_ang))),
@@ -118,7 +118,7 @@ mpc_conf = dict(
     T_fly=T_ss,
     T_contact=T_ds,
     T=T,
-    dt=0.01,
+    timestep=dt,
 )
 
 mpc = MPC()
