@@ -5,6 +5,7 @@ set(PROJECT_NAME simple-mpc)
 set(PROJECT_DESCRIPTION "MPC schemes for locomotion")
 set(PROJECT_URL https://github.com/edantec/${PROJECT_NAME})
 set(PROJECT_CUSTOM_HEADER_DIR "simple-mpc")
+set(PROJECT_CUSTOM_HEADER_EXTENSION "hpp")
 
 # Project configuration
 set(CMAKE_CXX_STANDARD 17)
