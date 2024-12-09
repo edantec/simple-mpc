@@ -11,7 +11,6 @@
 
 #include <aligator/core/stage-model.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/modelling/multibody/frame-placement.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/joint-configuration.hpp>
 #include <pinocchio/algorithm/model.hpp>
