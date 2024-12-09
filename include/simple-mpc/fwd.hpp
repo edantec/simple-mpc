@@ -16,6 +16,8 @@
 #include <pinocchio/multibody/model.hpp>
 
 namespace simple_mpc {
+namespace pin = pinocchio;
+using pin::FrameIndex;
 
 using std::shared_ptr;
 

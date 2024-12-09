@@ -123,10 +123,10 @@ void IDSolver::computeMatrice(pinocchio::Data &data,
     if (contact_state[(size_t)i]) {
       getFrameJacobianTimeVariation(model_, data,
                                     settings_.contact_ids[(size_t)i],
-                                    LOCAL_WORLD_ALIGNED, Jdot_);
+                                    pin::LOCAL_WORLD_ALIGNED, Jdot_);
       Jc_.middleRows(i * settings_.force_size, settings_.force_size) =
           getFrameJacobian(model_, data, settings_.contact_ids[(size_t)i],
-                           LOCAL_WORLD_ALIGNED)
+                           pin::LOCAL_WORLD_ALIGNED)
               .topRows(settings_.force_size);
       gamma_.segment(i * settings_.force_size, settings_.force_size) =
           Jdot_.topRows(settings_.force_size) * v;
@@ -315,23 +315,24 @@ void IKIDSolver::computeDifferences(
     FrameIndex id = settings_.contact_ids[i];
     foot_diffs_[i].head(3) =
         foot_refs[i].translation() - data.oMf[id].translation();
-    foot_diffs_[i].tail(3) =
-        -log3(foot_refs[i].rotation().transpose() * data.oMf[id].rotation());
+    foot_diffs_[i].tail(3) = -pin::log3(foot_refs[i].rotation().transpose() *
+                                        data.oMf[id].rotation());
 
     dfoot_diffs_[i].head(3) =
         (foot_refs_next[i].translation() - foot_refs[i].translation()) /
             settings_.dt -
-        getFrameVelocity(model_, data, id, LOCAL).linear();
+        pin::getFrameVelocity(model_, data, id, pin::LOCAL).linear();
     dfoot_diffs_[i].tail(3) =
-        log3(foot_refs[i].rotation().transpose() *
-             foot_refs_next[i].rotation()) /
+        pin::log3(foot_refs[i].rotation().transpose() *
+                  foot_refs_next[i].rotation()) /
             settings_.dt -
-        getFrameVelocity(model_, data, id, LOCAL).angular();
+        pin::getFrameVelocity(model_, data, id, pin::LOCAL).angular();
   }
   for (size_t i = 0; i < settings_.fixed_frame_ids.size(); i++) {
     FrameIndex id = settings_.fixed_frame_ids[i];
-    frame_diffs_[i] = -log3(data.oMf[id].rotation());
-    dframe_diffs_[i] = -getFrameVelocity(model_, data, id, LOCAL).angular();
+    frame_diffs_[i] = -pin::log3(data.oMf[id].rotation());
+    dframe_diffs_[i] =
+        -pin::getFrameVelocity(model_, data, id, pin::LOCAL).angular();
   }
 }
 
@@ -365,8 +366,8 @@ void IKIDSolver::computeMatrice(pinocchio::Data &data,
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {
     dJfoot_.setZero();
     FrameIndex id = settings_.contact_ids[i];
-    Jfoot_ = getFrameJacobian(model_, data, id, LOCAL);
-    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJfoot_);
+    Jfoot_ = getFrameJacobian(model_, data, id, pin::LOCAL);
+    getFrameJacobianTimeVariation(model_, data, id, pin::LOCAL, dJfoot_);
 
     H_.topLeftCorner(model_.nv, model_.nv) += settings_.w_footpose *
                                               Jfoot_.topRows(fs_).transpose() *
@@ -413,8 +414,8 @@ void IKIDSolver::computeMatrice(pinocchio::Data &data,
   for (size_t i = 0; i < settings_.fixed_frame_ids.size(); i++) {
     dJframe_.setZero();
     FrameIndex id = settings_.fixed_frame_ids[i];
-    Jframe_ = getFrameJacobian(model_, data, id, LOCAL).bottomRows(3);
-    getFrameJacobianTimeVariation(model_, data, id, LOCAL, dJframe_);
+    Jframe_ = pin::getFrameJacobian(model_, data, id, pin::LOCAL).bottomRows(3);
+    pin::getFrameJacobianTimeVariation(model_, data, id, pin::LOCAL, dJframe_);
 
     H_.topLeftCorner(model_.nv, model_.nv) +=
         settings_.w_baserot * Jframe_.transpose() * Jframe_;
