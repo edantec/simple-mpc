@@ -17,7 +17,8 @@
 #include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
 #include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 #ifndef ALIGATOR_PINOCCHIO_V3
-#error "aligator no compile with pin v3"
+#error                                                                         \
+    "aligator was not compiled with Pinocchio 3 support. simple-mpc requires Pinocchio 3 features in aligator."
 #endif
 
 namespace simple_mpc {
@@ -34,10 +35,10 @@ using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
-/**
- * @brief Base problem abstract class
- */
 
+///
+/// @brief Base abstract class for all MPC problems.
+///
 class Problem {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

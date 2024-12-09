@@ -10,7 +10,6 @@
 #include <pinocchio/fwd.hpp>
 
 #include <eigenpy/eigenpy.hpp>
-#include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 
 #include "simple-mpc/mpc.hpp"
@@ -64,11 +63,6 @@ void exposeMPC() {
   StdVectorPythonVisitor<StageVec, true>::expose(
       "StdVec_StageModel",
       eigenpy::details::overload_base_get_item_for_std_vector<StageVec>());
-
-  eigenpy::python::StdMapPythonVisitor<
-      std::string, bool, std::less<std::string>,
-      std::allocator<std::pair<const std::string, bool>>,
-      true>::expose("StdMap_Bool");
 
   StdVectorPythonVisitor<std::vector<MapBool>, true>::expose("StdVec_MapBool");
 

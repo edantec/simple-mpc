@@ -1,7 +1,7 @@
 include("${JRL_CMAKE_MODULES}/python.cmake")
 include("${JRL_CMAKE_MODULES}/stubs.cmake")
 
-add_project_dependency(eigenpy 2.7.10 REQUIRED)
+add_project_dependency(eigenpy 3.9.1 REQUIRED)
 
 set(
   ${PY_NAME}_SOURCES
@@ -10,7 +10,9 @@ set(
   expose-problem.cpp
   expose-mpc.cpp
   expose-lowlevel.cpp
-  problems.hpp
+  expose-centroidal.cpp
+  expose-fulldynamics.cpp
+  expose-kinodynamics.cpp
 )
 
 python3_add_library(${PY_NAME}_pywrap MODULE WITH_SOABI ${${PY_NAME}_SOURCES})
