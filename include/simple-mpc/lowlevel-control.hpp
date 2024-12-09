@@ -15,10 +15,7 @@
 #define SIMPLE_MPC_LOWLEVEL_CONTROL_HPP_
 
 #include "simple-mpc/fwd.hpp"
-#include <Eigen/Cholesky>
-#include <Eigen/Core>
 #include <pinocchio/multibody/fwd.hpp>
-#include <proxsuite/linalg/veg/util/dbg.hpp>
 #include <proxsuite/proxqp/dense/dense.hpp>
 #include <proxsuite/proxqp/dense/wrapper.hpp>
 
