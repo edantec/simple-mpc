@@ -11,10 +11,9 @@
 
 namespace simple_mpc {
 using namespace aligator;
-
 /**
  * @brief Build a kinodynamics problem based on
- * the KinodynamicsFwdDynamics object of Aligator.
+ * aligator's KinodynamicsFwdDynamics class.
  *
  * State is defined as concatenation of joint positions and
  * joint velocities; control is defined as concatenation of
