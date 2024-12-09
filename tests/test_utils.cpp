@@ -8,13 +8,12 @@
 using namespace simple_mpc;
 
 RobotModelHandler getTalosModelHandler() {
-    // Load model from example robot data
+    // Load pinocchio model from example robot data
     Model model;
     std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
     std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
 
     pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
-
     srdf::loadReferenceConfigurations(model, srdf_path, false);
     srdf::loadRotorParameters(model, srdf_path, false);
 
@@ -40,49 +39,39 @@ RobotModelHandler getTalosModelHandler() {
         ), locked_joints_names.end()
     );
 
-    // Feet list
-    const std::vector<std::string> feet_names {"left_sole_link", "right_sole_link"};
 
-    // Feet reference transform
-    const SE3 left_foot_trans(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.));
-    const SE3 right_foot_trans(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.));
+    // Actually create handler
+    std::string base_joint = "root_joint";
+    RobotModelHandler handler(model, "half_sitting", base_joint, locked_joints_names);
 
-    //
-    const std::string reference_configuration = "half_sitting";
-    const std::string base_name = "root_joint";
-
-    RobotModelHandler handler(model, reference_configuration, base_name, locked_joints_names);
+    // Add feet
+    handler.addFoot("left_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.)));
+    handler.addFoot("right_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.)));
 
     return handler;
 }
 
-RobotDataHandler getSoloHandler() {
-  RobotModelHandler settings;
-  settings.urdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
-  settings.srdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/srdf/solo.srdf";
+RobotModelHandler getSoloHandler() {
+    // Load pinocchio model from example robot data
+    Model model;
+    const std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
+    const std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/srdf/solo.srdf";
 
-  settings.controlled_joints_names = {
-      "root_joint", "FL_HAA", "FL_HFE", "FL_KFE", "FR_HAA", "FR_HFE", "FR_KFE",
-      "HL_HAA",     "HL_HFE", "HL_KFE", "HR_HAA", "HR_HFE", "HR_KFE",
-  };
-  settings.end_effector_names = {"FR_FOOT", "FL_FOOT", "HL_FOOT", "HR_FOOT"};
-  Eigen::Vector3d FL_trans;
-  Eigen::Vector3d FR_trans;
-  Eigen::Vector3d HL_trans;
-  Eigen::Vector3d HR_trans;
-  FL_trans << 0.1, 0.1, 0.;
-  FR_trans << 0.1, -0.1, 0.;
-  HL_trans << -0.1, 0.1, 0.;
-  HR_trans << -0.1, -0.1, 0.;
-  settings.feet_to_base_trans = {FR_trans, FL_trans, HL_trans, HR_trans};
-  settings.base_configuration = "straight_standing";
-  settings.root_name = "root_joint";
+    pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
+    srdf::loadReferenceConfigurations(model, srdf_path, false);
+    srdf::loadRotorParameters(model, srdf_path, false);
 
-  RobotDataHandler handler(settings);
+    // Actually create handler
+    std::string base_joint = "root_joint";
+    RobotModelHandler handler(model, "straight_standing", base_joint);
 
-  return handler;
+    // Add feet
+    handler.addFoot("FR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, -0.1, 0.)));
+    handler.addFoot("FL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, 0.1, 0.)));
+    handler.addFoot("HR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, -0.1, 0.)));
+    handler.addFoot("HL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, 0.1, 0.)));
+
+    return handler;
 }
 
 FullDynamicsSettings getFullDynamicsSettings(RobotDataHandler handler) {
