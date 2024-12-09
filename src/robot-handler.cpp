@@ -9,114 +9,48 @@
 namespace simple_mpc {
 
   RobotModelHandler::RobotModelHandler(const Model& model, const std::vector<std::string>& feet_names, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names)
-  : model_full(model)
-  , feet_names(feet_names)
+  : model_full_(model)
+  , feet_names_(feet_names)
   {
+    // Construct controlled and locked joints ids list
+    std::vector<unsigned long> locked_joint_ids;
+    for(size_t i = 0; i< model_full_.names.size(); i++)
+    {
+      const std::string joint_name = model_full_.names.at(i);
+      if(count(locked_joint_names.begin(), locked_joint_names.end(), joint_name) == 0)
+      {
+        controlled_joints_ids_.push_back(model_full_.getJointId(joint_name));
+      }
+      else
+      {
+        locked_joint_ids.push_back(model_full_.getJointId(joint_name));
+      }
+    }
 
+    // Build reduced model with locked joints
+    model_ = buildReducedModel(model_full_, locked_joint_ids, model_full_.referenceConfigurations[reference_configuration_name]);
+
+    // Root frame id
+    root_id_ = model_.getFrameId(model_handler_.root_name); // TODO: Which root name ?
+
+    // Add feet reference frames
+    for(size_t i = 0; i < feet_names_.size(); i++) {
+      const std::string foot_name = feet_names_.at(i);
+      feet_ids_.push_back(model_.getFrameId(foot_name));
+      ref_feet_ids_.push_back(addFrameToBase(model_handler_.feet_to_base_trans[i], foot_name + "_ref")); // TODO: Which translation ?
+    }
+
+    // Set reference state
+    reference_state_ = shapeState(model_full_.referenceConfigurations[reference_configuration_name], Eigen::VectorXd::Zero(model_.nv));
   }
 
-// void RobotDataHandler::initialize(const RobotModelHandler &settings) {
-//   model_handler = settings;
-
-//   // COMPLETE MODEL //
-//   if (model_handler.robot_description.size() > 0) {
-//     pinocchio::urdf::buildModelFromXML(model_handler.robot_description,
-//                                        JointModelFreeFlyer(), rmodel_complete_);
-//     std::cout << "### Build pinocchio model from rosparam robot_description."
-//               << std::endl;
-//   } else if (model_handler.urdf_path.size() > 0) {
-//     pinocchio::urdf::buildModel(model_handler.urdf_path, JointModelFreeFlyer(),
-//                                 rmodel_complete_);
-//     std::cout << "### Build pinocchio model from urdf file." << std::endl;
-//   } else {
-//     throw std::invalid_argument(
-//         "the urdf file, or robotDescription must be specified.");
-//   }
-//   if (model_handler.srdf_path.size() > 0) {
-//     srdf::loadReferenceConfigurations(rmodel_complete_, model_handler.srdf_path,
-//                                       false);
-//     if (settings.load_rotor) {
-//       srdf::loadRotorParameters(rmodel_complete_, model_handler.srdf_path, false);
-//     }
-//     q_complete_ =
-//         rmodel_complete_.referenceConfigurations[settings.base_configuration];
-//   } else {
-//     q_complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nq);
-//   }
-//   v_complete_ = Eigen::VectorXd::Zero(rmodel_complete_.nv);
-
-//   // REDUCED MODEL //
-
-//   // Check if listed joints belong to model
-//   for (std::vector<std::string>::const_iterator it =
-//            model_handler.controlled_joints_names.begin();
-//        it != model_handler.controlled_joints_names.end(); ++it) {
-//     const std::string &joint_name = *it;
-//     std::cout << joint_name << std::endl;
-//     std::cout << rmodel_complete_.getJointId(joint_name) << std::endl;
-//     if (not(rmodel_complete_.existJointName(joint_name))) {
-//       std::cout << "joint: " << joint_name << " does not belong to the model"
-//                 << std::endl;
-//     }
-//   }
-
-//   // making list of blocked joints
-//   std::vector<unsigned long> locked_joints_id;
-//   for (std::vector<std::string>::const_iterator it =
-//            rmodel_complete_.names.begin() + 1;
-//        it != rmodel_complete_.names.end(); ++it) {
-//     const std::string &joint_name = *it;
-//     if (std::find(model_handler.controlled_joints_names.begin(),
-//                   model_handler.controlled_joints_names.end(),
-//                   joint_name) == model_handler.controlled_joints_names.end()) {
-//       locked_joints_id.push_back(rmodel_complete_.getJointId(joint_name));
-//     }
-//   }
-
-//   rmodel_ = buildReducedModel(rmodel_complete_, locked_joints_id, q_complete_);
-//   root_ids_ = rmodel_.getFrameId(model_handler.root_name);
-//   for (std::size_t i = 0; i < model_handler.end_effector_names.size(); i++) {
-//     std::string name = model_handler.end_effector_names[i];
-//     end_effector_map_.insert({name, rmodel_.getFrameId(name)});
-//     end_effector_ids_.push_back(rmodel_.getFrameId(name));
-//     ref_end_effector_map_.insert(
-//         {name, addFrameToBase(model_handler.feet_to_base_trans[i], name + "_ref")});
-//   }
-//   rdata_ = Data(rmodel_);
-
-//   if (model_handler.srdf_path.size() > 0) {
-//     srdf::loadReferenceConfigurations(rmodel_, model_handler.srdf_path, false);
-//     if (settings.load_rotor) {
-//       srdf::loadRotorParameters(rmodel_, model_handler.srdf_path, false);
-//     }
-//     q_ = rmodel_.referenceConfigurations[model_handler.base_configuration];
-//   } else {
-//     q_ = Eigen::VectorXd::Zero(rmodel_.nq);
-//   }
-//   v_ = Eigen::VectorXd::Zero(rmodel_.nv);
-//   x_.resize(rmodel_.nq + rmodel_.nv);
-//   x_centroidal_.resize(9);
-
-//   // Generating list of indices for controlled joints //
-//   for (std::vector<std::string>::const_iterator it = rmodel_.names.begin() + 1;
-//        it != rmodel_.names.end(); ++it) {
-//     const std::string &joint_name = *it;
-//     if (std::find(model_handler.controlled_joints_names.begin(),
-//                   model_handler.controlled_joints_names.end(),
-//                   joint_name) != model_handler.controlled_joints_names.end()) {
-//       controlled_joints_ids_.push_back(rmodel_complete_.getJointId(joint_name));
-//     }
-//   }
-//   computeMass();
-//   initialized_ = true;
-// }
 
 Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) const
 {
-  const size_t nq_full = model_full.nq;
-  const size_t nv_full = model_full.nv;
-  const size_t nq = model.nq;
-  const size_t nv = model.nv;
+  const size_t nq_full = model_full_.nq;
+  const size_t nv_full = model_full_.nv;
+  const size_t nq = model_.nq;
+  const size_t nv = model_.nv;
   const size_t nx = nq + nv;
   Eigen::VectorXd x(nx);
 
@@ -130,12 +64,12 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
   // Copy each controlled joint to state vector
   int iq = 7;
   int iv = nq + 6;
-  for (unsigned long jointId : controlled_joints_ids)
+  for (unsigned long jointId : controlled_joints_ids_)
   {
-    const size_t j_idx_q = model_full.idx_qs[jointId];
-    const size_t j_idx_v = model_full.idx_vs[jointId];
-    const size_t j_nq = model_full.nqs[jointId];
-    const size_t j_nv = model_full.nvs[jointId];
+    const size_t j_idx_q = model_full_.idx_qs[jointId];
+    const size_t j_idx_v = model_full_.idx_vs[jointId];
+    const size_t j_nq = model_full_.nqs[jointId];
+    const size_t j_nv = model_full_.nvs[jointId];
 
     x.segment(iq, j_nq) = q.segment(j_idx_q, j_nq);
     x.segment(iv, j_nv) = v.segment(j_idx_v, j_nv);
@@ -148,14 +82,14 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
 
 Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const
 {
-  const size_t nq = model.nq;
-  const size_t nv = model.nv;
+  const size_t nq = model_.nq;
+  const size_t nv = model_.nv;
   const size_t ndx = 2* nv;
 
   Eigen::VectorXd dx(ndx);
 
   // Difference over q
-  pinocchio::difference(model, x1.head(nq), x2.head(nq), dx.head(nv));
+  pinocchio::difference(model_, x1.head(nq), x2.head(nq), dx.head(nv));
 
   // Difference over v
   dx.tail(nv) = x2.tail(nv) - x1.tail(nv);
@@ -167,25 +101,25 @@ pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translat
   auto placement = pinocchio::SE3::Identity();
   placement.translation() = translation;
 
-  auto new_frame = pinocchio::Frame(name, model.frames[root_id].parentJoint, root_id, placement, pinocchio::OP_FRAME);
-  auto frame_id = model.addFrame(new_frame);
+  auto new_frame = pinocchio::Frame(name, model_.frames[root_id_].parentJoint, root_id_, placement, pinocchio::OP_FRAME);
+  auto frame_id = model_.addFrame(new_frame);
 
   return frame_id;
 }
 
 RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)
-: model_handler(model_handler)
-, data(model_handler.getModel())
+: model_handler_(model_handler)
+, data_(model_handler.getModel())
 {
 }
 
 void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
-  const Eigen::Block q = x.head(model_handler.getModel().nq);
-  const Eigen::Block v = x.tail(model_handler.getModel().nv);
+  const Eigen::Block q = x.head(model_handler_.getModel().nq);
+  const Eigen::Block v = x.tail(model_handler_.getModel().nv);
 
-  forwardKinematics(model_handler.getModel(), data, q);
-  updateFramePlacements(model_handler.getModel(), data);
-  computeCentroidalMomentum(model_handler.getModel(), data, q, v);
+  forwardKinematics(model_handler_.getModel(), data_, q);
+  updateFramePlacements(model_handler_.getModel(), data_);
+  computeCentroidalMomentum(model_handler_.getModel(), data_, q, v);
 
   if (updateJacobians)
   {
@@ -194,23 +128,23 @@ void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool u
 }
 
 void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
-  const Eigen::Block q = x.head(model_handler.getModel().nq);
-  const Eigen::Block v = x.tail(model_handler.getModel().nv);
+  const Eigen::Block q = x.head(model_handler_.getModel().nq);
+  const Eigen::Block v = x.tail(model_handler_.getModel().nv);
 
-  computeJointJacobians(model_handler.getModel(), data);
-  computeJointJacobiansTimeVariation(model_handler.getModel(), data, q, v);
-  crba(model_handler.getModel(), data, q);
-  make_symmetric(data.M);
-  nonLinearEffects(model_handler.getModel(), data, q, v);
-  dccrba(model_handler.getModel(), data, q, v);
+  computeJointJacobians(model_handler_.getModel(), data_);
+  computeJointJacobiansTimeVariation(model_handler_.getModel(), data_, q, v);
+  crba(model_handler_.getModel(), data_, q);
+  make_symmetric(data_.M);
+  nonLinearEffects(model_handler_.getModel(), data_, q, v);
+  dccrba(model_handler_.getModel(), data_, q, v);
 }
 
 RobotDataHandler::CentroidalStateVector RobotDataHandler::getCentroidalState() const
 {
   RobotDataHandler::CentroidalStateVector x_centroidal;
-  x_centroidal.head(3) = data.com[0];
-  x_centroidal.segment(3, 3) = data.hg.linear();
-  x_centroidal.tail(3) = data.hg.angular();
+  x_centroidal.head(3) = data_.com[0];
+  x_centroidal.segment(3, 3) = data_.hg.linear();
+  x_centroidal.tail(3) = data_.hg.angular();
   return x_centroidal;
 }
 

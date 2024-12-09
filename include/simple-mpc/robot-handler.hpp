@@ -33,47 +33,47 @@ private:
   /**
    * @brief Robot model with all joints unlocked
    */
-  Model model_full;
+  Model model_full_;
 
   /**
    * @brief Reduced model to be used by ocp
    */
-  Model model;
+  Model model_;
 
   /**
    * @brief Robot total mass
    */
-  double mass;
+  double mass_;
 
   /**
    * @brief Joint id to be controlled in full model
    */
-  std::vector<unsigned long> controlled_joints_ids;
+  std::vector<unsigned long> controlled_joints_ids_;
 
   /**
    * @brief Names of the frames to be in contact with the environment
    */
-  std::vector<std::string> feet_names;
+  std::vector<std::string> feet_names_;
 
   /**
    * @brief Ids of the frames to be in contact with the environment
    */
-  std::vector<FrameIndex> feet_ids;
+  std::vector<FrameIndex> feet_ids_;
 
   /**
    * @brief Ids of the frames that are reference position for the feet
    */
-  std::vector<FrameIndex> ref_feet_ids;
+  std::vector<FrameIndex> ref_feet_ids_;
 
   /**
    * @brief Reference configuration and velocity (most probably null velocity) to use
    */
-  Eigen::VectorXd reference_state;
+  Eigen::VectorXd reference_state_;
 
   /**
    * @brief Root frame id
    */
-  pinocchio::FrameIndex root_id;
+  pinocchio::FrameIndex root_id_;
 
 public:
   /**
@@ -117,56 +117,56 @@ public:
   // Const getters
   const Eigen::VectorXd& getReferenceState() const
   {
-    return reference_state;
+    return reference_state_;
   }
   size_t getFootNb(const std::string &foot_name) const
   {
-    return std::find(feet_names.begin(), feet_names.end(), foot_name) - feet_names.begin();
+    return std::find(feet_names_.begin(), feet_names_.end(), foot_name) - feet_names_.begin();
   }
 
   const std::vector<FrameIndex>& getFeetIds() const
   {
-    return feet_ids;
+    return feet_ids_;
   }
 
   const std::string &getFootName(size_t i) const
   {
-    return feet_names.at(i);
+    return feet_names_.at(i);
   }
 
   const std::vector<std::string> &getFeetNames() const
   {
-    return feet_names;
+    return feet_names_;
   }
 
   FrameIndex getRootFrameId() const
   {
-    return root_id;
+    return root_id_;
   }
 
   FrameIndex getFootId(const std::string &foot_name) const
   {
-    return feet_ids.at(getFootNb(foot_name));
+    return feet_ids_.at(getFootNb(foot_name));
   }
 
   FrameIndex getRefFootId(const std::string &foot_name) const
   {
-    return feet_ids.at(getFootNb(foot_name));
+    return feet_ids_.at(getFootNb(foot_name));
   }
 
   double getMass() const
   {
-    return mass;
+    return mass_;
   }
 
   const Model& getModel() const
   {
-    return model;
+    return model_;
   }
 
   const Model& getCompleteModel() const
   {
-    return model_full;
+    return model_full_;
   }
 };
 
@@ -175,8 +175,8 @@ public:
   typedef Eigen::Matrix<double,9,1> CentroidalStateVector;
 
 private:
-  RobotModelHandler model_handler;
-  Data data;
+  RobotModelHandler model_handler_;
+  Data data_;
 
 public:
   RobotDataHandler(const RobotModelHandler &model_handler);
@@ -188,22 +188,22 @@ public:
   // Const getters
   const SE3 &getRefFootPose(const std::string &foot_name) const
   {
-    return data.oMf[model_handler.getRefFootId(foot_name)];
+    return data_.oMf[model_handler_.getRefFootId(foot_name)];
   };
   const SE3 &getFootPose(const std::string &foot_name) const
   {
-    return data.oMf[model_handler.getFootId(foot_name)];
+    return data_.oMf[model_handler_.getFootId(foot_name)];
   };
   const SE3 &getRootFramePose() const {
-    return data.oMf[model_handler.getRootFrameId()];
+    return data_.oMf[model_handler_.getRootFrameId()];
   }
   const RobotModelHandler &getModelHandler() const
   {
-    return model_handler;
+    return model_handler_;
   }
   const Data &getData() const
   {
-    return data;
+    return data_;
   }
   RobotDataHandler::CentroidalStateVector getCentroidalState() const;
 };
