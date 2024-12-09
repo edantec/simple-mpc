@@ -6,6 +6,7 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <aligator/modelling/contact-map.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
@@ -14,15 +15,13 @@
 
 #include "problems.hpp"
 #include "simple-mpc/base-problem.hpp"
-#include "simple-mpc/fulldynamics.hpp"
-
 #include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
 namespace python {
 namespace bp = boost::python;
 using eigenpy::StdVectorPythonVisitor;
-
+using ContactMap = ContactMapTpl<double>;
 void exposeBaseProblem() {
   bp::register_ptr_to_python<std::shared_ptr<Problem>>();
   bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)

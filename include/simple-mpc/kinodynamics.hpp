@@ -7,18 +7,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
-#include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
-
 #include "simple-mpc/base-problem.hpp"
-#include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
-using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
-using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
-using CentroidalMomentumDerivativeResidual =
-    CentroidalMomentumDerivativeResidualTpl<double>;
+
 /**
  * @brief Build a kinodynamics problem based on
  * the KinodynamicsFwdDynamics object of Aligator.

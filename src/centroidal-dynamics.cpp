@@ -1,9 +1,30 @@
 #include "simple-mpc/centroidal-dynamics.hpp"
-#include <pinocchio/spatial/fwd.hpp>
-#include <stdexcept>
+
+#include <aligator/modelling/centroidal/angular-acceleration.hpp>
+#include <aligator/modelling/centroidal/angular-momentum.hpp>
+#include <aligator/modelling/centroidal/centroidal-acceleration.hpp>
+#include <aligator/modelling/centroidal/centroidal-friction-cone.hpp>
+#include <aligator/modelling/centroidal/centroidal-translation.hxx>
+#include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
+#include <aligator/modelling/centroidal/linear-momentum.hpp>
+#include <aligator/modelling/dynamics/centroidal-fwd.hpp>
+#include <aligator/modelling/dynamics/integrator-euler.hpp>
 
 namespace simple_mpc {
 using namespace aligator;
+using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
+using CentroidalFwdDynamics = dynamics::CentroidalFwdDynamicsTpl<double>;
+using CentroidalAccelerationResidual =
+    CentroidalAccelerationResidualTpl<double>;
+using AngularAccelerationResidual = AngularAccelerationResidualTpl<double>;
+using LinearMomentumResidual = LinearMomentumResidualTpl<double>;
+using AngularMomentumResidual = AngularMomentumResidualTpl<double>;
+using CentroidalCoMResidual = CentroidalCoMResidualTpl<double>;
+using ContactMap = ContactMapTpl<double>;
+using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
+using CentroidalFrictionConeResidual =
+    CentroidalFrictionConeResidualTpl<double>;
+using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 
 CentroidalProblem::CentroidalProblem(const RobotHandler &handler)
     : Base(handler) {}

@@ -7,33 +7,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
-#include <aligator/modelling/multibody/centroidal-momentum.hpp>
-#include <aligator/modelling/multibody/fly-high.hpp>
-#include <aligator/modelling/multibody/gravity-compensation-residual.hpp>
-#include <aligator/modelling/multibody/multibody-friction-cone.hpp>
-#include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 #include <pinocchio/algorithm/proximal.hpp>
-#include <proxsuite-nlp/modelling/spaces/multibody.hpp>
 
 #include "simple-mpc/base-problem.hpp"
-#include "simple-mpc/fwd.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
 using Base = Problem;
-using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
 using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using MultibodyConstraintFwdDynamics =
-    dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
-using ControlErrorResidual = ControlErrorResidualTpl<double>;
-using MultibodyWrenchConeResidual =
-    aligator::MultibodyWrenchConeResidualTpl<double>;
-using MultibodyFrictionConeResidual = MultibodyFrictionConeResidualTpl<double>;
-using GravityCompensationResidual = GravityCompensationResidualTpl<double>;
-using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
-using ConstraintStack = ConstraintStackTpl<double>;
-using FlyHighResidual = FlyHighResidualTpl<double>;
+
 /**
  * @brief Build a full dynamics problem based on the
  * MultibodyConstraintFwdDynamics of Aligator.

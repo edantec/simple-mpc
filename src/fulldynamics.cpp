@@ -1,18 +1,35 @@
-#include <aligator/core/stage-model.hpp>
-#include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/core/workspace-base.hpp>
-#include <aligator/fwd.hpp>
-#include <aligator/solvers/proxddp/solver-proxddp.hpp>
-#include <aligator/utils/exceptions.hpp>
-#include <pinocchio/fwd.hpp>
-#include <pinocchio/multibody/fwd.hpp>
-#include <proxsuite-nlp/fwd.hpp>
 
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fulldynamics.hpp"
+
+#include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
+#include <aligator/modelling/dynamics/integrator-semi-euler.hpp>
+#include <aligator/modelling/multibody/center-of-mass-translation.hpp>
+#include <aligator/modelling/multibody/centroidal-momentum.hpp>
+#include <aligator/modelling/multibody/contact-force.hpp>
+#include <aligator/modelling/multibody/dcm-position.hpp>
+#include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/frame-translation.hpp>
+#include <aligator/modelling/multibody/frame-velocity.hpp>
+#include <aligator/modelling/multibody/multibody-friction-cone.hpp>
+#include <aligator/modelling/multibody/multibody-wrench-cone.hpp>
 
 namespace simple_mpc {
 using namespace aligator;
+using ContactForceResidual = ContactForceResidualTpl<double>;
+using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
+using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
+using MultibodyWrenchConeResidual =
+    aligator::MultibodyWrenchConeResidualTpl<double>;
+using MultibodyFrictionConeResidual = MultibodyFrictionConeResidualTpl<double>;
+using MultibodyConstraintFwdDynamics =
+    dynamics::MultibodyConstraintFwdDynamicsTpl<double>;
+using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
+using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
+using DCMPositionResidual = DCMPositionResidualTpl<double>;
+using CenterOfMassTranslationResidual =
+    CenterOfMassTranslationResidualTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
 FullDynamicsProblem::FullDynamicsProblem(const RobotHandler &handler)
     : Base(handler) {}

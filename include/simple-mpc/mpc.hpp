@@ -9,39 +9,14 @@
 #ifndef SIMPLE_MPC_MPC_HPP_
 #define SIMPLE_MPC_MPC_HPP_
 
-#include "aligator/modelling/contact-map.hpp"
-#include "aligator/modelling/costs/quad-state-cost.hpp"
-#include "aligator/modelling/costs/sum-of-costs.hpp"
-#include "aligator/modelling/dynamics/kinodynamics-fwd.hpp"
-#include "aligator/modelling/multibody/centroidal-momentum-derivative.hpp"
-#include "aligator/modelling/multibody/centroidal-momentum.hpp"
-#include "aligator/solvers/proxddp/solver-proxddp.hpp"
-#include <pinocchio/algorithm/proximal.hpp>
+#include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
 #include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
-#include "simple-mpc/fwd.hpp"
-#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
-using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
-using ProximalSettings = pinocchio::ProximalSettingsTpl<double>;
-using StageModel = StageModelTpl<double>;
 using StageData = StageDataTpl<double>;
-using CostStack = CostStackTpl<double>;
-using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
-using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
-using ODEAbstract = dynamics::ODEAbstractTpl<double>;
-using QuadraticStateCost = QuadraticStateCostTpl<double>;
-using QuadraticControlCost = QuadraticControlCostTpl<double>;
-using ContactMap = ContactMapTpl<double>;
-using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
-using TrajOptProblem = TrajOptProblemTpl<double>;
-using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
-using CentroidalMomentumDerivativeResidual =
-    CentroidalMomentumDerivativeResidualTpl<double>;
 using SolverProxDDP = SolverProxDDPTpl<double>;
 /**
  * @brief Build a MPC object holding an instance

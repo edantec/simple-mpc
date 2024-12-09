@@ -1,7 +1,32 @@
 #include "simple-mpc/kinodynamics.hpp"
 
+#include <aligator/modelling/centroidal/centroidal-friction-cone.hpp>
+#include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
+#include <aligator/modelling/dynamics/integrator-semi-euler.hpp>
+#include <aligator/modelling/dynamics/kinodynamics-fwd.hpp>
+#include <aligator/modelling/multibody/center-of-mass-translation.hpp>
+#include <aligator/modelling/multibody/centroidal-momentum-derivative.hpp>
+#include <aligator/modelling/multibody/centroidal-momentum.hpp>
+#include <aligator/modelling/multibody/frame-placement.hpp>
+#include <aligator/modelling/multibody/frame-translation.hpp>
+#include <aligator/modelling/multibody/frame-velocity.hpp>
+
 namespace simple_mpc {
 using namespace aligator;
+using MultibodyPhaseSpace = proxsuite::nlp::MultibodyPhaseSpace<double>;
+using KinodynamicsFwdDynamics = dynamics::KinodynamicsFwdDynamicsTpl<double>;
+using CentroidalMomentumDerivativeResidual =
+    CentroidalMomentumDerivativeResidualTpl<double>;
+using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
+using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
+using CentroidalFrictionConeResidual =
+    CentroidalFrictionConeResidualTpl<double>;
+using FramePlacementResidual = FramePlacementResidualTpl<double>;
+using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
+using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
+using CenterOfMassTranslationResidual =
+    CenterOfMassTranslationResidualTpl<double>;
+using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
 KinodynamicsProblem::KinodynamicsProblem(const RobotHandler &handler)
     : Base(handler) {}

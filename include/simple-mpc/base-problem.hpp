@@ -10,22 +10,10 @@
 #include "simple-mpc/fwd.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
-#include <aligator/core/cost-abstract.hpp>
 #include <aligator/core/traj-opt-problem.hpp>
-#include <aligator/modelling/centroidal/centroidal-friction-cone.hpp>
-#include <aligator/modelling/centroidal/centroidal-wrench-cone.hpp>
 #include <aligator/modelling/costs/quad-state-cost.hpp>
 #include <aligator/modelling/costs/sum-of-costs.hpp>
-#include <aligator/modelling/dynamics/integrator-euler.hpp>
-#include <aligator/modelling/dynamics/integrator-semi-euler.hpp>
 #include <aligator/modelling/function-xpr-slice.hpp>
-#include <aligator/modelling/multibody/center-of-mass-translation.hpp>
-#include <aligator/modelling/multibody/centroidal-momentum.hpp>
-#include <aligator/modelling/multibody/contact-force.hpp>
-#include <aligator/modelling/multibody/dcm-position.hpp>
-#include <aligator/modelling/multibody/frame-placement.hpp>
-#include <aligator/modelling/multibody/frame-translation.hpp>
-#include <aligator/modelling/multibody/frame-velocity.hpp>
 #include <proxsuite-nlp/modelling/constraints/box-constraint.hpp>
 #include <proxsuite-nlp/modelling/constraints/negative-orthant.hpp>
 #ifndef ALIGATOR_PINOCCHIO_V3
@@ -37,29 +25,15 @@ using namespace aligator;
 using StageModel = StageModelTpl<double>;
 using CostStack = CostStackTpl<double>;
 using TrajOptProblem = TrajOptProblemTpl<double>;
-using CostAbstract = CostAbstractTpl<double>;
+using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;
 using QuadraticResidualCost = QuadraticResidualCostTpl<double>;
-using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
-using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
-using VectorSpace = proxsuite::nlp::VectorSpaceTpl<double>;
-using ContactForceResidual = ContactForceResidualTpl<double>;
-using DCMPositionResidual = DCMPositionResidualTpl<double>;
-using FramePlacementResidual = FramePlacementResidualTpl<double>;
-using FrameTranslationResidual = FrameTranslationResidualTpl<double>;
-using CentroidalMomentumResidual = CentroidalMomentumResidualTpl<double>;
-using FrameVelocityResidual = FrameVelocityResidualTpl<double>;
 using StateErrorResidual = StateErrorResidualTpl<double>;
-using CenterOfMassTranslationResidual =
-    CenterOfMassTranslationResidualTpl<double>;
 using BoxConstraint = proxsuite::nlp::BoxConstraintTpl<double>;
 using NegativeOrthant = proxsuite::nlp::NegativeOrthantTpl<double>;
 using EqualityConstraint = proxsuite::nlp::EqualityConstraintTpl<double>;
 using FunctionSliceXpr = FunctionSliceXprTpl<double>;
-using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
-using CentroidalFrictionConeResidual =
-    CentroidalFrictionConeResidualTpl<double>;
 /**
  * @brief Base problem abstract class
  */
