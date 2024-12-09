@@ -6,6 +6,7 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 #include "simple-mpc/lowlevel-control.hpp"
+#include <pinocchio/algorithm/frames.hpp>
 #include <proxsuite/proxqp/settings.hpp>
 
 namespace simple_mpc {
