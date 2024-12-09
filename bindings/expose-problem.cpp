@@ -42,9 +42,9 @@ void exposeContainers() {
       "StdVec_ContactMap_double");
 }
 
-void exposeBaseProblem() {
+void exposeOcpHandler() {
   bp::register_ptr_to_python<std::shared_ptr<OCPHandler>>();
-  bp::class_<PyProblem, boost::noncopyable>("Problem", bp::no_init)
+  bp::class_<PyOCPHandler, boost::noncopyable>("OCPHandler", bp::no_init)
       .def(bp::init<const RobotHandler &>(("self"_a, "robot_handler")))
       .def("createStage", bp::pure_virtual(&OCPHandler::createStage),
            ("self"_a, "contact_map", "force_refs", "land_constraint"))

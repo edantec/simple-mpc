@@ -59,8 +59,8 @@ template <class T> bp::list std_vector_to_py_list(const std::vector<T> &v) {
   bp::list l(iter);
   return l;
 }
-struct PyProblem : OCPHandler, bp::wrapper<OCPHandler> {
-  using OCPHandler::Problem;
+struct PyOCPHandler : OCPHandler, bp::wrapper<OCPHandler> {
+  using OCPHandler::OCPHandler;
 
   StageModel
   createStage(const std::map<std::string, bool> &contact_phase,

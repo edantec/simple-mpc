@@ -8,7 +8,7 @@ namespace bp = boost::python;
 
 /* FORWARD DECLARATIONS */
 void exposeHandler();
-void exposeBaseProblem();
+void exposeOcpHandler();
 void exposeFullDynamicsProblem();
 void exposeCentroidalProblem();
 void exposeKinodynamicsProblem();
@@ -23,7 +23,7 @@ BOOST_PYTHON_MODULE(simple_mpc_pywrap) {
   bp::scope().attr("__version__") = SIMPLE_MPC_VERSION;
   ENABLE_SPECIFIC_MATRIX_TYPE(Eigen::VectorXi);
   exposeHandler();
-  exposeBaseProblem();
+  exposeOcpHandler();
   exposeFullDynamicsProblem();
   exposeCentroidalProblem();
   exposeKinodynamicsProblem();
