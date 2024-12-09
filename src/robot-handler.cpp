@@ -8,9 +8,8 @@
 #include <pinocchio/parsers/urdf.hpp>
 namespace simple_mpc {
 
-  RobotModelHandler::RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names, const std::string& base_frame_name, const std::vector<std::string>& feet_names)
+  RobotModelHandler::RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::string& base_frame_name, const std::vector<std::string>& locked_joint_names)
   : model_full_(model)
-  , feet_names_(feet_names)
   {
     // Construct controlled and locked joints ids list
     std::vector<unsigned long> locked_joint_ids;
@@ -33,16 +32,26 @@ namespace simple_mpc {
     // Root frame id
     base_id_ = model_.getFrameId(base_frame_name);
 
-    // Add feet reference frames
-    for(size_t i = 0; i < feet_names_.size(); i++) {
-      const std::string foot_name = feet_names_.at(i);
-      feet_ids_.push_back(model_.getFrameId(foot_name));
-      ref_feet_ids_.push_back(addFrameToBase(model_handler_.feet_to_base_trans[i], foot_name + "_ref")); // TODO: Which translation ?
-    }
-
     // Set reference state
     reference_state_ = shapeState(model_full_.referenceConfigurations[reference_configuration_name], Eigen::VectorXd::Zero(model_.nv));
   }
+
+FrameIndex RobotModelHandler::addFoot(const std::string& foot_name, const std::string& placement_reference_frame_name, const SE3& placement)
+{
+  feet_names_.push_back(foot_name);
+  feet_ids_.push_back(model_.getFrameId(foot_name));
+
+  // Create reference frame
+  FrameIndex placement_reference_frame_id = model_.getFrameId(placement_reference_frame_name);
+  JointIndex parent_joint = model_.frames[placement_reference_frame_id].parentJoint;
+
+  auto new_frame = pinocchio::Frame(foot_name + "_ref", parent_joint, placement_reference_frame_id, placement, pinocchio::OP_FRAME);
+  auto frame_id = model_.addFrame(new_frame);
+
+  ref_feet_ids_.push_back(frame_id);
+
+  return frame_id;
+}
 
 
 Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) const
@@ -95,16 +104,6 @@ Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1, const E
   dx.tail(nv) = x2.tail(nv) - x1.tail(nv);
 
   return dx;
-}
-
-pinocchio::FrameIndex RobotModelHandler::addFrameToBase(Eigen::Vector3d translation, std::string name) {
-  auto placement = pinocchio::SE3::Identity();
-  placement.translation() = translation;
-
-  auto new_frame = pinocchio::Frame(name, model_.frames[base_id_].parentJoint, base_id_, placement, pinocchio::OP_FRAME);
-  auto frame_id = model_.addFrame(new_frame);
-
-  return frame_id;
 }
 
 RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)

@@ -18,10 +18,10 @@ namespace bp = boost::python;
 
 void exposeHandler() {
     bp::class_<RobotModelHandler>("RobotModelHandler",
-        bp::init<const pinocchio::Model&, const std::vector<std::string>&, const std::string&, const std::vector<std::string>&>(
-            bp::args("self", "model", "feet_names", "reference_configuration_name", "locked_joint_names")
+        bp::init<const pinocchio::Model&, const std::string&, const std::string&, const std::vector<std::string>&>(
+            bp::args("self", "model", "reference_configuration_name", "base_frame_name", "locked_joint_names")
         ))
-        .def("addFrameToBase", &RobotModelHandler::addFrameToBase)
+        .def("addFoot", &RobotModelHandler::addFoot)
         .def("difference", &RobotModelHandler::difference)
         .def("shapeState", &RobotModelHandler::shapeState)
         .def("getBaseFrameId", &RobotModelHandler::getBaseFrameId)

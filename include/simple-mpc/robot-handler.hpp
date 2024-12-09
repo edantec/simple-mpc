@@ -84,16 +84,16 @@ public:
    * @param reference_configuration_name Reference configuration to use
    * @param locked_joint_names List of joints to lock (values will be fixed at the reference configuration)
    */
-  RobotModelHandler(const Model& model, const std::vector<std::string>& feet_names, const std::string& reference_configuration_name, const std::vector<std::string>& locked_joint_names = {});
+  RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::string& base_frame_name, const std::vector<std::string>& locked_joint_names = {});
 
   /**
-   * @brief Helper function to augment the model by adding frames fixed to the base
+   * @brief
    *
-   * @param[in] translation Position of the new frame in the base frame
-   * @param[in] name Name of the new frame
-   * @return pinocchio::FrameIndex Index of the created frame
+   * @param foot_name Frame name that will be used a a foot
+   * @param placement_reference_frame_name Frame to which the foot reference frame will be attached.
+   * @param placement Transformation from `base_ref_frame_name` to foot reference frame
    */
-  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation, std::string name);
+   FrameIndex addFoot(const std::string& foot_name, const std::string& placement_reference_frame_name, const SE3& placement);
 
   /**
    * @brief Perform a finite difference on the sates.
