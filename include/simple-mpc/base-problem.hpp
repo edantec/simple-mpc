@@ -44,8 +44,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// Constructor
-  Problem();
-  Problem(const RobotHandler &handler);
+  explicit Problem(const RobotHandler &handler);
   virtual ~Problem();
 
   /// Virtual functions defined in child classes
