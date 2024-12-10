@@ -54,7 +54,6 @@ protected:
   std::vector<std::shared_ptr<StageData>> one_horizon_data_;
   std::vector<std::shared_ptr<StageModel>> standing_horizon_;
   std::vector<std::shared_ptr<StageData>> standing_horizon_data_;
-  std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
   std::map<std::string, pinocchio::SE3> relative_feet_poses_;
   // INTERNAL UPDATING function
@@ -69,6 +68,7 @@ protected:
   LocomotionType now_;
 
 public:
+  std::shared_ptr<SolverProxDDP> solver_;
   Vector6d velocity_base_;
   Vector7d pose_base_;
   Eigen::Vector3d next_pose_;
@@ -124,6 +124,7 @@ public:
   // getters and setters
   TrajOptProblem &getTrajOptProblem();
 
+  SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
   SolverProxDDP &getSolver() { return *solver_; }
 
   RobotHandler &getHandler();
