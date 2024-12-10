@@ -190,7 +190,7 @@ device.showTargetToTrack(
 
 v = np.zeros(6)
 v[0] = 0.1
-mpc.setVelocityBase(v)
+mpc.velocity_base = v
 for t in range(Tmpc + 800):
     # print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("left_sole_link")

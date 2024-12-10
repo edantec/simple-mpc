@@ -98,9 +98,8 @@ void exposeMPC() {
            "Get the trajectory optimal problem.")
       .def("getCycleHorizon", &MPC::getCycleHorizon, "self"_a,
            bp::return_internal_reference<>(), "Get the cycle horizon.")
-      .def(
-          "getSolver", +[](MPC &mpc) { return boost::ref(mpc.getSolver()); },
-          "self"_a, "Get the SolverProxDDP object.")
+      .def("getSolver", &MPC::getSolver, bp::args("self"),
+           bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("Ks", &MPC::Ks_);

@@ -128,7 +128,6 @@ public:
   TrajOptProblem &getTrajOptProblem() { return ocp_handler_->getProblem(); }
 
   SolverProxDDP &getSolver() { return *solver_; }
-  const SolverProxDDP &getSolver() const { return *solver_; }
 
   RobotHandler &getHandler() { return ocp_handler_->getHandler(); }
 

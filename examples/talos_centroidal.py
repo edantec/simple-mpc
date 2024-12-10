@@ -205,7 +205,7 @@ device.showTargetToTrack(
 
 v = np.zeros(6)
 v[0] = 0.2
-mpc.setVelocityBase(v)
+mpc.velocity_base = v
 for t in range(600):
     # print("Time " + str(t))
     if t == 400:
