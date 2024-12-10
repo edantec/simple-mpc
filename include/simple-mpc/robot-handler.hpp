@@ -147,7 +147,7 @@ public:
 
   FrameIndex getRefFootId(const std::string &foot_name) const
   {
-    return feet_ids_.at(getFootNb(foot_name));
+    return ref_feet_ids_.at(getFootNb(foot_name));
   }
 
   double getMass() const

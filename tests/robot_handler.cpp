@@ -66,8 +66,9 @@ BOOST_AUTO_TEST_CASE(model_handler) {
     BOOST_CHECK_EQUAL(foot_name, model.frames.at(model_handler.getFootId(foot_name)).name);
 
     const FrameIndex ref_frame = model_handler.getRefFootId(foot_name);
-    BOOST_CHECK_EQUAL(model.frames.at(ref_frame).parentFrame, model.getFrameId(base_frame));
-    BOOST_CHECK(model.frames.at(ref_frame).placement.isApprox(feet_refs.at(i)));
+    const FrameIndex ref_frame_parent = model_handler.getModel().frames.at(ref_frame).parentFrame;
+    BOOST_CHECK_EQUAL(model_handler.getModel().frames.at(ref_frame_parent).name, base_frame);
+    BOOST_CHECK(model_handler.getModel().frames.at(ref_frame).placement.isApprox(feet_refs.at(i)));
   }
 
   // // State
