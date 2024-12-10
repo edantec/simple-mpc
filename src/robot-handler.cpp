@@ -35,6 +35,9 @@ namespace simple_mpc {
 
     // Set reference state
     reference_state_ = shapeState(model_full_.referenceConfigurations[reference_configuration_name], Eigen::VectorXd::Zero(model_full_.nv));
+
+    // Mass
+    mass_ = pinocchio::computeTotalMass(model_);
   }
 
 FrameIndex RobotModelHandler::addFoot(const std::string& foot_name, const std::string& placement_reference_frame_name, const SE3& placement)

@@ -5,6 +5,7 @@
 #include "simple-mpc/robot-handler.hpp"
 #include "test_utils.cpp"
 #include <pinocchio/fwd.hpp>
+#include <pinocchio/algorithm/center-of-mass.hpp>
 
 
 BOOST_AUTO_TEST_SUITE(robot_handler)
@@ -133,7 +134,12 @@ BOOST_AUTO_TEST_CASE(model_handler) {
     BOOST_CHECK(dv.isApprox(diff.tail<16>()));
   }
 
-  BOOST_CHECK_EQUAL(model_handler.getMass(), 90.272192000000018);
+  // Mass
+  {
+    Data data(model);
+    pinocchio::computeTotalMass(model, data);
+    BOOST_CHECK_EQUAL(model_handler.getMass(), data.mass[0]);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(build_solo) {
