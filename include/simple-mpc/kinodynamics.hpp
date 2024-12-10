@@ -54,11 +54,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  KinodynamicsOCP(const RobotHandler &handler);
-  KinodynamicsOCP(const KinodynamicsSettings &settings,
-                  const RobotHandler &handler);
+  explicit KinodynamicsOCP(const KinodynamicsSettings &settings,
+                           const RobotHandler &handler);
+
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsOCP);
-  void initialize(const KinodynamicsSettings &settings);
+
   virtual ~KinodynamicsOCP() {};
 
   // Create one Kinodynamics stage

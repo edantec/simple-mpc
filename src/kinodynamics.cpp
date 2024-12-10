@@ -28,16 +28,10 @@ using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-KinodynamicsOCP::KinodynamicsOCP(const RobotHandler &handler) : Base(handler) {}
-
 KinodynamicsOCP::KinodynamicsOCP(const KinodynamicsSettings &settings,
                                  const RobotHandler &handler)
-    : Base(handler) {
-  initialize(settings);
-}
+    : Base(handler), settings_(settings) {
 
-void KinodynamicsOCP::initialize(const KinodynamicsSettings &settings) {
-  settings_ = settings;
   nu_ = nv_ - 6 + settings_.force_size * (int)handler_.getFeetNames().size();
   x0_ = handler_.getState();
   control_ref_.resize(nu_);

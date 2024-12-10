@@ -56,11 +56,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  CentroidalOCP(const RobotHandler &handler);
-  CentroidalOCP(const CentroidalSettings &settings,
-                const RobotHandler &handler);
+  explicit CentroidalOCP(const CentroidalSettings &settings,
+                         const RobotHandler &handler);
+
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalOCP);
-  void initialize(const CentroidalSettings &settings);
+
   virtual ~CentroidalOCP() {};
 
   // Create one Centroidal stage

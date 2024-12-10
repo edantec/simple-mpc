@@ -1,11 +1,11 @@
+#include "simple-mpc/python.hpp"
 #include "simple-mpc/centroidal-dynamics.hpp"
-#include "simple-mpc/python/py-ocp-handler.hpp"
 
 #include <eigenpy/std-map.hpp>
 
 namespace simple_mpc::python {
 
-void initializeCent(CentroidalOCP &self, const bp::dict &settings) {
+auto *createCentroidal(const bp::dict &settings, const RobotHandler &handler) {
   CentroidalSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_com = bp::extract<Eigen::Matrix3d>(settings["w_com"]);
@@ -22,7 +22,7 @@ void initializeCent(CentroidalOCP &self, const bp::dict &settings) {
   conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
   conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
 
-  self.initialize(conf);
+  return new CentroidalOCP(conf, handler);
 }
 
 StageModel createCentStage(CentroidalOCP &self, const bp::dict &phase_dict,
@@ -97,13 +97,11 @@ void exposeCentroidalOcp() {
   bp::register_ptr_to_python<std::shared_ptr<CentroidalOCP>>();
 
   bp::class_<CentroidalOCP, bp::bases<OCPHandler>, boost::noncopyable>(
-      "CentroidalOCP", bp::init<const RobotHandler &>(("self"_a, "handler")))
-      .def("initialize", &initializeCent, ("self"_a, "settings"))
+      "CentroidalOCP", bp::no_init)
+      .def("__init__",
+           bp::make_constructor(&createCentroidal, bp::default_call_policies(),
+                                ("settings"_a, "handler")))
       .def("getSettings", &getSettingsCent)
-      .def("initialize",
-           bp::make_function(
-               &CentroidalOCP::initialize,
-               bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createCentStage);
 }
 

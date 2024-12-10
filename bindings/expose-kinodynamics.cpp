@@ -1,12 +1,12 @@
+#include "simple-mpc/python.hpp"
 #include "simple-mpc/kinodynamics.hpp"
-#include "simple-mpc/python/py-ocp-handler.hpp"
 
 #include <eigenpy/std-map.hpp>
 
 namespace simple_mpc::python {
-using eigenpy::python::StdMapPythonVisitor;
 
-void initializeKino(KinodynamicsOCP &self, const bp::dict &settings) {
+auto *createKinodynamics(const bp::dict &settings,
+                         const RobotHandler &handler) {
   KinodynamicsSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
@@ -28,7 +28,7 @@ void initializeKino(KinodynamicsOCP &self, const bp::dict &settings) {
   conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
   conf.force_cone = bp::extract<bool>(settings["force_cone"]);
 
-  self.initialize(conf);
+  return new KinodynamicsOCP(conf, handler);
 }
 
 bp::dict getSettingsKino(KinodynamicsOCP &self) {
@@ -106,14 +106,11 @@ void exposeKinodynamicsOcp() {
   bp::register_ptr_to_python<shared_ptr<KinodynamicsOCP>>();
 
   bp::class_<KinodynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
-      "KinodynamicsOCP",
-      bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("initialize", &initializeKino, bp::args("self", "settings"))
+      "KinodynamicsOCP", bp::no_init)
+      .def("__init__", bp::make_constructor(&createKinodynamics,
+                                            bp::default_call_policies(),
+                                            ("settings"_a, "handler")))
       .def("getSettings", &getSettingsKino)
-      .def("initialize",
-           bp::make_function(
-               &KinodynamicsOCP::initialize,
-               bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createKinoStage);
 }
 
