@@ -78,8 +78,9 @@ public:
   MPCSettings settings_;
   std::shared_ptr<OCPHandler> ocp_handler_;
 
-  MPC();
-  MPC(const MPCSettings &settings, std::shared_ptr<OCPHandler> problem);
+  explicit MPC();
+  explicit MPC(const MPCSettings &settings,
+               std::shared_ptr<OCPHandler> problem);
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<OCPHandler> problem);
 
