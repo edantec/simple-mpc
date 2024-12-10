@@ -70,6 +70,26 @@ auto *create_ikidsolver(const bp::dict &settings,
   return new IKIDSolver(conf, model);
 }
 
+/// \brief Visitor used to expose common elements in a low-level QP object.
+struct ll_qp_visitor : bp::def_visitor<ll_qp_visitor> {
+  template <class T, class... PyArgs>
+  void visit(bp::class_<T, PyArgs...> &cl) const {
+    cl.def("getA", &T::getA, "self"_a)
+        .def("getH", &T::getH, "self"_a)
+        .def("getC", &T::getC, "self"_a)
+        .def("getb", &T::getb, "self"_a)
+        .def("getg", &T::getg, "self"_a)
+        .def_readonly("qp", &T::qp_)
+        .def("getQP", &T::getQP,
+             eigenpy::deprecated_member<>(
+                 "Deprecated getter. Please use the `qp` class attribute."),
+             "self"_a)
+        .add_property("solved_acc", &T::solved_acc_)
+        .add_property("solved_forces", &T::solved_forces_)
+        .add_property("solved_torque", &T::solved_torque_);
+  };
+};
+
 void exposeIDSolver() {
   eigenpy::StdVectorPythonVisitor<std::vector<pinocchio::SE3>, true>::expose(
       "StdVec_SE3"),
@@ -81,16 +101,7 @@ void exposeIDSolver() {
       .def("__init__", bp::make_constructor(&create_idsolver))
       .def("solveQP", &IDSolver::solveQP,
            ("self"_a, "data", "contact_state", "v", "a", "tau", "forces", "M"))
-      .def("getA", &IDSolver::getA, "self"_a)
-      .def("getA", &IDSolver::getA, "self"_a)
-      .def("getH", &IDSolver::getH, "self"_a)
-      .def("getC", &IDSolver::getC, "self"_a)
-      .def("getb", &IDSolver::getb, "self"_a)
-      .def("getg", &IDSolver::getg, "self"_a)
-      .def_readonly("qp", &IDSolver::qp_)
-      .add_property("solved_acc", &IDSolver::solved_acc_)
-      .add_property("solved_forces", &IDSolver::solved_forces_)
-      .add_property("solved_torque", &IDSolver::solved_torque_);
+      .def(ll_qp_visitor());
 }
 
 void exposeIKIDSolver() {
@@ -107,14 +118,7 @@ void exposeIKIDSolver() {
                     "dH", "M"))
       .def("computeDifferences", &IKIDSolver::computeDifferences,
            ("self"_a, "data", "x_measured", "foot_refs", "foot_refs_next"))
-      .def_readonly("qp", &IKIDSolver::qp_)
-      .def("getQP", &IKIDSolver::getQP,
-           eigenpy::deprecated_member<>(
-               "Deprecated getter. Please use the `qp` class attribute."),
-           "self"_a)
-      .add_property("solved_acc", &IKIDSolver::solved_acc_)
-      .add_property("solved_forces", &IKIDSolver::solved_forces_)
-      .add_property("solved_torque", &IKIDSolver::solved_torque_);
+      .def(ll_qp_visitor());
 }
 
 } // namespace python
