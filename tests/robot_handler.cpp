@@ -145,6 +145,20 @@ BOOST_AUTO_TEST_CASE(model_handler) {
 BOOST_AUTO_TEST_CASE(data_handler) {
   const RobotModelHandler model_handler = getSoloHandler();
   RobotDataHandler data_handler(model_handler);
+
+  Eigen::Vector<double, 19> q = pinocchio::randomConfiguration(model_handler.getCompleteModel()); q.head<3>() = Eigen::Vector3d::Random();
+  const Eigen::Vector<double, 18> v = Eigen::Vector<double, 18>::Random();
+
+  const Eigen::Vector<double, 37> x = model_handler.shapeState(q, v);
+
+  data_handler.updateInternalData(x, true);
+
+  // const SE3 &getRefFootPose(const std::string &foot_name)
+  // const SE3 &getFootPose(const std::string &foot_name)
+  // const SE3 &getRootFramePose() const
+  // const RobotModelHandler &getModelHandler()
+  // const Data &getData()
+  // RobotDataHandler::CentroidalStateVector getCentroidalState()
 }
 
 BOOST_AUTO_TEST_SUITE_END()
