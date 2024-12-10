@@ -93,13 +93,13 @@ IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
   qp_->init(H_, g_, A_, b_, C_, l_, u_);
 }
 
-void IDSolver::computeMatrice(pinocchio::Data &data,
-                              const std::vector<bool> &contact_state,
-                              const Eigen::VectorXd &v,
-                              const Eigen::VectorXd &a,
-                              const Eigen::VectorXd &tau,
-                              const Eigen::VectorXd &forces,
-                              const Eigen::MatrixXd &M) {
+void IDSolver::computeMatrices(pinocchio::Data &data,
+                               const std::vector<bool> &contact_state,
+                               const Eigen::VectorXd &v,
+                               const Eigen::VectorXd &a,
+                               const Eigen::VectorXd &tau,
+                               const Eigen::VectorXd &forces,
+                               const Eigen::MatrixXd &M) {
   // Reset matrices
   Jc_.setZero();
   gamma_.setZero();
@@ -169,7 +169,7 @@ void IDSolver::solveQP(pinocchio::Data &data,
                        const Eigen::VectorXd &forces,
                        const Eigen::MatrixXd &M) {
 
-  computeMatrice(data, contact_state, v, a, tau, forces, M);
+  computeMatrices(data, contact_state, v, a, tau, forces, M);
   qp_->update(H_, g_, A_, b_, C_, l_, u_, false);
   qp_->solve();
 
@@ -321,12 +321,12 @@ void IKIDSolver::computeDifferences(
   }
 }
 
-void IKIDSolver::computeMatrice(pinocchio::Data &data,
-                                const std::vector<bool> &contact_state,
-                                const Eigen::VectorXd &v_current,
-                                const Eigen::VectorXd &forces,
-                                const Eigen::VectorXd &dH,
-                                const Eigen::MatrixXd &M) {
+void IKIDSolver::computeMatrices(pinocchio::Data &data,
+                                 const std::vector<bool> &contact_state,
+                                 const Eigen::VectorXd &v_current,
+                                 const Eigen::VectorXd &forces,
+                                 const Eigen::VectorXd &dH,
+                                 const Eigen::MatrixXd &M) {
 
   H_.topLeftCorner(model_.nv, model_.nv) =
       settings_.w_qref * Eigen::MatrixXd::Identity(model_.nv, model_.nv);
@@ -418,7 +418,7 @@ void IKIDSolver::solve_qp(pinocchio::Data &data,
                           const Eigen::VectorXd &v_current,
                           const Eigen::VectorXd &forces,
                           const Eigen::VectorXd &dH, const Eigen::MatrixXd &M) {
-  computeMatrice(data, contact_state, v_current, forces, dH, M);
+  computeMatrices(data, contact_state, v_current, forces, dH, M);
 
   qp_->update(H_, g_, A_, b_, C_, l_, u_, l_box_, u_box_, false);
   qp_->solve();

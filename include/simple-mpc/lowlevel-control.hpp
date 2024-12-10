@@ -81,11 +81,10 @@ protected:
   Eigen::MatrixXd Jdot_;
 
   // Internal matrix computation
-  void computeMatrice(pinocchio::Data &data,
-                      const std::vector<bool> &contact_state,
-                      const Eigen::VectorXd &v, const Eigen::VectorXd &a,
-                      const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
-                      const Eigen::MatrixXd &M);
+  void computeMatrices(pin::Data &data, const std::vector<bool> &contact_state,
+                       const Eigen::VectorXd &v, const Eigen::VectorXd &a,
+                       const Eigen::VectorXd &tau,
+                       const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
 
 public:
   explicit IDSolver(const IDSettings &settings, const pin::Model &model);
@@ -148,21 +147,19 @@ protected:
   Eigen::VectorXd dq_diff_;
 
   // Internal matrix computation
-  void computeMatrice(pinocchio::Data &data,
-                      const std::vector<bool> &contact_state,
-                      const Eigen::VectorXd &x_measured,
-                      const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
-                      const Eigen::MatrixXd &M);
+  void computeMatrices(pin::Data &data, const std::vector<bool> &contact_state,
+                       const Eigen::VectorXd &x_measured,
+                       const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
+                       const Eigen::MatrixXd &M);
 
 public:
   explicit IKIDSolver(const IKIDSettings &settings, const pin::Model &model);
 
-  void computeDifferences(pinocchio::Data &data,
-                          const Eigen::VectorXd &x_measured,
-                          const std::vector<pinocchio::SE3> foot_refs,
-                          const std::vector<pinocchio::SE3> foot_refs_next);
+  void computeDifferences(pin::Data &data, const Eigen::VectorXd &x_measured,
+                          const std::vector<pin::SE3> foot_refs,
+                          const std::vector<pin::SE3> foot_refs_next);
 
-  void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
+  void solve_qp(pin::Data &data, const std::vector<bool> &contact_state,
                 const Eigen::VectorXd &x_measured,
                 const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
                 const Eigen::MatrixXd &M);
