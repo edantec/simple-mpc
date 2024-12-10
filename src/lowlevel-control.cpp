@@ -180,7 +180,7 @@ void IDSolver::solveQP(pinocchio::Data &data,
 
 IKIDSolver::IKIDSolver(const IKIDSettings &settings,
                        const pinocchio::Model &model)
-    : qp_(0, 0, 0), settings_(settings), model_(model) {
+    : qp_(1, 1, 1), settings_(settings), model_(model) {
 
   Jfoot_.resize(6, model_.nv);
   Jfoot_.setZero();
