@@ -176,8 +176,7 @@ id_conf = dict(
     verbose=False,
 )
 
-qp = IDSolver()
-qp.initialize(id_conf, handler.getModel())
+qp = IDSolver(id_conf, handler.getModel())
 
 """ Initialize simulation"""
 device = BulletRobot(

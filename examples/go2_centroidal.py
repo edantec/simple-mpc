@@ -238,8 +238,7 @@ ikid_conf = dict(
     verbose=False,
 )
 
-qp = IKIDSolver()
-qp.initialize(ikid_conf, handler.getModel())
+qp = IKIDSolver(ikid_conf, handler.getModel())
 
 x0_multibody = handler.getState().copy()
 
