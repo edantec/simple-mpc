@@ -115,8 +115,7 @@ problem_conf = dict(
 )
 
 T = 100
-dynproblem = FullDynamicsOCP(handler)
-dynproblem.initialize(problem_conf)
+dynproblem = FullDynamicsOCP(settings=problem_conf, handler=handler)
 dynproblem.createProblem(x0, T, 6, gravity[2], False)
 
 """ Define feet trajectory """

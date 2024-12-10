@@ -100,8 +100,7 @@ problem_conf = dict(
 )
 T = 50
 
-dynproblem = FullDynamicsOCP(handler)
-dynproblem.initialize(problem_conf)
+dynproblem = FullDynamicsOCP(problem_conf, handler)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2], False)
 
 T_ds = 10
