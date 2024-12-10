@@ -9,10 +9,12 @@
 #include <pinocchio/bindings/python/utils/pickle-map.hpp>
 #include <pinocchio/fwd.hpp>
 
+#include <eigenpy/deprecation-policy.hpp>
 #include <eigenpy/eigenpy.hpp>
 #include <eigenpy/std-vector.hpp>
 
 #include "simple-mpc/mpc.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/python.hpp"
 
 namespace simple_mpc {
@@ -69,7 +71,6 @@ void exposeMPC() {
 
   bp::class_<MPC>("MPC", bp::no_init)
       .def(bp::init<>(bp::args("self")))
-      .def_readonly("ocp_handler", &MPC::ocp_handler_)
       .def("initialize", &initialize)
       .def("getSettings", &getSettings)
       .def("generateCycleHorizon", &MPC::generateCycleHorizon,
@@ -82,6 +83,8 @@ void exposeMPC() {
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
       .def_readwrite("velocity_base", &MPC::velocity_base_)
+      .def_readwrite("pose_base", &MPC::pose_base_)
+      .def_readonly("ocp_handler", &MPC::ocp_handler_)
       .def("setPoseBase", &MPC::setPoseBase, ("self"_a, "pose_base"))
       .def("getPoseBase", &MPC::getPoseBase, ("self"_a, "t"))
       .def("switchToWalk", &MPC::switchToWalk, ("self"_a, "velocity_base"))
@@ -98,8 +101,11 @@ void exposeMPC() {
            "Get the trajectory optimal problem.")
       .def("getCycleHorizon", &MPC::getCycleHorizon, "self"_a,
            bp::return_internal_reference<>(), "Get the cycle horizon.")
-      .def("getSolver", &MPC::getSolver, bp::args("self"),
-           bp::return_internal_reference<>(), "Get the SolverProxDDP object.")
+      .def("getSolver", &MPC::getSolver, "self"_a,
+           eigenpy::deprecated_member<eigenpy::DeprecationType::DEPRECATION,
+                                      bp::return_internal_reference<>>(),
+           "Get the SolverProxDDP object")
+      .def_readonly("solver", &MPC::solver_)
       .add_property("xs", &MPC::xs_)
       .add_property("us", &MPC::us_)
       .add_property("Ks", &MPC::Ks_);

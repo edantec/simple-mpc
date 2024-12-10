@@ -9,19 +9,12 @@
 
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
+#include "simple-mpc/fwd.hpp"
 #include "simple-mpc/deprecated.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
-#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
-using namespace aligator;
-using StageData = StageDataTpl<double>;
-using SolverProxDDP = SolverProxDDPTpl<double>;
-/**
- * @brief Build a MPC object holding an instance
- * of a trajectory optimization problem
- */
 
 struct MPCSettings {
 public:
@@ -44,6 +37,11 @@ public:
   size_t T = 100;
   double timestep = 0.01;
 };
+
+/**
+ * @brief Build a MPC object holding an instance
+ * of a trajectory optimization problem
+ */
 class MPC {
 
 protected:
@@ -56,7 +54,6 @@ protected:
   std::vector<std::shared_ptr<StageData>> one_horizon_data_;
   std::vector<std::shared_ptr<StageModel>> standing_horizon_;
   std::vector<std::shared_ptr<StageData>> standing_horizon_data_;
-  std::shared_ptr<SolverProxDDP> solver_;
   FootTrajectory foot_trajectories_;
   std::map<std::string, pinocchio::SE3> relative_feet_poses_;
   // INTERNAL UPDATING function
@@ -71,6 +68,7 @@ protected:
   LocomotionType now_;
 
 public:
+  std::shared_ptr<SolverProxDDP> solver_;
   Vector6d velocity_base_;
   Vector7d pose_base_;
   Eigen::Vector3d next_pose_;
@@ -78,8 +76,9 @@ public:
   MPCSettings settings_;
   std::shared_ptr<OCPHandler> ocp_handler_;
 
-  MPC();
-  MPC(const MPCSettings &settings, std::shared_ptr<OCPHandler> problem);
+  explicit MPC();
+  explicit MPC(const MPCSettings &settings,
+               std::shared_ptr<OCPHandler> problem);
   void initialize(const MPCSettings &settings,
                   std::shared_ptr<OCPHandler> problem);
 
@@ -120,29 +119,33 @@ public:
     pose_base_ = pose_ref;
   }
 
-  ConstVectorRef getPoseBase(const std::size_t t) const {
-    return ocp_handler_->getPoseBase(t);
-  }
+  ConstVectorRef getPoseBase(const std::size_t t) const;
 
   // getters and setters
-  TrajOptProblem &getTrajOptProblem() { return ocp_handler_->getProblem(); }
+  TrajOptProblem &getTrajOptProblem();
 
+  SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
   SolverProxDDP &getSolver() { return *solver_; }
 
-  RobotHandler &getHandler() { return ocp_handler_->getHandler(); }
+  RobotHandler &getHandler();
 
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }
-  bool getCyclingContactState(const std::size_t t, const std::string &ee_name);
-  int getFootTakeoffCycle(const std::string &ee_name) {
+
+  inline bool getCyclingContactState(const std::size_t t,
+                                     const std::string &ee_name) const {
+    return contact_states_[t].at(ee_name);
+  }
+
+  inline int getFootTakeoffCycle(const std::string &ee_name) const {
     if (foot_takeoff_times_.at(ee_name).empty()) {
       return -1;
     } else {
       return foot_takeoff_times_.at(ee_name)[0];
     }
   }
-  int getFootLandCycle(const std::string &ee_name) {
+  inline int getFootLandCycle(const std::string &ee_name) const {
     if (foot_land_times_.at(ee_name).empty()) {
       return -1;
     } else {
