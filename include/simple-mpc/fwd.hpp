@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <aligator/fwd.hpp>
+#include <aligator/context.hpp>
 #include <aligator/modelling/contact-map.hpp>
 
 #include <pinocchio/multibody/data.hpp>
@@ -19,7 +19,15 @@ using pin::FrameIndex;
 using std::shared_ptr;
 using ContactMap = aligator::ContactMapTpl<double>;
 
-// MPC
+/// ALIGATOR TYPEDEFS / USING-DECLS
+
+using aligator::context::SolverProxDDP;
+using aligator::context::StageData;
+using aligator::context::StageModel;
+using aligator::context::TrajOptProblem;
+
+/// SIMPLE-MPC FORWARD DECLARATIONS
+
 struct Settings;
 struct FullDynamicsSettings;
 class RobotHandler;
@@ -29,6 +37,8 @@ class CentroidalProblem;
 class OCPHandler;
 class IDSolver;
 class IKIDSolver;
+
+/// EIGEN TYPEDEFS
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;

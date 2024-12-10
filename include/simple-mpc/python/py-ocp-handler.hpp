@@ -67,9 +67,9 @@ struct PyOCPHandler : OCPHandler, bp::wrapper<OCPHandler> {
               const std::map<std::string, pinocchio::SE3> &contact_pose,
               const std::map<std::string, Eigen::VectorXd> &contact_force,
               const std::map<std::string, bool> &land_constraint) override {
-    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::StageModelTpl<double>,
-                                    "createStage", contact_phase, contact_pose,
-                                    contact_force, land_constraint);
+    SIMPLE_MPC_PYTHON_OVERRIDE_PURE(StageModel, "createStage", contact_phase,
+                                    contact_pose, contact_force,
+                                    land_constraint);
   }
 
   CostStack createTerminalCost() override {

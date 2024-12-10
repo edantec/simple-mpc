@@ -23,9 +23,7 @@
 
 namespace simple_mpc {
 using namespace aligator;
-using StageModel = StageModelTpl<double>;
 using CostStack = CostStackTpl<double>;
-using TrajOptProblem = TrajOptProblemTpl<double>;
 using ControlErrorResidual = ControlErrorResidualTpl<double>;
 using QuadraticControlCost = QuadraticControlCostTpl<double>;
 using QuadraticStateCost = QuadraticStateCostTpl<double>;

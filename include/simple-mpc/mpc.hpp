@@ -15,13 +15,6 @@
 #include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
-using namespace aligator;
-using StageData = StageDataTpl<double>;
-using SolverProxDDP = SolverProxDDPTpl<double>;
-/**
- * @brief Build a MPC object holding an instance
- * of a trajectory optimization problem
- */
 
 struct MPCSettings {
 public:
@@ -44,6 +37,11 @@ public:
   size_t T = 100;
   double timestep = 0.01;
 };
+
+/**
+ * @brief Build a MPC object holding an instance
+ * of a trajectory optimization problem
+ */
 class MPC {
 
 protected:
