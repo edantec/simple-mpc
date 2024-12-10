@@ -88,11 +88,9 @@ protected:
                       const Eigen::MatrixXd &M);
 
 public:
-  IDSolver();
-  IDSolver(const IDSettings &settings, const pinocchio::Model &model);
-  void initialize(const IDSettings &settings, const pinocchio::Model &model);
+  explicit IDSolver(const IDSettings &settings, const pin::Model &model);
 
-  void solveQP(pinocchio::Data &data, const std::vector<bool> &contact_state,
+  void solveQP(pin::Data &data, const std::vector<bool> &contact_state,
                const Eigen::VectorXd &v, const Eigen::VectorXd &a,
                const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
                const Eigen::MatrixXd &M);
@@ -157,9 +155,7 @@ protected:
                       const Eigen::MatrixXd &M);
 
 public:
-  IKIDSolver();
-  IKIDSolver(const IKIDSettings &settings, const pinocchio::Model &model);
-  void initialize(const IKIDSettings &settings, const pinocchio::Model &model);
+  explicit IKIDSolver(const IKIDSettings &settings, const pin::Model &model);
 
   void computeDifferences(pinocchio::Data &data,
                           const Eigen::VectorXd &x_measured,

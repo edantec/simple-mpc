@@ -25,8 +25,7 @@ inline void py_list_to_std_vector(const bp::object &iterable,
                        bp::stl_input_iterator<T>());
 }
 
-void initialize_ID(IDSolver &self, const bp::dict &settings,
-                   const pinocchio::Model &model) {
+auto *create_idsolver(const bp::dict &settings, const pinocchio::Model &model) {
   IDSettings conf;
 
   py_list_to_std_vector(settings["contact_ids"], conf.contact_ids);
@@ -42,11 +41,11 @@ void initialize_ID(IDSolver &self, const bp::dict &settings,
   conf.w_tau = bp::extract<double>(settings["w_tau"]);
   conf.verbose = bp::extract<bool>(settings["verbose"]);
 
-  self.initialize(conf, model);
+  return new IDSolver(conf, model);
 }
 
-void initialize_IKID(IKIDSolver &self, const bp::dict &settings,
-                     const pinocchio::Model &model) {
+auto *create_ikidsolver(const bp::dict &settings,
+                        const pinocchio::Model &model) {
   IKIDSettings conf;
 
   py_list_to_std_vector(settings["Kp_gains"], conf.Kp_gains);
@@ -68,7 +67,7 @@ void initialize_IKID(IKIDSolver &self, const bp::dict &settings,
   conf.w_force = bp::extract<double>(settings["w_force"]);
   conf.verbose = bp::extract<bool>(settings["verbose"]);
 
-  self.initialize(conf, model);
+  return new IKIDSolver(conf, model);
 }
 
 void exposeIDSolver() {
@@ -77,8 +76,9 @@ void exposeIDSolver() {
       eigenpy::details::overload_base_get_item_for_std_vector<
           std::vector<pinocchio::SE3>>();
   bp::class_<IDSolver>("IDSolver", bp::no_init)
-      .def(bp::init<>(bp::args("self")))
-      .def("initialize", &initialize_ID)
+      .def(bp::init<const IDSettings &, const pin::Model &>(
+          ("self"_a, "settings", "model")))
+      .def("__init__", bp::make_constructor(&create_idsolver))
       .def("solveQP", &IDSolver::solveQP,
            ("self"_a, "data", "contact_state", "v", "a", "tau", "forces", "M"))
       .def("getA", &IDSolver::getA, "self"_a)
@@ -99,11 +99,14 @@ void exposeIKIDSolver() {
       eigenpy::details::overload_base_get_item_for_std_vector<
           std::vector<pinocchio::SE3>>();
   bp::class_<IKIDSolver>("IKIDSolver", bp::no_init)
-      .def(bp::init<>(bp::args("self")))
-      .def("initialize", &initialize_IKID)
+      .def(bp::init<const IKIDSettings &, const pin::Model &>(
+          ("self"_a, "settings", "model")))
+      .def("__init__", bp::make_constructor(&create_ikidsolver))
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
                     "dH", "M"))
+      .def("computeDifferences", &IKIDSolver::computeDifferences,
+           ("self"_a, "data", "x_measured", "foot_refs", "foot_refs_next"))
       .def_readonly("qp", &IKIDSolver::qp_)
       .def("getQP", &IKIDSolver::getQP,
            eigenpy::deprecated_member<>(

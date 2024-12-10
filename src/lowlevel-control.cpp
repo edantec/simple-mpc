@@ -11,16 +11,8 @@
 
 namespace simple_mpc {
 
-IDSolver::IDSolver() {}
-
-IDSolver::IDSolver(const IDSettings &settings, const pinocchio::Model &model) {
-  initialize(settings, model);
-}
-
-void IDSolver::initialize(const IDSettings &settings,
-                          const pinocchio::Model &model) {
-  settings_ = settings;
-  model_ = model;
+IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
+    : settings_(settings), model_(model) {
 
   // Set the dimension of the problem
   nk_ = (int)settings.contact_ids.size();
@@ -186,17 +178,9 @@ void IDSolver::solveQP(pinocchio::Data &data,
   solved_torque_ = tau + qp_->results.x.tail(model_.nv - 6);
 }
 
-IKIDSolver::IKIDSolver() {}
-
 IKIDSolver::IKIDSolver(const IKIDSettings &settings,
-                       const pinocchio::Model &model) {
-  initialize(settings, model);
-}
-
-void IKIDSolver::initialize(const IKIDSettings &settings,
-                            const pinocchio::Model &model) {
-  settings_ = settings;
-  model_ = model;
+                       const pinocchio::Model &model)
+    : settings_(settings), model_(model) {
 
   Jfoot_.resize(6, model_.nv);
   Jfoot_.setZero();
