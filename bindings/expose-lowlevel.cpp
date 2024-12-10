@@ -80,13 +80,10 @@ struct ll_qp_visitor : bp::def_visitor<ll_qp_visitor> {
         .def("getb", &T::getb, "self"_a)
         .def("getg", &T::getg, "self"_a)
         .def_readonly("qp", &T::qp_)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         .def("getQP", &T::getQP,
              eigenpy::deprecated_member<>(
                  "Deprecated getter. Please use the `qp` class attribute."),
              "self"_a)
-#pragma GCC diagnostic pop
         .add_property("solved_acc", &T::solved_acc_)
         .add_property("solved_forces", &T::solved_forces_)
         .add_property("solved_torque", &T::solved_torque_);

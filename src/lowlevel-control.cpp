@@ -12,7 +12,7 @@
 namespace simple_mpc {
 
 IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
-    : qp_(0, 0, 0), settings_(settings), model_(model) {
+    : qp_(1, 1, 1), settings_(settings), model_(model) {
 
   // Set the dimension of the problem
   nk_ = (int)settings.contact_ids.size();
