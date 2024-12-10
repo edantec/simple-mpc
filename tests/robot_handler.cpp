@@ -75,21 +75,36 @@ BOOST_AUTO_TEST_CASE(model_handler) {
   const size_t nq_red = 17;
   Eigen::Vector<double, 19> q = Eigen::Vector<double, 19>::Random();
   Eigen::Vector<double, 18> v = Eigen::Vector<double, 18>::Random();
+  Eigen::Vector<double, 33> x = Eigen::Vector<double, 33>::Random();
+  bool is_reference_state = false;
 
-  // State vector without locked joints
-  Eigen::Vector<double, 33> x;
-  for(size_t i = 1; i< model_handler.getModel().njoints; i++) {
-    const std::string& joint_name = model_handler.getModel().names[i];
-    const JointModel& joint_full = model.joints[model.getJointId(joint_name)];
-    const JointModel& joint_red = model_handler.getModel().joints[i];
+  for(int n=0;n<2;n++) // First time with random data, second with reference state
+  {
+    // State vector without locked joints
+    for(size_t i = 1; i< model_handler.getModel().njoints; i++) {
+      const std::string& joint_name = model_handler.getModel().names[i];
+      const JointModel& joint_full = model.joints[model.getJointId(joint_name)];
+      const JointModel& joint_red = model_handler.getModel().joints[i];
 
-    x.segment(joint_red.idx_q(), joint_red.nq()) = q.segment(joint_full.idx_q(), joint_full.nq());
-    x.segment(nq_red + joint_red.idx_v(), joint_red.nv()) = v.segment(joint_full.idx_v(), joint_full.nv());
+      x.segment(joint_red.idx_q(), joint_red.nq()) = q.segment(joint_full.idx_q(), joint_full.nq());
+      x.segment(nq_red + joint_red.idx_v(), joint_red.nv()) = v.segment(joint_full.idx_v(), joint_full.nv());
+    }
+
+    // Test shape state
+    BOOST_CHECK(model_handler.shapeState(q, v).isApprox(x));
+
+    // Test reference state
+    if(is_reference_state) {
+      BOOST_CHECK(x.isApprox(model_handler.getReferenceState()));
+    }
+
+    // Set reference state for 2nd round
+    q = model.referenceConfigurations[default_conf_name];
+    v = Eigen::Vector<double, 18>::Zero();
+    is_reference_state = true;
   }
-  BOOST_CHECK(model_handler.shapeState(q, v).isApprox(x));
 
   // Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const;
-  // const Eigen::VectorXd& getReferenceState() const
 
   BOOST_CHECK_EQUAL(model_handler.getMass(), 90.272192000000018);
 }
