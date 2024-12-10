@@ -4,8 +4,9 @@
 #include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/compute-all-terms.hpp>
 #include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/parsers/srdf.hpp>
-#include <pinocchio/parsers/urdf.hpp>
+#include <pinocchio/algorithm/crba.hpp>
+#include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
 namespace simple_mpc {
 
   RobotModelHandler::RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::string& base_frame_name, const std::vector<std::string>& locked_joint_names)

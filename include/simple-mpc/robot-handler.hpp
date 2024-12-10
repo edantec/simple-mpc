@@ -10,9 +10,6 @@
 #include <pinocchio/fwd.hpp>
 // Include pinocchio first
 #include <Eigen/Dense>
-#include <pinocchio/algorithm/crba.hpp>
-#include <pinocchio/algorithm/model.hpp>
-#include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/spatial/se3.hpp>
 #include <string>
 #include <vector>
