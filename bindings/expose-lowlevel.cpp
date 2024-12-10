@@ -6,8 +6,9 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <eigenpy/eigenpy.hpp>
+#include "simple-mpc/python.hpp"
 #include <eigenpy/std-vector.hpp>
+#include <eigenpy/deprecation-policy.hpp>
 
 #include "simple-mpc/lowlevel-control.hpp"
 #include <proxsuite/proxqp/dense/dense.hpp>
@@ -79,14 +80,14 @@ void exposeIDSolver() {
       .def(bp::init<>(bp::args("self")))
       .def("initialize", &initialize_ID)
       .def("solveQP", &IDSolver::solveQP,
-           bp::args("self", "data", "contact_state", "v", "a", "tau", "forces",
-                    "M"))
-      .def("getA", &IDSolver::getA, bp::args("self"))
-      .def("getA", &IDSolver::getA, bp::args("self"))
-      .def("getH", &IDSolver::getH, bp::args("self"))
-      .def("getC", &IDSolver::getC, bp::args("self"))
-      .def("getb", &IDSolver::getb, bp::args("self"))
-      .def("getg", &IDSolver::getg, bp::args("self"))
+           ("self"_a, "data", "contact_state", "v", "a", "tau", "forces", "M"))
+      .def("getA", &IDSolver::getA, "self"_a)
+      .def("getA", &IDSolver::getA, "self"_a)
+      .def("getH", &IDSolver::getH, "self"_a)
+      .def("getC", &IDSolver::getC, "self"_a)
+      .def("getb", &IDSolver::getb, "self"_a)
+      .def("getg", &IDSolver::getg, "self"_a)
+      .def_readonly("qp", &IDSolver::qp_)
       .add_property("solved_acc", &IDSolver::solved_acc_)
       .add_property("solved_forces", &IDSolver::solved_forces_)
       .add_property("solved_torque", &IDSolver::solved_torque_);
@@ -103,10 +104,11 @@ void exposeIKIDSolver() {
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
                     "dH", "M"))
-      .def("getQP", &IKIDSolver::getQP, bp::args("self"))
-      .def(
-          "computeDifferences", &IKIDSolver::computeDifferences,
-          bp::args("self", "data", "x_measured", "foot_refs", "foot_refs_next"))
+      .def_readonly("qp", &IKIDSolver::qp_)
+      .def("getQP", &IKIDSolver::getQP,
+           eigenpy::deprecated_member<>(
+               "Deprecated getter. Please use the `qp` class attribute."),
+           "self"_a)
       .add_property("solved_acc", &IKIDSolver::solved_acc_)
       .add_property("solved_forces", &IKIDSolver::solved_forces_)
       .add_property("solved_torque", &IKIDSolver::solved_torque_);

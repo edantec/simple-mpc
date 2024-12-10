@@ -15,6 +15,7 @@
 #define SIMPLE_MPC_LOWLEVEL_CONTROL_HPP_
 
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/deprecated.hpp"
 #include <pinocchio/multibody/fwd.hpp>
 #include <proxsuite/proxqp/dense/dense.hpp>
 
@@ -55,11 +56,12 @@ struct IKIDSettings {
 };
 
 class IDSolver {
+public:
+  std::shared_ptr<proxqp::dense::QP<double>> qp_;
 
 protected:
   IDSettings settings_;
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
-  pinocchio::Model model_;
+  pin::Model model_;
   int force_dim_;
   int nforcein_;
   int nk_;
@@ -94,7 +96,10 @@ public:
                const Eigen::VectorXd &v, const Eigen::VectorXd &a,
                const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
                const Eigen::MatrixXd &M);
+
+  SIMPLE_MPC_DEPRECATED
   proxqp::dense::Model<double> getQP() { return qp_->model; }
+
   Eigen::MatrixXd getA() { return qp_->model.A; }
   Eigen::MatrixXd getH() { return qp_->model.H; }
   Eigen::MatrixXd getC() { return qp_->model.C; }
@@ -108,11 +113,12 @@ public:
 };
 
 class IKIDSolver {
+public:
+  std::shared_ptr<proxqp::dense::QP<double>> qp_;
 
 protected:
   IKIDSettings settings_;
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
-  pinocchio::Model model_;
+  pin::Model model_;
   int force_dim_;
   int nforcein_;
   int nk_;
@@ -164,7 +170,10 @@ public:
                 const Eigen::VectorXd &x_measured,
                 const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
                 const Eigen::MatrixXd &M);
+
+  SIMPLE_MPC_DEPRECATED
   proxqp::dense::Model<double> getQP() { return qp_->model; }
+
   // QP results
   Eigen::VectorXd solved_forces_;
   Eigen::VectorXd solved_acc_;
