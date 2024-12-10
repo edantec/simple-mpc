@@ -47,20 +47,20 @@ struct KinodynamicsSettings {
   bool force_cone;
 };
 
-class KinodynamicsProblem : public OCPHandler {
+class KinodynamicsOCP : public OCPHandler {
   using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  KinodynamicsProblem();
-  KinodynamicsProblem(const RobotHandler &handler);
-  KinodynamicsProblem(const KinodynamicsSettings &settings,
-                      const RobotHandler &handler);
-  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsProblem);
+  KinodynamicsOCP();
+  KinodynamicsOCP(const RobotHandler &handler);
+  KinodynamicsOCP(const KinodynamicsSettings &settings,
+                  const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsOCP);
   void initialize(const KinodynamicsSettings &settings);
-  virtual ~KinodynamicsProblem() {};
+  virtual ~KinodynamicsOCP() {};
 
   // Create one Kinodynamics stage
   StageModel

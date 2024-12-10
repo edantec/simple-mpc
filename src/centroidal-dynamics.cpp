@@ -25,16 +25,15 @@ using CentroidalFrictionConeResidual =
     CentroidalFrictionConeResidualTpl<double>;
 using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 
-CentroidalProblem::CentroidalProblem(const RobotHandler &handler)
-    : Base(handler) {}
+CentroidalOCP::CentroidalOCP(const RobotHandler &handler) : Base(handler) {}
 
-CentroidalProblem::CentroidalProblem(const CentroidalSettings &settings,
-                                     const RobotHandler &handler)
+CentroidalOCP::CentroidalOCP(const CentroidalSettings &settings,
+                             const RobotHandler &handler)
     : Base(handler) {
   initialize(settings);
 }
 
-void CentroidalProblem::initialize(const CentroidalSettings &settings) {
+void CentroidalOCP::initialize(const CentroidalSettings &settings) {
   settings_ = settings;
   nx_ = 9;
   nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
@@ -43,7 +42,7 @@ void CentroidalProblem::initialize(const CentroidalSettings &settings) {
   com_ref_.setZero();
 }
 
-StageModel CentroidalProblem::createStage(
+StageModel CentroidalOCP::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
@@ -120,7 +119,7 @@ StageModel CentroidalProblem::createStage(
   return stm;
 }
 
-void CentroidalProblem::computeControlFromForces(
+void CentroidalOCP::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   for (std::size_t i = 0; i < handler_.getFeetNames().size(); i++) {
     if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
@@ -132,7 +131,7 @@ void CentroidalProblem::computeControlFromForces(
   }
 }
 
-void CentroidalProblem::setReferencePoses(
+void CentroidalOCP::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (t >= problem_->stages_.size()) {
@@ -168,9 +167,9 @@ void CentroidalProblem::setReferencePoses(
   }
 }
 
-void CentroidalProblem::setReferencePose(const std::size_t t,
-                                         const std::string &ee_name,
-                                         const pinocchio::SE3 &pose_ref) {
+void CentroidalOCP::setReferencePose(const std::size_t t,
+                                     const std::string &ee_name,
+                                     const pinocchio::SE3 &pose_ref) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -193,8 +192,8 @@ void CentroidalProblem::setReferencePose(const std::size_t t,
 }
 
 const pinocchio::SE3
-CentroidalProblem::getReferencePose(const std::size_t t,
-                                    const std::string &ee_name) {
+CentroidalOCP::getReferencePose(const std::size_t t,
+                                const std::string &ee_name) {
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
@@ -208,16 +207,16 @@ CentroidalProblem::getReferencePose(const std::size_t t,
   return pose;
 }
 
-void CentroidalProblem::setReferenceForces(
+void CentroidalOCP::setReferenceForces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   computeControlFromForces(force_refs);
   setReferenceControl(t, control_ref_);
 }
 
-void CentroidalProblem::setReferenceForce(const std::size_t t,
-                                          const std::string &ee_name,
-                                          const Eigen::VectorXd &force_ref) {
+void CentroidalOCP::setReferenceForce(const std::size_t t,
+                                      const std::string &ee_name,
+                                      const Eigen::VectorXd &force_ref) {
   std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
@@ -228,8 +227,8 @@ void CentroidalProblem::setReferenceForce(const std::size_t t,
 }
 
 const Eigen::VectorXd
-CentroidalProblem::getReferenceForce(const std::size_t t,
-                                     const std::string &ee_name) {
+CentroidalOCP::getReferenceForce(const std::size_t t,
+                                 const std::string &ee_name) {
   std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
@@ -239,7 +238,7 @@ CentroidalProblem::getReferenceForce(const std::size_t t,
                                         settings_.force_size);
 }
 
-const Eigen::VectorXd CentroidalProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd CentroidalOCP::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   Eigen::VectorXd v(6);
 
@@ -256,8 +255,8 @@ const Eigen::VectorXd CentroidalProblem::getVelocityBase(const std::size_t t) {
   return v;
 }
 
-void CentroidalProblem::setVelocityBase(const std::size_t t,
-                                        const Eigen::VectorXd &velocity_base) {
+void CentroidalOCP::setVelocityBase(const std::size_t t,
+                                    const Eigen::VectorXd &velocity_base) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qcm =
       cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
@@ -271,7 +270,7 @@ void CentroidalProblem::setVelocityBase(const std::size_t t,
   cfa->setReference(velocity_base.tail(3) * handler_.getMass());
 }
 
-const Eigen::VectorXd CentroidalProblem::getPoseBase(const std::size_t t) {
+const Eigen::VectorXd CentroidalOCP::getPoseBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>("com_cost");
@@ -279,8 +278,8 @@ const Eigen::VectorXd CentroidalProblem::getPoseBase(const std::size_t t) {
   return cfr->getReference();
 }
 
-void CentroidalProblem::setPoseBase(const std::size_t t,
-                                    const Eigen::VectorXd &pose_base) {
+void CentroidalOCP::setPoseBase(const std::size_t t,
+                                const Eigen::VectorXd &pose_base) {
   if (pose_base.size() != 7) {
     throw std::runtime_error("pose_base size should be 7");
   }
@@ -292,11 +291,11 @@ void CentroidalProblem::setPoseBase(const std::size_t t,
   cfr->setReference(com_ref_);
 }
 
-const Eigen::VectorXd CentroidalProblem::getProblemState() {
+const Eigen::VectorXd CentroidalOCP::getProblemState() {
   return handler_.getCentroidalState();
 }
 
-size_t CentroidalProblem::getContactSupport(const std::size_t t) {
+size_t CentroidalOCP::getContactSupport(const std::size_t t) {
   CentroidalFwdDynamics *ode = problem_->stages_[t]
                                    ->getDynamics<IntegratorEuler>()
                                    ->getDynamics<CentroidalFwdDynamics>();
@@ -310,7 +309,7 @@ size_t CentroidalProblem::getContactSupport(const std::size_t t) {
   return active_contacts;
 }
 
-CostStack CentroidalProblem::createTerminalCost() {
+CostStack CentroidalOCP::createTerminalCost() {
   auto ter_space = VectorSpace(nx_);
   auto term_cost = CostStack(ter_space, nu_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
@@ -325,7 +324,7 @@ CostStack CentroidalProblem::createTerminalCost() {
   return term_cost;
 }
 
-void CentroidalProblem::createTerminalConstraint() {
+void CentroidalOCP::createTerminalConstraint() {
   if (!problem_initialized_) {
     throw std::runtime_error("Create problem first!");
   }
@@ -336,8 +335,7 @@ void CentroidalProblem::createTerminalConstraint() {
   terminal_constraint_ = false;
 }
 
-void CentroidalProblem::updateTerminalConstraint(
-    const Eigen::Vector3d &com_ref) {
+void CentroidalOCP::updateTerminalConstraint(const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
     CentroidalCoMResidual *CoMres =
         problem_->term_cstrs_.getConstraint<CentroidalCoMResidual>(0);

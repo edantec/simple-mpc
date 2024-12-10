@@ -5,7 +5,7 @@
 
 namespace simple_mpc::python {
 
-void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
+void initializeCent(CentroidalOCP &self, const bp::dict &settings) {
   CentroidalSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_com = bp::extract<Eigen::Matrix3d>(settings["w_com"]);
@@ -25,7 +25,7 @@ void initializeCent(CentroidalProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
+StageModel createCentStage(CentroidalOCP &self, const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
@@ -74,7 +74,7 @@ StageModel createCentStage(CentroidalProblem &self, const bp::dict &phase_dict,
                           land_constraint);
 }
 
-bp::dict getSettingsCent(CentroidalProblem &self) {
+bp::dict getSettingsCent(CentroidalOCP &self) {
   CentroidalSettings conf = self.getSettings();
   bp::dict settings;
   settings["timestep"] = conf.timestep;
@@ -93,17 +93,16 @@ bp::dict getSettingsCent(CentroidalProblem &self) {
   return settings;
 }
 
-void exposeCentroidalProblem() {
-  bp::register_ptr_to_python<std::shared_ptr<CentroidalProblem>>();
+void exposeCentroidalOcp() {
+  bp::register_ptr_to_python<std::shared_ptr<CentroidalOCP>>();
 
-  bp::class_<CentroidalProblem, bp::bases<OCPHandler>, boost::noncopyable>(
-      "CentroidalProblem",
-      bp::init<const RobotHandler &>(("self"_a, "handler")))
+  bp::class_<CentroidalOCP, bp::bases<OCPHandler>, boost::noncopyable>(
+      "CentroidalOCP", bp::init<const RobotHandler &>(("self"_a, "handler")))
       .def("initialize", &initializeCent, ("self"_a, "settings"))
       .def("getSettings", &getSettingsCent)
       .def("initialize",
            bp::make_function(
-               &CentroidalProblem::initialize,
+               &CentroidalOCP::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createCentStage);
 }

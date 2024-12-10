@@ -1,7 +1,7 @@
 import numpy as np
 import example_robot_data
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, CentroidalProblem, MPC, IKIDSolver
+from simple_mpc import RobotHandler, CentroidalOCP, MPC, IKIDSolver
 import example_robot_data
 import time
 from QP_utils import IKIDSolver_f3
@@ -154,7 +154,7 @@ problem_conf = dict(
 )
 T = 100
 
-problem = CentroidalProblem(handler)
+problem = CentroidalOCP(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getCentroidalState(), T, force_size, gravity[2], False)
 

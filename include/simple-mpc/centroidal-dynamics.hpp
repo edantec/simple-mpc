@@ -49,20 +49,20 @@ struct CentroidalSettings {
   int force_size;
 };
 
-class CentroidalProblem : public OCPHandler {
+class CentroidalOCP : public OCPHandler {
   using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  CentroidalProblem();
-  CentroidalProblem(const RobotHandler &handler);
-  CentroidalProblem(const CentroidalSettings &settings,
-                    const RobotHandler &handler);
-  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalProblem);
+  CentroidalOCP();
+  CentroidalOCP(const RobotHandler &handler);
+  CentroidalOCP(const CentroidalSettings &settings,
+                const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalOCP);
   void initialize(const CentroidalSettings &settings);
-  virtual ~CentroidalProblem() {};
+  virtual ~CentroidalOCP() {};
 
   // Create one Centroidal stage
   StageModel

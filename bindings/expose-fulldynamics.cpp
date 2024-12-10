@@ -6,7 +6,7 @@
 
 namespace simple_mpc::python {
 
-void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
+void initializeFull(FullDynamicsOCP &self, const bp::dict &settings) {
   FullDynamicsSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
@@ -41,8 +41,7 @@ void initializeFull(FullDynamicsProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-StageModel createFullStage(FullDynamicsProblem &self,
-                           const bp::dict &phase_dict,
+StageModel createFullStage(FullDynamicsOCP &self, const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
@@ -91,7 +90,7 @@ StageModel createFullStage(FullDynamicsProblem &self,
                           land_constraint);
 }
 
-bp::dict getSettingsFull(FullDynamicsProblem &self) {
+bp::dict getSettingsFull(FullDynamicsOCP &self) {
   FullDynamicsSettings conf = self.getSettings();
   bp::dict settings;
   settings["timestep"] = conf.timestep;
@@ -118,17 +117,17 @@ bp::dict getSettingsFull(FullDynamicsProblem &self) {
   return settings;
 }
 
-void exposeFullDynamicsProblem() {
-  bp::register_ptr_to_python<std::shared_ptr<FullDynamicsProblem>>();
+void exposeFullDynamicsOcp() {
+  bp::register_ptr_to_python<std::shared_ptr<FullDynamicsOCP>>();
 
-  bp::class_<FullDynamicsProblem, bp::bases<OCPHandler>, boost::noncopyable>(
-      "FullDynamicsProblem",
+  bp::class_<FullDynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
+      "FullDynamicsOCP",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeFull, bp::args("self", "settings"))
       .def("getSettings", &getSettingsFull)
       .def("initialize",
            bp::make_function(
-               &FullDynamicsProblem::initialize,
+               &FullDynamicsOCP::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createFullStage);
 }

@@ -16,8 +16,8 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   RobotHandler handler = getTalosHandler();
 
   FullDynamicsSettings settings = getFullDynamicsSettings(handler);
-  auto problem = std::make_shared<FullDynamicsProblem>(settings, handler);
-  FullDynamicsProblem &fdproblem = *problem;
+  auto problem = std::make_shared<FullDynamicsOCP>(settings, handler);
+  FullDynamicsOCP &fdproblem = *problem;
 
   const size_t T = 100;
   fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2], true);
@@ -88,8 +88,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   RobotHandler handler = getTalosHandler();
 
   KinodynamicsSettings settings = getKinodynamicsSettings(handler);
-  auto problem = std::make_shared<KinodynamicsProblem>(settings, handler);
-  KinodynamicsProblem &kinoproblem = *problem;
+  auto problem = std::make_shared<KinodynamicsOCP>(settings, handler);
+  KinodynamicsOCP &kinoproblem = *problem;
   const std::size_t T = 100;
   const double support_force = -handler.getMass() * settings.gravity[2];
   Eigen::VectorXd f1(6);
@@ -156,8 +156,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   RobotHandler handler = getTalosHandler();
 
   CentroidalSettings settings = getCentroidalSettings();
-  auto problem = std::make_shared<CentroidalProblem>(settings, handler);
-  CentroidalProblem &centproblem = *problem;
+  auto problem = std::make_shared<CentroidalOCP>(settings, handler);
+  CentroidalOCP &centproblem = *problem;
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};

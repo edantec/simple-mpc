@@ -1,4 +1,3 @@
-
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/ocp-handler.hpp"
 
@@ -32,17 +31,16 @@ using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-FullDynamicsProblem::FullDynamicsProblem(const RobotHandler &handler)
-    : Base(handler) {}
+FullDynamicsOCP::FullDynamicsOCP(const RobotHandler &handler) : Base(handler) {}
 
-FullDynamicsProblem::FullDynamicsProblem(const FullDynamicsSettings &settings,
-                                         const RobotHandler &handler)
+FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings &settings,
+                                 const RobotHandler &handler)
     : Base(handler) {
 
   initialize(settings);
 }
 
-void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
+void FullDynamicsOCP::initialize(const FullDynamicsSettings &settings) {
 
   settings_ = settings;
   actuation_matrix_.resize(nv_, nu_);
@@ -85,7 +83,7 @@ void FullDynamicsProblem::initialize(const FullDynamicsSettings &settings) {
   }
 }
 
-StageModel FullDynamicsProblem::createStage(
+StageModel FullDynamicsOCP::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
@@ -226,7 +224,7 @@ StageModel FullDynamicsProblem::createStage(
   return stm;
 }
 
-void FullDynamicsProblem::setReferencePoses(
+void FullDynamicsOCP::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (pose_refs.size() != handler_.getFeetNames().size()) {
@@ -250,9 +248,9 @@ void FullDynamicsProblem::setReferencePoses(
   }
 }
 
-void FullDynamicsProblem::setReferencePose(const std::size_t t,
-                                           const std::string &ee_name,
-                                           const pinocchio::SE3 &pose_ref) {
+void FullDynamicsOCP::setReferencePose(const std::size_t t,
+                                       const std::string &ee_name,
+                                       const pinocchio::SE3 &pose_ref) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -266,8 +264,8 @@ void FullDynamicsProblem::setReferencePose(const std::size_t t,
   }
 }
 
-void FullDynamicsProblem::setTerminalReferencePose(
-    const std::string &ee_name, const pinocchio::SE3 &pose_ref) {
+void FullDynamicsOCP::setTerminalReferencePose(const std::string &ee_name,
+                                               const pinocchio::SE3 &pose_ref) {
   CostStack *cs = getTerminalCostStack();
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -281,7 +279,7 @@ void FullDynamicsProblem::setTerminalReferencePose(
   }
 }
 
-void FullDynamicsProblem::setReferenceForces(
+void FullDynamicsOCP::setReferenceForces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   CostStack *cs = getCostStack(t);
@@ -297,9 +295,9 @@ void FullDynamicsProblem::setReferenceForces(
   }
 }
 
-void FullDynamicsProblem::setReferenceForce(const std::size_t i,
-                                            const std::string &ee_name,
-                                            const Eigen::VectorXd &force_ref) {
+void FullDynamicsOCP::setReferenceForce(const std::size_t i,
+                                        const std::string &ee_name,
+                                        const Eigen::VectorXd &force_ref) {
   CostStack *cs = getCostStack(i);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_force_cost");
@@ -308,8 +306,8 @@ void FullDynamicsProblem::setReferenceForce(const std::size_t i,
 }
 
 const pinocchio::SE3
-FullDynamicsProblem::getReferencePose(const std::size_t t,
-                                      const std::string &ee_name) {
+FullDynamicsOCP::getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -326,8 +324,8 @@ FullDynamicsProblem::getReferencePose(const std::size_t t,
 }
 
 const Eigen::VectorXd
-FullDynamicsProblem::getReferenceForce(const std::size_t t,
-                                       const std::string &ee_name) {
+FullDynamicsOCP::getReferenceForce(const std::size_t t,
+                                   const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_force_cost");
@@ -335,15 +333,14 @@ FullDynamicsProblem::getReferenceForce(const std::size_t t,
   return cfr->getReference();
 }
 
-const Eigen::VectorXd
-FullDynamicsProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd FullDynamicsOCP::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
   return qc->getTarget().segment(nq_, 6);
 }
 
-void FullDynamicsProblem::setVelocityBase(
-    const std::size_t t, const Eigen::VectorXd &velocity_base) {
+void FullDynamicsOCP::setVelocityBase(const std::size_t t,
+                                      const Eigen::VectorXd &velocity_base) {
   if (velocity_base.size() != 6) {
     throw std::runtime_error("velocity_base size should be 6");
   }
@@ -353,14 +350,14 @@ void FullDynamicsProblem::setVelocityBase(
   qc->setTarget(x0_);
 }
 
-const Eigen::VectorXd FullDynamicsProblem::getPoseBase(const std::size_t t) {
+const Eigen::VectorXd FullDynamicsOCP::getPoseBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
   return qc->getTarget().head(7);
 };
 
-void FullDynamicsProblem::setPoseBase(const std::size_t t,
-                                      const Eigen::VectorXd &pose_base) {
+void FullDynamicsOCP::setPoseBase(const std::size_t t,
+                                  const Eigen::VectorXd &pose_base) {
   if (pose_base.size() != 7) {
     throw std::runtime_error("pose_base size should be 7");
   }
@@ -370,11 +367,11 @@ void FullDynamicsProblem::setPoseBase(const std::size_t t,
   qc->setTarget(x0_);
 }
 
-const Eigen::VectorXd FullDynamicsProblem::getProblemState() {
+const Eigen::VectorXd FullDynamicsOCP::getProblemState() {
   return handler_.getState();
 }
 
-size_t FullDynamicsProblem::getContactSupport(const std::size_t t) {
+size_t FullDynamicsOCP::getContactSupport(const std::size_t t) {
   MultibodyConstraintFwdDynamics *ode =
       problem_->stages_[t]
           ->getDynamics<IntegratorSemiImplEuler>()
@@ -383,7 +380,7 @@ size_t FullDynamicsProblem::getContactSupport(const std::size_t t) {
   return ode->constraint_models_.size();
 }
 
-CostStack FullDynamicsProblem::createTerminalCost() {
+CostStack FullDynamicsOCP::createTerminalCost() {
   auto ter_space = MultibodyPhaseSpace(handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);
   auto cent_mom = CentroidalMomentumResidual(
@@ -398,7 +395,7 @@ CostStack FullDynamicsProblem::createTerminalCost() {
   return term_cost;
 }
 
-void FullDynamicsProblem::createTerminalConstraint() {
+void FullDynamicsOCP::createTerminalConstraint() {
   if (!problem_initialized_) {
     throw std::runtime_error("Create problem first!");
   }
@@ -429,8 +426,7 @@ void FullDynamicsProblem::createTerminalConstraint() {
   terminal_constraint_ = true;
 }
 
-void FullDynamicsProblem::updateTerminalConstraint(
-    const Eigen::Vector3d &com_ref) {
+void FullDynamicsOCP::updateTerminalConstraint(const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
     DCMPositionResidual *CoMres =
         problem_->term_cstrs_.getConstraint<DCMPositionResidual>(0);

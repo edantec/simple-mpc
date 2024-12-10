@@ -28,16 +28,15 @@ using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-KinodynamicsProblem::KinodynamicsProblem(const RobotHandler &handler)
-    : Base(handler) {}
+KinodynamicsOCP::KinodynamicsOCP(const RobotHandler &handler) : Base(handler) {}
 
-KinodynamicsProblem::KinodynamicsProblem(const KinodynamicsSettings &settings,
-                                         const RobotHandler &handler)
+KinodynamicsOCP::KinodynamicsOCP(const KinodynamicsSettings &settings,
+                                 const RobotHandler &handler)
     : Base(handler) {
   initialize(settings);
 }
 
-void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
+void KinodynamicsOCP::initialize(const KinodynamicsSettings &settings) {
   settings_ = settings;
   nu_ = nv_ - 6 + settings_.force_size * (int)handler_.getFeetNames().size();
   x0_ = handler_.getState();
@@ -45,7 +44,7 @@ void KinodynamicsProblem::initialize(const KinodynamicsSettings &settings) {
   control_ref_.setZero();
 }
 
-StageModel KinodynamicsProblem::createStage(
+StageModel KinodynamicsOCP::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
@@ -158,9 +157,9 @@ StageModel KinodynamicsProblem::createStage(
   return stm;
 }
 
-void KinodynamicsProblem::setReferencePose(const std::size_t t,
-                                           const std::string &ee_name,
-                                           const pinocchio::SE3 &pose_ref) {
+void KinodynamicsOCP::setReferencePose(const std::size_t t,
+                                       const std::string &ee_name,
+                                       const pinocchio::SE3 &pose_ref) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -174,7 +173,7 @@ void KinodynamicsProblem::setReferencePose(const std::size_t t,
   }
 }
 
-void KinodynamicsProblem::setReferencePoses(
+void KinodynamicsOCP::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
   if (pose_refs.size() != handler_.getFeetNames().size()) {
@@ -197,8 +196,8 @@ void KinodynamicsProblem::setReferencePoses(
   }
 }
 
-void KinodynamicsProblem::setTerminalReferencePose(
-    const std::string &ee_name, const pinocchio::SE3 &pose_ref) {
+void KinodynamicsOCP::setTerminalReferencePose(const std::string &ee_name,
+                                               const pinocchio::SE3 &pose_ref) {
   CostStack *cs = getTerminalCostStack();
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -213,8 +212,8 @@ void KinodynamicsProblem::setTerminalReferencePose(
 }
 
 const pinocchio::SE3
-KinodynamicsProblem::getReferencePose(const std::size_t t,
-                                      const std::string &ee_name) {
+KinodynamicsOCP::getReferencePose(const std::size_t t,
+                                  const std::string &ee_name) {
   CostStack *cs = getCostStack(t);
   QuadraticResidualCost *qrc =
       cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
@@ -230,7 +229,7 @@ KinodynamicsProblem::getReferencePose(const std::size_t t,
   }
 }
 
-void KinodynamicsProblem::computeControlFromForces(
+void KinodynamicsOCP::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   for (std::size_t i = 0; i < handler_.getFeetNames().size(); i++) {
     if (settings_.force_size != force_refs.at(handler_.getFootName(i)).size()) {
@@ -242,16 +241,16 @@ void KinodynamicsProblem::computeControlFromForces(
   }
 }
 
-void KinodynamicsProblem::setReferenceForces(
+void KinodynamicsOCP::setReferenceForces(
     const std::size_t i,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   computeControlFromForces(force_refs);
   setReferenceControl(i, control_ref_);
 }
 
-void KinodynamicsProblem::setReferenceForce(const std::size_t i,
-                                            const std::string &ee_name,
-                                            const Eigen::VectorXd &force_ref) {
+void KinodynamicsOCP::setReferenceForce(const std::size_t i,
+                                        const std::string &ee_name,
+                                        const Eigen::VectorXd &force_ref) {
   std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
@@ -262,8 +261,8 @@ void KinodynamicsProblem::setReferenceForce(const std::size_t i,
 }
 
 const Eigen::VectorXd
-KinodynamicsProblem::getReferenceForce(const std::size_t i,
-                                       const std::string &ee_name) {
+KinodynamicsOCP::getReferenceForce(const std::size_t i,
+                                   const std::string &ee_name) {
   std::vector<std::string> hname = handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
@@ -273,15 +272,14 @@ KinodynamicsProblem::getReferenceForce(const std::size_t i,
                                         settings_.force_size);
 }
 
-const Eigen::VectorXd
-KinodynamicsProblem::getVelocityBase(const std::size_t t) {
+const Eigen::VectorXd KinodynamicsOCP::getVelocityBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
   return qc->getTarget().segment(nq_, 6);
 }
 
-void KinodynamicsProblem::setVelocityBase(
-    const std::size_t t, const Eigen::VectorXd &velocity_base) {
+void KinodynamicsOCP::setVelocityBase(const std::size_t t,
+                                      const Eigen::VectorXd &velocity_base) {
   if (velocity_base.size() != 6) {
     throw std::runtime_error("velocity_base size should be 6");
   }
@@ -291,14 +289,14 @@ void KinodynamicsProblem::setVelocityBase(
   qc->setTarget(x0_);
 }
 
-const Eigen::VectorXd KinodynamicsProblem::getPoseBase(const std::size_t t) {
+const Eigen::VectorXd KinodynamicsOCP::getPoseBase(const std::size_t t) {
   CostStack *cs = getCostStack(t);
   QuadraticStateCost *qc = cs->getComponent<QuadraticStateCost>("state_cost");
   return qc->getTarget().head(7);
 };
 
-void KinodynamicsProblem::setPoseBase(const std::size_t t,
-                                      const Eigen::VectorXd &pose_base) {
+void KinodynamicsOCP::setPoseBase(const std::size_t t,
+                                  const Eigen::VectorXd &pose_base) {
   if (pose_base.size() != 7) {
     throw std::runtime_error("pose_base size should be 7");
   }
@@ -308,11 +306,11 @@ void KinodynamicsProblem::setPoseBase(const std::size_t t,
   qc->setTarget(x0_);
 }
 
-const Eigen::VectorXd KinodynamicsProblem::getProblemState() {
+const Eigen::VectorXd KinodynamicsOCP::getProblemState() {
   return handler_.getState();
 }
 
-size_t KinodynamicsProblem::getContactSupport(const std::size_t t) {
+size_t KinodynamicsOCP::getContactSupport(const std::size_t t) {
   KinodynamicsFwdDynamics *ode = problem_->stages_[t]
                                      ->getDynamics<IntegratorSemiImplEuler>()
                                      ->getDynamics<KinodynamicsFwdDynamics>();
@@ -326,7 +324,7 @@ size_t KinodynamicsProblem::getContactSupport(const std::size_t t) {
   return active_contacts;
 }
 
-CostStack KinodynamicsProblem::createTerminalCost() {
+CostStack KinodynamicsOCP::createTerminalCost() {
   auto ter_space = MultibodyPhaseSpace(handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);
   auto cent_mom = CentroidalMomentumResidual(
@@ -341,7 +339,7 @@ CostStack KinodynamicsProblem::createTerminalCost() {
   return term_cost;
 }
 
-void KinodynamicsProblem::createTerminalConstraint() {
+void KinodynamicsOCP::createTerminalConstraint() {
   if (!problem_initialized_) {
     throw std::runtime_error("Create problem first!");
   }
@@ -352,8 +350,7 @@ void KinodynamicsProblem::createTerminalConstraint() {
   terminal_constraint_ = true;
 }
 
-void KinodynamicsProblem::updateTerminalConstraint(
-    const Eigen::Vector3d &com_ref) {
+void KinodynamicsOCP::updateTerminalConstraint(const Eigen::Vector3d &com_ref) {
   if (terminal_constraint_) {
     CenterOfMassTranslationResidual *CoMres =
         problem_->term_cstrs_.getConstraint<CenterOfMassTranslationResidual>(0);

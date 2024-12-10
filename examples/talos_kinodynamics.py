@@ -2,7 +2,7 @@ import numpy as np
 import example_robot_data
 from bullet_robot import BulletRobot
 import time
-from simple_mpc import RobotHandler, KinodynamicsProblem, MPC, IDSolver
+from simple_mpc import RobotHandler, KinodynamicsOCP, MPC, IDSolver
 
 URDF_FILENAME = "talos_reduced.urdf"
 SRDF_FILENAME = "talos.srdf"
@@ -129,7 +129,7 @@ problem_conf = dict(
 
 T = 100
 
-problem = KinodynamicsProblem(handler)
+problem = KinodynamicsOCP(handler)
 problem.initialize(problem_conf)
 problem.createProblem(handler.getState(), T, 6, gravity[2], False)
 

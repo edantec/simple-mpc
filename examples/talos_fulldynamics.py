@@ -8,7 +8,7 @@ import numpy as np
 import time
 from bullet_robot import BulletRobot
 import example_robot_data
-from simple_mpc import MPC, FullDynamicsProblem, RobotHandler
+from simple_mpc import MPC, FullDynamicsOCP, RobotHandler
 
 # ####### CONFIGURATION  ############
 # ### RobotWrapper
@@ -115,7 +115,7 @@ problem_conf = dict(
 )
 
 T = 100
-dynproblem = FullDynamicsProblem(handler)
+dynproblem = FullDynamicsOCP(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(x0, T, 6, gravity[2], False)
 

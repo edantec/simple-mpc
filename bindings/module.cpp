@@ -10,9 +10,9 @@ namespace bp = boost::python;
 /* FORWARD DECLARATIONS */
 void exposeHandler();
 void exposeOcpHandler();
-void exposeFullDynamicsProblem();
-void exposeCentroidalProblem();
-void exposeKinodynamicsProblem();
+void exposeFullDynamicsOcp();
+void exposeCentroidalOcp();
+void exposeKinodynamicsOcp();
 void exposeMPC();
 void exposeIDSolver();
 void exposeIKIDSolver();
@@ -27,9 +27,9 @@ BOOST_PYTHON_MODULE(simple_mpc_pywrap) {
   ENABLE_SPECIFIC_MATRIX_TYPE(Vector7d);
   exposeHandler();
   exposeOcpHandler();
-  exposeFullDynamicsProblem();
-  exposeCentroidalProblem();
-  exposeKinodynamicsProblem();
+  exposeFullDynamicsOcp();
+  exposeCentroidalOcp();
+  exposeKinodynamicsOcp();
   exposeMPC();
   exposeIDSolver();
   exposeIKIDSolver();

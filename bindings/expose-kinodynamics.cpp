@@ -6,7 +6,7 @@
 namespace simple_mpc::python {
 using eigenpy::python::StdMapPythonVisitor;
 
-void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
+void initializeKino(KinodynamicsOCP &self, const bp::dict &settings) {
   KinodynamicsSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
@@ -31,7 +31,7 @@ void initializeKino(KinodynamicsProblem &self, const bp::dict &settings) {
   self.initialize(conf);
 }
 
-bp::dict getSettingsKino(KinodynamicsProblem &self) {
+bp::dict getSettingsKino(KinodynamicsOCP &self) {
   KinodynamicsSettings conf = self.getSettings();
   bp::dict settings;
   settings["timestep"] = conf.timestep;
@@ -53,8 +53,7 @@ bp::dict getSettingsKino(KinodynamicsProblem &self) {
   return settings;
 }
 
-StageModel createKinoStage(KinodynamicsProblem &self,
-                           const bp::dict &phase_dict,
+StageModel createKinoStage(KinodynamicsOCP &self, const bp::dict &phase_dict,
                            const bp::dict &pose_dict,
                            const bp::dict &force_dict,
                            const bp::dict &land_dict) {
@@ -103,17 +102,17 @@ StageModel createKinoStage(KinodynamicsProblem &self,
                           land_constraint);
 }
 
-void exposeKinodynamicsProblem() {
-  bp::register_ptr_to_python<shared_ptr<KinodynamicsProblem>>();
+void exposeKinodynamicsOcp() {
+  bp::register_ptr_to_python<shared_ptr<KinodynamicsOCP>>();
 
-  bp::class_<KinodynamicsProblem, bp::bases<OCPHandler>, boost::noncopyable>(
-      "KinodynamicsProblem",
+  bp::class_<KinodynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
+      "KinodynamicsOCP",
       bp::init<const RobotHandler &>(bp::args("self", "handler")))
       .def("initialize", &initializeKino, bp::args("self", "settings"))
       .def("getSettings", &getSettingsKino)
       .def("initialize",
            bp::make_function(
-               &KinodynamicsProblem::initialize,
+               &KinodynamicsOCP::initialize,
                bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createKinoStage);
 }

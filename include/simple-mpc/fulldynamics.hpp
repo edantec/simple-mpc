@@ -61,18 +61,18 @@ public:
   Eigen::VectorXd Kd_correction;
 };
 
-class FullDynamicsProblem : public OCPHandler {
+class FullDynamicsOCP : public OCPHandler {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructors
-  FullDynamicsProblem();
-  FullDynamicsProblem(const RobotHandler &handler);
-  FullDynamicsProblem(const FullDynamicsSettings &settings,
-                      const RobotHandler &handler);
-  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsProblem);
+  FullDynamicsOCP();
+  FullDynamicsOCP(const RobotHandler &handler);
+  FullDynamicsOCP(const FullDynamicsSettings &settings,
+                  const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsOCP);
   void initialize(const FullDynamicsSettings &settings);
-  virtual ~FullDynamicsProblem() {}
+  virtual ~FullDynamicsOCP() {}
 
   // Create one FullDynamics stage
   StageModel

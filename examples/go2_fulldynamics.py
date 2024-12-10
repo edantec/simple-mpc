@@ -1,6 +1,6 @@
 import numpy as np
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, FullDynamicsProblem, MPC, IDSolver
+from simple_mpc import RobotHandler, FullDynamicsOCP, MPC, IDSolver
 import example_robot_data
 import time
 from utils import save_trajectory, extract_forces
@@ -100,7 +100,7 @@ problem_conf = dict(
 )
 T = 50
 
-dynproblem = FullDynamicsProblem(handler)
+dynproblem = FullDynamicsOCP(handler)
 dynproblem.initialize(problem_conf)
 dynproblem.createProblem(handler.getState(), T, force_size, gravity[2], False)
 
