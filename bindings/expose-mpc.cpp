@@ -69,7 +69,6 @@ void exposeMPC() {
 
   bp::class_<MPC>("MPC", bp::no_init)
       .def(bp::init<>(bp::args("self")))
-      .def_readonly("ocp_handler", &MPC::ocp_handler_)
       .def("initialize", &initialize)
       .def("getSettings", &getSettings)
       .def("generateCycleHorizon", &MPC::generateCycleHorizon,
@@ -82,6 +81,8 @@ void exposeMPC() {
       .def("setTerminalReferencePose", &MPC::setTerminalReferencePose,
            bp::args("self", "ee_name", "pose_ref"))
       .def_readwrite("velocity_base", &MPC::velocity_base_)
+      .def_readwrite("pose_base", &MPC::pose_base_)
+      .def_readonly("ocp_handler", &MPC::ocp_handler_)
       .def("setPoseBase", &MPC::setPoseBase, ("self"_a, "pose_base"))
       .def("getPoseBase", &MPC::getPoseBase, ("self"_a, "t"))
       .def("switchToWalk", &MPC::switchToWalk, ("self"_a, "velocity_base"))
