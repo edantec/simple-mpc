@@ -114,10 +114,24 @@ BOOST_AUTO_TEST_CASE(model_handler) {
 
   // Difference
   {
-  // Eigen::Vector<double, 33> x1 = Eigen::Vector<double, 33>::Random();
-  // Eigen::Vector<double, 33> x2 = Eigen::Vector<double, 33>::Random();
+    Eigen::Vector<double, 17> q1 = pinocchio::randomConfiguration(model_handler.getModel()); q1.head<3>() = Eigen::Vector3d::Random();
+    Eigen::Vector<double, 17> q2 = pinocchio::randomConfiguration(model_handler.getModel()); q2.head<3>() = Eigen::Vector3d::Random();
+
+    const Eigen::Vector<double, 16> v1 = Eigen::Vector<double, 16>::Random();
+    const Eigen::Vector<double, 16> v2 = Eigen::Vector<double, 16>::Random();
+
+    Eigen::Vector<double, 33> x1, x2;
+    x1.head<17>() = q1; x1.tail<16>() = v1;
+    x2.head<17>() = q2; x2.tail<16>() = v2;
+
+    const Eigen::Vector<double, 32> diff = model_handler.difference(x1, x2);
+
+    const Eigen::Vector<double, 16> dq; pinocchio::difference(model_handler.getModel(), q1, q2, dq);
+    const Eigen::Vector<double, 16> dv = v2 - v1;
+
+    BOOST_CHECK(dq.isApprox(diff.head<16>()));
+    BOOST_CHECK(dv.isApprox(diff.tail<16>()));
   }
-  // Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const;
 
   BOOST_CHECK_EQUAL(model_handler.getMass(), 90.272192000000018);
 }
