@@ -74,6 +74,8 @@ auto *create_ikidsolver(const bp::dict &settings,
 struct ll_qp_visitor : bp::def_visitor<ll_qp_visitor> {
   template <class T, class... PyArgs>
   void visit(bp::class_<T, PyArgs...> &cl) const {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     cl.def("getA", &T::getA, "self"_a)
         .def("getH", &T::getH, "self"_a)
         .def("getC", &T::getC, "self"_a)
@@ -87,6 +89,7 @@ struct ll_qp_visitor : bp::def_visitor<ll_qp_visitor> {
         .add_property("solved_acc", &T::solved_acc_)
         .add_property("solved_forces", &T::solved_forces_)
         .add_property("solved_torque", &T::solved_torque_);
+#pragma GCC diagnostic pop
   };
 };
 
