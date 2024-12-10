@@ -66,7 +66,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructors
-  FullDynamicsOCP();
   FullDynamicsOCP(const RobotHandler &handler);
   FullDynamicsOCP(const FullDynamicsSettings &settings,
                   const RobotHandler &handler);

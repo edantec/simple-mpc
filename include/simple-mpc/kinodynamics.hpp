@@ -54,7 +54,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  KinodynamicsOCP();
   KinodynamicsOCP(const RobotHandler &handler);
   KinodynamicsOCP(const KinodynamicsSettings &settings,
                   const RobotHandler &handler);

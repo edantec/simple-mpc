@@ -56,7 +56,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  CentroidalOCP();
   CentroidalOCP(const RobotHandler &handler);
   CentroidalOCP(const CentroidalSettings &settings,
                 const RobotHandler &handler);
