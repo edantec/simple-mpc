@@ -328,11 +328,6 @@ const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
   return ocp_handler_->getReferencePose(t, ee_name);
 }
 
-bool MPC::getCyclingContactState(const std::size_t t,
-                                 const std::string &ee_name) {
-  return contact_states_[t].at(ee_name);
-}
-
 void MPC::switchToWalk(const Vector6d &velocity_base) {
   now_ = WALKING;
   velocity_base_ = velocity_base;

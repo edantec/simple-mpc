@@ -135,15 +135,20 @@ public:
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }
-  bool getCyclingContactState(const std::size_t t, const std::string &ee_name);
-  int getFootTakeoffCycle(const std::string &ee_name) {
+
+  inline bool getCyclingContactState(const std::size_t t,
+                                     const std::string &ee_name) const {
+    return contact_states_[t].at(ee_name);
+  }
+
+  inline int getFootTakeoffCycle(const std::string &ee_name) const {
     if (foot_takeoff_times_.at(ee_name).empty()) {
       return -1;
     } else {
       return foot_takeoff_times_.at(ee_name)[0];
     }
   }
-  int getFootLandCycle(const std::string &ee_name) {
+  inline int getFootLandCycle(const std::string &ee_name) const {
     if (foot_land_times_.at(ee_name).empty()) {
       return -1;
     } else {
