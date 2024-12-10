@@ -1,5 +1,6 @@
 
 #include "simple-mpc/fulldynamics.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 #include "aligator/modelling/dynamics/multibody-constraint-fwd.hpp"
 #include <aligator/modelling/dynamics/integrator-semi-euler.hpp>

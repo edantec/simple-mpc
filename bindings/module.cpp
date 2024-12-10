@@ -1,5 +1,6 @@
 /// @copyright Copyright (C) 2024 INRIA
 #include "simple-mpc/config.hpp"
+#include "simple-mpc/fwd.hpp"
 #include "simple-mpc/python.hpp"
 
 namespace simple_mpc::python {
@@ -8,7 +9,7 @@ namespace bp = boost::python;
 
 /* FORWARD DECLARATIONS */
 void exposeHandler();
-void exposeBaseProblem();
+void exposeOcpHandler();
 void exposeFullDynamicsProblem();
 void exposeCentroidalProblem();
 void exposeKinodynamicsProblem();
@@ -22,8 +23,10 @@ BOOST_PYTHON_MODULE(simple_mpc_pywrap) {
   bp::import("aligator");
   bp::scope().attr("__version__") = SIMPLE_MPC_VERSION;
   ENABLE_SPECIFIC_MATRIX_TYPE(Eigen::VectorXi);
+  ENABLE_SPECIFIC_MATRIX_TYPE(Vector6d);
+  ENABLE_SPECIFIC_MATRIX_TYPE(Vector7d);
   exposeHandler();
-  exposeBaseProblem();
+  exposeOcpHandler();
   exposeFullDynamicsProblem();
   exposeCentroidalProblem();
   exposeKinodynamicsProblem();

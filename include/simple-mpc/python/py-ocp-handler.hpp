@@ -1,8 +1,8 @@
 /// @copyright Copyright (C) 2024 INRIA
 #pragma once
 
-#include "simple-mpc/base-problem.hpp"
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/python.hpp"
 
 namespace simple_mpc {
@@ -59,8 +59,8 @@ template <class T> bp::list std_vector_to_py_list(const std::vector<T> &v) {
   bp::list l(iter);
   return l;
 }
-struct PyProblem : Problem, bp::wrapper<Problem> {
-  using Problem::Problem;
+struct PyOCPHandler : OCPHandler, bp::wrapper<OCPHandler> {
+  using OCPHandler::OCPHandler;
 
   StageModel
   createStage(const std::map<std::string, bool> &contact_phase,
@@ -154,11 +154,11 @@ struct PyProblem : Problem, bp::wrapper<Problem> {
   }
 
   void setReferenceControl(const std::size_t t, const Eigen::VectorXd &u_ref) {
-    SIMPLE_MPC_PYTHON_OVERRIDE(void, Problem, setReferenceControl, t, u_ref);
+    SIMPLE_MPC_PYTHON_OVERRIDE(void, OCPHandler, setReferenceControl, t, u_ref);
   }
 
   Eigen::VectorXd getReferenceControl(const std::size_t t) {
-    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, Problem, getReferenceControl,
+    SIMPLE_MPC_PYTHON_OVERRIDE(Eigen::VectorXd, OCPHandler, getReferenceControl,
                                t);
   }
 };

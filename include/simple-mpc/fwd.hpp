@@ -8,6 +8,7 @@
 #pragma once
 
 #include <aligator/fwd.hpp>
+#include <aligator/modelling/contact-map.hpp>
 
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
@@ -15,13 +16,8 @@
 namespace simple_mpc {
 namespace pin = pinocchio;
 using pin::FrameIndex;
-
 using std::shared_ptr;
-
-typedef Eigen::Matrix<double, 6, 1> eVector6;
-typedef Eigen::Matrix<double, 4, 1> eVector4;
-typedef Eigen::Vector3d eVector3;
-typedef Eigen::Vector2d eVector2;
+using ContactMap = aligator::ContactMapTpl<double>;
 
 // MPC
 struct Settings;
@@ -30,8 +26,16 @@ class RobotHandler;
 class FullDynamicsProblem;
 class KinodynamicsProblem;
 class CentroidalProblem;
-class Problem;
+class OCPHandler;
 class IDSolver;
 class IKIDSolver;
+
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+using VectorRef = Eigen::Ref<VectorXd>;
+using ConstVectorRef = Eigen::Ref<const VectorXd>;
+
+using Vector6d = Eigen::Matrix<double, 6, 1>;
+using Vector7d = Eigen::Matrix<double, 7, 1>;
 
 } // namespace simple_mpc

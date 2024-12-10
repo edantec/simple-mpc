@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "simple-mpc/base-problem.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -47,8 +47,8 @@ struct KinodynamicsSettings {
   bool force_cone;
 };
 
-class KinodynamicsProblem : public Problem {
-  using Base = Problem;
+class KinodynamicsProblem : public OCPHandler {
+  using Base = OCPHandler;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -58,6 +58,7 @@ public:
   KinodynamicsProblem(const RobotHandler &handler);
   KinodynamicsProblem(const KinodynamicsSettings &settings,
                       const RobotHandler &handler);
+  SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsProblem);
   void initialize(const KinodynamicsSettings &settings);
   virtual ~KinodynamicsProblem() {};
 
