@@ -6,8 +6,9 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <eigenpy/eigenpy.hpp>
+#include "simple-mpc/python.hpp"
 #include <eigenpy/std-vector.hpp>
+#include <eigenpy/deprecation-policy.hpp>
 
 #include "simple-mpc/lowlevel-control.hpp"
 #include <proxsuite/proxqp/dense/dense.hpp>
@@ -24,8 +25,7 @@ inline void py_list_to_std_vector(const bp::object &iterable,
                        bp::stl_input_iterator<T>());
 }
 
-void initialize_ID(IDSolver &self, const bp::dict &settings,
-                   const pinocchio::Model &model) {
+auto *create_idsolver(const bp::dict &settings, const pinocchio::Model &model) {
   IDSettings conf;
 
   py_list_to_std_vector(settings["contact_ids"], conf.contact_ids);
@@ -41,11 +41,11 @@ void initialize_ID(IDSolver &self, const bp::dict &settings,
   conf.w_tau = bp::extract<double>(settings["w_tau"]);
   conf.verbose = bp::extract<bool>(settings["verbose"]);
 
-  self.initialize(conf, model);
+  return new IDSolver(conf, model);
 }
 
-void initialize_IKID(IKIDSolver &self, const bp::dict &settings,
-                     const pinocchio::Model &model) {
+auto *create_ikidsolver(const bp::dict &settings,
+                        const pinocchio::Model &model) {
   IKIDSettings conf;
 
   py_list_to_std_vector(settings["Kp_gains"], conf.Kp_gains);
@@ -67,8 +67,28 @@ void initialize_IKID(IKIDSolver &self, const bp::dict &settings,
   conf.w_force = bp::extract<double>(settings["w_force"]);
   conf.verbose = bp::extract<bool>(settings["verbose"]);
 
-  self.initialize(conf, model);
+  return new IKIDSolver(conf, model);
 }
+
+/// \brief Visitor used to expose common elements in a low-level QP object.
+struct ll_qp_visitor : bp::def_visitor<ll_qp_visitor> {
+  template <class T, class... PyArgs>
+  void visit(bp::class_<T, PyArgs...> &cl) const {
+    cl.def("getA", &T::getA, "self"_a)
+        .def("getH", &T::getH, "self"_a)
+        .def("getC", &T::getC, "self"_a)
+        .def("getb", &T::getb, "self"_a)
+        .def("getg", &T::getg, "self"_a)
+        .def_readonly("qp", &T::qp_)
+        .def("getQP", &T::getQP,
+             eigenpy::deprecated_member<>(
+                 "Deprecated getter. Please use the `qp` class attribute."),
+             "self"_a)
+        .add_property("solved_acc", &T::solved_acc_)
+        .add_property("solved_forces", &T::solved_forces_)
+        .add_property("solved_torque", &T::solved_torque_);
+  };
+};
 
 void exposeIDSolver() {
   eigenpy::StdVectorPythonVisitor<std::vector<pinocchio::SE3>, true>::expose(
@@ -76,20 +96,12 @@ void exposeIDSolver() {
       eigenpy::details::overload_base_get_item_for_std_vector<
           std::vector<pinocchio::SE3>>();
   bp::class_<IDSolver>("IDSolver", bp::no_init)
-      .def(bp::init<>(bp::args("self")))
-      .def("initialize", &initialize_ID)
+      .def(bp::init<const IDSettings &, const pin::Model &>(
+          ("self"_a, "settings", "model")))
+      .def("__init__", bp::make_constructor(&create_idsolver))
       .def("solveQP", &IDSolver::solveQP,
-           bp::args("self", "data", "contact_state", "v", "a", "tau", "forces",
-                    "M"))
-      .def("getA", &IDSolver::getA, bp::args("self"))
-      .def("getA", &IDSolver::getA, bp::args("self"))
-      .def("getH", &IDSolver::getH, bp::args("self"))
-      .def("getC", &IDSolver::getC, bp::args("self"))
-      .def("getb", &IDSolver::getb, bp::args("self"))
-      .def("getg", &IDSolver::getg, bp::args("self"))
-      .add_property("solved_acc", &IDSolver::solved_acc_)
-      .add_property("solved_forces", &IDSolver::solved_forces_)
-      .add_property("solved_torque", &IDSolver::solved_torque_);
+           ("self"_a, "data", "contact_state", "v", "a", "tau", "forces", "M"))
+      .def(ll_qp_visitor());
 }
 
 void exposeIKIDSolver() {
@@ -98,18 +110,15 @@ void exposeIKIDSolver() {
       eigenpy::details::overload_base_get_item_for_std_vector<
           std::vector<pinocchio::SE3>>();
   bp::class_<IKIDSolver>("IKIDSolver", bp::no_init)
-      .def(bp::init<>(bp::args("self")))
-      .def("initialize", &initialize_IKID)
+      .def(bp::init<const IKIDSettings &, const pin::Model &>(
+          ("self"_a, "settings", "model")))
+      .def("__init__", bp::make_constructor(&create_ikidsolver))
       .def("solve_qp", &IKIDSolver::solve_qp,
            bp::args("self", "data", "contact_state", "x_measured", "forces",
                     "dH", "M"))
-      .def("getQP", &IKIDSolver::getQP, bp::args("self"))
-      .def(
-          "computeDifferences", &IKIDSolver::computeDifferences,
-          bp::args("self", "data", "x_measured", "foot_refs", "foot_refs_next"))
-      .add_property("solved_acc", &IKIDSolver::solved_acc_)
-      .add_property("solved_forces", &IKIDSolver::solved_forces_)
-      .add_property("solved_torque", &IKIDSolver::solved_torque_);
+      .def("computeDifferences", &IKIDSolver::computeDifferences,
+           ("self"_a, "data", "x_measured", "foot_refs", "foot_refs_next"))
+      .def(ll_qp_visitor());
 }
 
 } // namespace python

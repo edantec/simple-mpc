@@ -1,12 +1,13 @@
+#include "simple-mpc/python.hpp"
 #include "simple-mpc/fulldynamics.hpp"
-#include "simple-mpc/python/py-ocp-handler.hpp"
 
 #include <eigenpy/std-map.hpp>
 #include <eigenpy/std-vector.hpp>
 
 namespace simple_mpc::python {
 
-void initializeFull(FullDynamicsOCP &self, const bp::dict &settings) {
+auto *createFulldynamics(const bp::dict &settings,
+                         const RobotHandler &handler) {
   FullDynamicsSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
@@ -38,7 +39,7 @@ void initializeFull(FullDynamicsOCP &self, const bp::dict &settings) {
   conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
   conf.force_cone = bp::extract<bool>(settings["force_cone"]);
 
-  self.initialize(conf);
+  return new FullDynamicsOCP(conf, handler);
 }
 
 StageModel createFullStage(FullDynamicsOCP &self, const bp::dict &phase_dict,
@@ -121,14 +122,11 @@ void exposeFullDynamicsOcp() {
   bp::register_ptr_to_python<std::shared_ptr<FullDynamicsOCP>>();
 
   bp::class_<FullDynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
-      "FullDynamicsOCP",
-      bp::init<const RobotHandler &>(bp::args("self", "handler")))
-      .def("initialize", &initializeFull, bp::args("self", "settings"))
+      "FullDynamicsOCP", bp::no_init)
+      .def("__init__", bp::make_constructor(&createFulldynamics,
+                                            bp::default_call_policies(),
+                                            ("settings"_a, "handler")))
       .def("getSettings", &getSettingsFull)
-      .def("initialize",
-           bp::make_function(
-               &FullDynamicsOCP::initialize,
-               bp::return_value_policy<bp::reference_existing_object>()))
       .def("createStage", &createFullStage);
 }
 

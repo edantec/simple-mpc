@@ -24,17 +24,10 @@ using CentroidalWrenchConeResidual = CentroidalWrenchConeResidualTpl<double>;
 using CentroidalFrictionConeResidual =
     CentroidalFrictionConeResidualTpl<double>;
 using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
-
-CentroidalOCP::CentroidalOCP(const RobotHandler &handler) : Base(handler) {}
-
 CentroidalOCP::CentroidalOCP(const CentroidalSettings &settings,
                              const RobotHandler &handler)
-    : Base(handler) {
-  initialize(settings);
-}
+    : Base(handler), settings_(settings) {
 
-void CentroidalOCP::initialize(const CentroidalSettings &settings) {
-  settings_ = settings;
   nx_ = 9;
   nu_ = (int)handler_.getFeetNames().size() * settings_.force_size;
   control_ref_.resize(nu_);
@@ -46,7 +39,7 @@ StageModel CentroidalOCP::createStage(
     const std::map<std::string, bool> &contact_phase,
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
-    const std::map<std::string, bool> &land_constraint) {
+    const std::map<std::string, bool> & /*land_constraint*/) {
   auto space = VectorSpace(nx_);
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states;

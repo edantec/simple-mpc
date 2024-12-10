@@ -1,6 +1,6 @@
 import numpy as np
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, FullDynamicsProblem, MPC
+from simple_mpc import RobotHandler, FullDynamicsOCP, MPC
 import example_robot_data
 import time
 import pinocchio as pin
@@ -104,8 +104,7 @@ problem_conf = dict(
 )
 nsteps = 100
 
-dynproblem = FullDynamicsProblem(handler)
-dynproblem.initialize(problem_conf)
+dynproblem = FullDynamicsOCP(problem_conf, handler)
 dynproblem.createProblem(handler.getState(), nsteps, force_size, gravity[2])
 
 T_ground = 100

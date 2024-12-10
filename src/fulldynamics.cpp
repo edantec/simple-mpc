@@ -31,18 +31,10 @@ using CenterOfMassTranslationResidual =
     CenterOfMassTranslationResidualTpl<double>;
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-FullDynamicsOCP::FullDynamicsOCP(const RobotHandler &handler) : Base(handler) {}
-
 FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings &settings,
                                  const RobotHandler &handler)
-    : Base(handler) {
+    : Base(handler), settings_(settings) {
 
-  initialize(settings);
-}
-
-void FullDynamicsOCP::initialize(const FullDynamicsSettings &settings) {
-
-  settings_ = settings;
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();

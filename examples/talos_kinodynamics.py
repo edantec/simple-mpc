@@ -129,8 +129,7 @@ problem_conf = dict(
 
 T = 100
 
-problem = KinodynamicsOCP(handler)
-problem.initialize(problem_conf)
+problem = KinodynamicsOCP(problem_conf, handler)
 problem.createProblem(handler.getState(), T, 6, gravity[2], False)
 
 """ Define MPC object """
@@ -188,8 +187,7 @@ id_conf = dict(
     verbose=False,
 )
 
-qp = IDSolver()
-qp.initialize(id_conf, handler.getModel())
+qp = IDSolver(id_conf, handler.getModel())
 
 """ Initialize simulation"""
 device = BulletRobot(

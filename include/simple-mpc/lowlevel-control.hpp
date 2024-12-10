@@ -15,6 +15,7 @@
 #define SIMPLE_MPC_LOWLEVEL_CONTROL_HPP_
 
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/deprecated.hpp"
 #include <pinocchio/multibody/fwd.hpp>
 #include <proxsuite/proxqp/dense/dense.hpp>
 
@@ -23,46 +24,44 @@ using namespace proxsuite;
 using pin::SE3;
 
 struct IDSettings {
-public:
-  std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
-  double mu;                                      // Friction parameter
-  double Lfoot;    // Half-length of foot (if contact 6D)
-  double Wfoot;    // Half-width of foot (if contact 6D)
-  long force_size; // Dimension of contact forces
-  double kd;       // Baumgarte coefficient
-  double w_acc;    // Weight for acceleration regularization
-  double w_tau;    // Weight for torque regularization
-  double w_force;  // Weight for force regularization
-  bool verbose;    // Print solver information
+  std::vector<FrameIndex> contact_ids; //< Index of contacts
+  double mu;                           //< Friction parameter
+  double Lfoot;                        //< Half-length of foot (if contact 6D)
+  double Wfoot;                        //< Half-width of foot (if contact 6D)
+  long force_size;                     //< Dimension of contact forces
+  double kd;                           //< Baumgarte coefficient
+  double w_acc;   //< Weight for acceleration regularization
+  double w_tau;   //< Weight for torque regularization
+  double w_force; //< Weight for force regularization
+  bool verbose;   //< Print solver information
 };
 
 struct IKIDSettings {
-public:
-  std::vector<Eigen::VectorXd> Kp_gains;          // Proportional gains
-  std::vector<Eigen::VectorXd> Kd_gains;          // Derivative gains
-  std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
-  std::vector<pinocchio::FrameIndex>
-      fixed_frame_ids; // Index of frames kept fixed
-  Eigen::VectorXd x0;  // Reference state
-  double dt;           // Integration timestep
-  double mu;           // Friction parameter
-  double Lfoot;        // Half-length of foot (if contact 6D)
-  double Wfoot;        // Half-width of foot (if contact 6D)
-  long force_size;     // Dimension of contact forces
-  double w_qref;       // Weight for configuration regularization
-  double w_footpose;   // Weight for foot placement
-  double w_centroidal; // Weight for CoM tracking
-  double w_baserot;    // Weight for base rotation
-  double w_force;      // Weight for force regularization
-  bool verbose;        // Print solver information
+  std::vector<Eigen::VectorXd> Kp_gains;   //< Proportional gains
+  std::vector<Eigen::VectorXd> Kd_gains;   //< Derivative gains
+  std::vector<FrameIndex> contact_ids;     //< Index of contacts
+  std::vector<FrameIndex> fixed_frame_ids; //< Index of frames kept fixed
+  Eigen::VectorXd x0;                      //< Reference state
+  double dt;                               //< Integration timestep
+  double mu;                               //< Friction parameter
+  double Lfoot;        //< Half-length of foot (if contact 6D)
+  double Wfoot;        //< Half-width of foot (if contact 6D)
+  long force_size;     //< Dimension of contact forces
+  double w_qref;       //< Weight for configuration regularization
+  double w_footpose;   //< Weight for foot placement
+  double w_centroidal; //< Weight for CoM tracking
+  double w_baserot;    //< Weight for base rotation
+  double w_force;      //< Weight for force regularization
+  bool verbose;        //< Print solver information
 };
 
 class IDSolver {
+public:
+  proxqp::dense::QP<double> qp_;
 
 protected:
   IDSettings settings_;
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
-  pinocchio::Model model_;
+  pin::Model model_;
   int force_dim_;
   int nforcein_;
   int nk_;
@@ -82,27 +81,27 @@ protected:
   Eigen::MatrixXd Jdot_;
 
   // Internal matrix computation
-  void computeMatrice(pinocchio::Data &data,
-                      const std::vector<bool> &contact_state,
-                      const Eigen::VectorXd &v, const Eigen::VectorXd &a,
-                      const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
-                      const Eigen::MatrixXd &M);
+  void computeMatrices(pin::Data &data, const std::vector<bool> &contact_state,
+                       const Eigen::VectorXd &v, const Eigen::VectorXd &a,
+                       const Eigen::VectorXd &tau,
+                       const Eigen::VectorXd &forces, const Eigen::MatrixXd &M);
 
 public:
-  IDSolver();
-  IDSolver(const IDSettings &settings, const pinocchio::Model &model);
-  void initialize(const IDSettings &settings, const pinocchio::Model &model);
+  explicit IDSolver(const IDSettings &settings, const pin::Model &model);
 
-  void solveQP(pinocchio::Data &data, const std::vector<bool> &contact_state,
+  void solveQP(pin::Data &data, const std::vector<bool> &contact_state,
                const Eigen::VectorXd &v, const Eigen::VectorXd &a,
                const Eigen::VectorXd &tau, const Eigen::VectorXd &forces,
                const Eigen::MatrixXd &M);
-  proxqp::dense::Model<double> getQP() { return qp_->model; }
-  Eigen::MatrixXd getA() { return qp_->model.A; }
-  Eigen::MatrixXd getH() { return qp_->model.H; }
-  Eigen::MatrixXd getC() { return qp_->model.C; }
-  Eigen::VectorXd getg() { return qp_->model.g; }
-  Eigen::VectorXd getb() { return qp_->model.b; }
+
+  SIMPLE_MPC_DEPRECATED
+  proxqp::dense::Model<double> getQP() { return qp_.model; }
+
+  Eigen::MatrixXd getA() { return qp_.model.A; }
+  Eigen::MatrixXd getH() { return qp_.model.H; }
+  Eigen::MatrixXd getC() { return qp_.model.C; }
+  Eigen::VectorXd getg() { return qp_.model.g; }
+  Eigen::VectorXd getb() { return qp_.model.b; }
 
   // QP results
   Eigen::VectorXd solved_forces_;
@@ -111,11 +110,12 @@ public:
 };
 
 class IKIDSolver {
+public:
+  proxqp::dense::QP<double> qp_;
 
 protected:
   IKIDSettings settings_;
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
-  pinocchio::Model model_;
+  pin::Model model_;
   int force_dim_;
   int nforcein_;
   int nk_;
@@ -147,27 +147,32 @@ protected:
   Eigen::VectorXd dq_diff_;
 
   // Internal matrix computation
-  void computeMatrice(pinocchio::Data &data,
-                      const std::vector<bool> &contact_state,
-                      const Eigen::VectorXd &x_measured,
-                      const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
-                      const Eigen::MatrixXd &M);
+  void computeMatrices(pin::Data &data, const std::vector<bool> &contact_state,
+                       const Eigen::VectorXd &x_measured,
+                       const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
+                       const Eigen::MatrixXd &M);
 
 public:
-  IKIDSolver();
-  IKIDSolver(const IKIDSettings &settings, const pinocchio::Model &model);
-  void initialize(const IKIDSettings &settings, const pinocchio::Model &model);
+  explicit IKIDSolver(const IKIDSettings &settings, const pin::Model &model);
 
-  void computeDifferences(pinocchio::Data &data,
-                          const Eigen::VectorXd &x_measured,
-                          const std::vector<pinocchio::SE3> foot_refs,
-                          const std::vector<pinocchio::SE3> foot_refs_next);
+  void computeDifferences(pin::Data &data, const Eigen::VectorXd &x_measured,
+                          const std::vector<pin::SE3> foot_refs,
+                          const std::vector<pin::SE3> foot_refs_next);
 
-  void solve_qp(pinocchio::Data &data, const std::vector<bool> &contact_state,
+  void solve_qp(pin::Data &data, const std::vector<bool> &contact_state,
                 const Eigen::VectorXd &x_measured,
                 const Eigen::VectorXd &forces, const Eigen::VectorXd &dH,
                 const Eigen::MatrixXd &M);
-  proxqp::dense::Model<double> getQP() { return qp_->model; }
+
+  SIMPLE_MPC_DEPRECATED
+  proxqp::dense::Model<double> getQP() { return qp_.model; }
+
+  Eigen::MatrixXd getA() { return qp_.model.A; }
+  Eigen::MatrixXd getH() { return qp_.model.H; }
+  Eigen::MatrixXd getC() { return qp_.model.C; }
+  Eigen::VectorXd getg() { return qp_.model.g; }
+  Eigen::VectorXd getb() { return qp_.model.b; }
+
   // QP results
   Eigen::VectorXd solved_forces_;
   Eigen::VectorXd solved_acc_;
