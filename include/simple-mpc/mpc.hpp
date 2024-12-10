@@ -9,9 +9,9 @@
 
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
+#include "simple-mpc/fwd.hpp"
 #include "simple-mpc/deprecated.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
-#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
@@ -121,16 +121,14 @@ public:
     pose_base_ = pose_ref;
   }
 
-  ConstVectorRef getPoseBase(const std::size_t t) const {
-    return ocp_handler_->getPoseBase(t);
-  }
+  ConstVectorRef getPoseBase(const std::size_t t) const;
 
   // getters and setters
-  TrajOptProblem &getTrajOptProblem() { return ocp_handler_->getProblem(); }
+  TrajOptProblem &getTrajOptProblem();
 
   SolverProxDDP &getSolver() { return *solver_; }
 
-  RobotHandler &getHandler() { return ocp_handler_->getHandler(); }
+  RobotHandler &getHandler();
 
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;

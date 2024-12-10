@@ -8,6 +8,7 @@
 
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -327,6 +328,14 @@ const pinocchio::SE3 MPC::getReferencePose(const std::size_t t,
                                            const std::string &ee_name) const {
   return ocp_handler_->getReferencePose(t, ee_name);
 }
+
+ConstVectorRef MPC::getPoseBase(const std::size_t t) const {
+  return ocp_handler_->getPoseBase(t);
+}
+
+TrajOptProblem &MPC::getTrajOptProblem() { return ocp_handler_->getProblem(); }
+
+RobotHandler &MPC::getHandler() { return ocp_handler_->getHandler(); }
 
 void MPC::switchToWalk(const Vector6d &velocity_base) {
   now_ = WALKING;
