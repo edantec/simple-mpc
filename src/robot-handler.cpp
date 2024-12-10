@@ -28,7 +28,7 @@ namespace simple_mpc {
     }
 
     // Build reduced model with locked joints
-    model_ = buildReducedModel(model_full_, locked_joint_ids, model_full_.referenceConfigurations[reference_configuration_name]);
+    buildReducedModel(model_full_, locked_joint_ids, model_full_.referenceConfigurations[reference_configuration_name], model_);
 
     // Root frame id
     base_id_ = model_.getFrameId(base_frame_name);
