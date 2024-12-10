@@ -82,8 +82,8 @@ public:
   void setReferencePoses(
       const std::size_t t,
       const std::map<std::string, pinocchio::SE3> &pose_refs) override;
-  void setTerminalReferencePose(const std::string &ee_name,
-                                const pinocchio::SE3 &pose_ref) override {}
+  void setTerminalReferencePose(const std::string & /*ee_name*/,
+                                const pinocchio::SE3 & /*pose_ref*/) override {}
   const pinocchio::SE3 getReferencePose(const std::size_t t,
                                         const std::string &ee_name) override;
 
