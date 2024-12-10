@@ -10,7 +10,6 @@
 #include <pinocchio/fwd.hpp>
 // Include pinocchio first
 #include <Eigen/Dense>
-#include <pinocchio/spatial/se3.hpp>
 #include <string>
 #include <vector>
 
