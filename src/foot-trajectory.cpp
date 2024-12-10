@@ -52,9 +52,9 @@ FootTrajectory::defineTranslationBezier(const point3_t &trans_init,
   }
   curve_translation bezier_curve(
       curve_translation(points.begin(), points.end(), 0., 1.));
-  boost::shared_ptr<curve_translation> ptr_curve =
-      boost::make_shared<curve_translation>(bezier_curve);
-  piecewise_curve se3curve = piecewise_curve(ptr_curve);
+
+  piecewise_curve se3curve;
+  se3curve.add_curve(bezier_curve);
 
   return se3curve;
 }
