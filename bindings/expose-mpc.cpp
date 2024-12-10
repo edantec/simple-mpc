@@ -14,6 +14,7 @@
 #include <eigenpy/std-vector.hpp>
 
 #include "simple-mpc/mpc.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/python.hpp"
 
 namespace simple_mpc {
