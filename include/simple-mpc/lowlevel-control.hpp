@@ -23,38 +23,35 @@ using namespace proxsuite;
 using pin::SE3;
 
 struct IDSettings {
-public:
-  std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
-  double mu;                                      // Friction parameter
-  double Lfoot;    // Half-length of foot (if contact 6D)
-  double Wfoot;    // Half-width of foot (if contact 6D)
-  long force_size; // Dimension of contact forces
-  double kd;       // Baumgarte coefficient
-  double w_acc;    // Weight for acceleration regularization
-  double w_tau;    // Weight for torque regularization
-  double w_force;  // Weight for force regularization
-  bool verbose;    // Print solver information
+  std::vector<FrameIndex> contact_ids; //< Index of contacts
+  double mu;                           //< Friction parameter
+  double Lfoot;                        //< Half-length of foot (if contact 6D)
+  double Wfoot;                        //< Half-width of foot (if contact 6D)
+  long force_size;                     //< Dimension of contact forces
+  double kd;                           //< Baumgarte coefficient
+  double w_acc;   //< Weight for acceleration regularization
+  double w_tau;   //< Weight for torque regularization
+  double w_force; //< Weight for force regularization
+  bool verbose;   //< Print solver information
 };
 
 struct IKIDSettings {
-public:
-  std::vector<Eigen::VectorXd> Kp_gains;          // Proportional gains
-  std::vector<Eigen::VectorXd> Kd_gains;          // Derivative gains
-  std::vector<pinocchio::FrameIndex> contact_ids; // Index of contacts
-  std::vector<pinocchio::FrameIndex>
-      fixed_frame_ids; // Index of frames kept fixed
-  Eigen::VectorXd x0;  // Reference state
-  double dt;           // Integration timestep
-  double mu;           // Friction parameter
-  double Lfoot;        // Half-length of foot (if contact 6D)
-  double Wfoot;        // Half-width of foot (if contact 6D)
-  long force_size;     // Dimension of contact forces
-  double w_qref;       // Weight for configuration regularization
-  double w_footpose;   // Weight for foot placement
-  double w_centroidal; // Weight for CoM tracking
-  double w_baserot;    // Weight for base rotation
-  double w_force;      // Weight for force regularization
-  bool verbose;        // Print solver information
+  std::vector<Eigen::VectorXd> Kp_gains;   //< Proportional gains
+  std::vector<Eigen::VectorXd> Kd_gains;   //< Derivative gains
+  std::vector<FrameIndex> contact_ids;     //< Index of contacts
+  std::vector<FrameIndex> fixed_frame_ids; //< Index of frames kept fixed
+  Eigen::VectorXd x0;                      //< Reference state
+  double dt;                               //< Integration timestep
+  double mu;                               //< Friction parameter
+  double Lfoot;        //< Half-length of foot (if contact 6D)
+  double Wfoot;        //< Half-width of foot (if contact 6D)
+  long force_size;     //< Dimension of contact forces
+  double w_qref;       //< Weight for configuration regularization
+  double w_footpose;   //< Weight for foot placement
+  double w_centroidal; //< Weight for CoM tracking
+  double w_baserot;    //< Weight for base rotation
+  double w_force;      //< Weight for force regularization
+  bool verbose;        //< Print solver information
 };
 
 class IDSolver {
