@@ -12,7 +12,7 @@
 namespace simple_mpc {
 
 IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
-    : settings_(settings), model_(model) {
+    : qp_(0, 0, 0), settings_(settings), model_(model) {
 
   // Set the dimension of the problem
   nk_ = (int)settings.contact_ids.size();
@@ -79,18 +79,18 @@ IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
   solved_torque_.resize(model_.nv - 6);
 
   // Create and initialize the QP object
-  qp_ = std::make_shared<proxqp::dense::QP<double>>(
-      n, neq, nin, false, proxqp::HessianType::Dense,
-      proxqp::DenseBackend::PrimalDualLDLT);
-  qp_->settings.eps_abs = 1e-3;
-  qp_->settings.eps_rel = 0.0;
-  qp_->settings.primal_infeasibility_solving = true;
-  qp_->settings.check_duality_gap = true;
-  qp_->settings.verbose = settings.verbose;
-  qp_->settings.max_iter = 10;
-  qp_->settings.max_iter_in = 10;
+  qp_ =
+      proxqp::dense::QP<double>(n, neq, nin, false, proxqp::HessianType::Dense,
+                                proxqp::DenseBackend::PrimalDualLDLT);
+  qp_.settings.eps_abs = 1e-3;
+  qp_.settings.eps_rel = 0.0;
+  qp_.settings.primal_infeasibility_solving = true;
+  qp_.settings.check_duality_gap = true;
+  qp_.settings.verbose = settings.verbose;
+  qp_.settings.max_iter = 10;
+  qp_.settings.max_iter_in = 10;
 
-  qp_->init(H_, g_, A_, b_, C_, l_, u_);
+  qp_.init(H_, g_, A_, b_, C_, l_, u_);
 }
 
 void IDSolver::computeMatrices(pinocchio::Data &data,
@@ -170,17 +170,17 @@ void IDSolver::solveQP(pinocchio::Data &data,
                        const Eigen::MatrixXd &M) {
 
   computeMatrices(data, contact_state, v, a, tau, forces, M);
-  qp_->update(H_, g_, A_, b_, C_, l_, u_, false);
-  qp_->solve();
+  qp_.update(H_, g_, A_, b_, C_, l_, u_, false);
+  qp_.solve();
 
-  solved_acc_ = a + qp_->results.x.head(model_.nv);
-  solved_forces_ = forces + qp_->results.x.segment(model_.nv, force_dim_);
-  solved_torque_ = tau + qp_->results.x.tail(model_.nv - 6);
+  solved_acc_ = a + qp_.results.x.head(model_.nv);
+  solved_forces_ = forces + qp_.results.x.segment(model_.nv, force_dim_);
+  solved_torque_ = tau + qp_.results.x.tail(model_.nv - 6);
 }
 
 IKIDSolver::IKIDSolver(const IKIDSettings &settings,
                        const pinocchio::Model &model)
-    : settings_(settings), model_(model) {
+    : qp_(0, 0, 0), settings_(settings), model_(model) {
 
   Jfoot_.resize(6, model_.nv);
   Jfoot_.setZero();
@@ -274,18 +274,17 @@ IKIDSolver::IKIDSolver(const IKIDSettings &settings,
   solved_acc_.resize(model_.nv);
   solved_torque_.resize(model_.nv - 6);
 
-  qp_ = std::make_shared<proxqp::dense::QP<double>>(
-      n, neq, nin, true, proxqp::HessianType::Dense,
-      proxqp::DenseBackend::PrimalDualLDLT);
-  qp_->settings.eps_abs = 1e-3;
-  qp_->settings.eps_rel = 0.0;
-  qp_->settings.primal_infeasibility_solving = true;
-  qp_->settings.check_duality_gap = true;
-  qp_->settings.verbose = settings.verbose;
-  qp_->settings.max_iter = 10;
-  qp_->settings.max_iter_in = 10;
+  qp_ = proxqp::dense::QP<double>(n, neq, nin, true, proxqp::HessianType::Dense,
+                                  proxqp::DenseBackend::PrimalDualLDLT);
+  qp_.settings.eps_abs = 1e-3;
+  qp_.settings.eps_rel = 0.0;
+  qp_.settings.primal_infeasibility_solving = true;
+  qp_.settings.check_duality_gap = true;
+  qp_.settings.verbose = settings.verbose;
+  qp_.settings.max_iter = 10;
+  qp_.settings.max_iter_in = 10;
 
-  qp_->init(H_, g_, A_, b_, C_, l_, u_, l_box_, u_box_);
+  qp_.init(H_, g_, A_, b_, C_, l_, u_, l_box_, u_box_);
 }
 
 void IKIDSolver::computeDifferences(
@@ -420,12 +419,12 @@ void IKIDSolver::solve_qp(pinocchio::Data &data,
                           const Eigen::VectorXd &dH, const Eigen::MatrixXd &M) {
   computeMatrices(data, contact_state, v_current, forces, dH, M);
 
-  qp_->update(H_, g_, A_, b_, C_, l_, u_, l_box_, u_box_, false);
-  qp_->solve();
+  qp_.update(H_, g_, A_, b_, C_, l_, u_, l_box_, u_box_, false);
+  qp_.solve();
 
-  solved_acc_ = qp_->results.x.head(model_.nv);
-  solved_forces_ = forces + qp_->results.x.segment(model_.nv, force_dim_);
-  solved_torque_ = qp_->results.x.tail(model_.nv - 6);
+  solved_acc_ = qp_.results.x.head(model_.nv);
+  solved_forces_ = forces + qp_.results.x.segment(model_.nv, force_dim_);
+  solved_torque_ = qp_.results.x.tail(model_.nv - 6);
 }
 
 } // namespace simple_mpc

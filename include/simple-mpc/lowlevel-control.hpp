@@ -57,7 +57,7 @@ struct IKIDSettings {
 
 class IDSolver {
 public:
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
+  proxqp::dense::QP<double> qp_;
 
 protected:
   IDSettings settings_;
@@ -95,13 +95,13 @@ public:
                const Eigen::MatrixXd &M);
 
   SIMPLE_MPC_DEPRECATED
-  proxqp::dense::Model<double> getQP() { return qp_->model; }
+  proxqp::dense::Model<double> getQP() { return qp_.model; }
 
-  Eigen::MatrixXd getA() { return qp_->model.A; }
-  Eigen::MatrixXd getH() { return qp_->model.H; }
-  Eigen::MatrixXd getC() { return qp_->model.C; }
-  Eigen::VectorXd getg() { return qp_->model.g; }
-  Eigen::VectorXd getb() { return qp_->model.b; }
+  Eigen::MatrixXd getA() { return qp_.model.A; }
+  Eigen::MatrixXd getH() { return qp_.model.H; }
+  Eigen::MatrixXd getC() { return qp_.model.C; }
+  Eigen::VectorXd getg() { return qp_.model.g; }
+  Eigen::VectorXd getb() { return qp_.model.b; }
 
   // QP results
   Eigen::VectorXd solved_forces_;
@@ -111,7 +111,7 @@ public:
 
 class IKIDSolver {
 public:
-  std::shared_ptr<proxqp::dense::QP<double>> qp_;
+  proxqp::dense::QP<double> qp_;
 
 protected:
   IKIDSettings settings_;
@@ -165,13 +165,13 @@ public:
                 const Eigen::MatrixXd &M);
 
   SIMPLE_MPC_DEPRECATED
-  proxqp::dense::Model<double> getQP() { return qp_->model; }
+  proxqp::dense::Model<double> getQP() { return qp_.model; }
 
-  Eigen::MatrixXd getA() { return qp_->model.A; }
-  Eigen::MatrixXd getH() { return qp_->model.H; }
-  Eigen::MatrixXd getC() { return qp_->model.C; }
-  Eigen::VectorXd getg() { return qp_->model.g; }
-  Eigen::VectorXd getb() { return qp_->model.b; }
+  Eigen::MatrixXd getA() { return qp_.model.A; }
+  Eigen::MatrixXd getH() { return qp_.model.H; }
+  Eigen::MatrixXd getC() { return qp_.model.C; }
+  Eigen::VectorXd getg() { return qp_.model.g; }
+  Eigen::VectorXd getb() { return qp_.model.b; }
 
   // QP results
   Eigen::VectorXd solved_forces_;
