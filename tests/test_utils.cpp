@@ -59,7 +59,6 @@ RobotModelHandler getSoloHandler() {
 
     pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
     srdf::loadReferenceConfigurations(model, srdf_path, false);
-    srdf::loadRotorParameters(model, srdf_path, false);
 
     // Actually create handler
     std::string base_joint = "root_joint";

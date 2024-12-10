@@ -142,23 +142,9 @@ BOOST_AUTO_TEST_CASE(model_handler) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(build_solo) {
-  // RobotDataHandler handler = getSoloHandler();
-
-  // BOOST_CHECK_EQUAL(handler.getModel().nq, 19);
-  // BOOST_CHECK_EQUAL(handler.getModel().nv, 18);
-  // BOOST_CHECK_EQUAL(handler.getMass(), 2.5000027900000004);
-
-  // Eigen::VectorXd q1(19);
-  // q1.setZero();
-  // q1[6] = 1;
-
-  // handler.updateConfiguration(q1, false);
-  // BOOST_CHECK_EQUAL(handler.getConfiguration(), q1);
-  // BOOST_CHECK_EQUAL(handler.getFootName(1), "FL_FOOT");
-
-  // Eigen::Vector3d com = handler.getComPosition();
-  // pinocchio::SE3 pose = handler.getFootPose("FL_FOOT");
+BOOST_AUTO_TEST_CASE(data_handler) {
+  const RobotModelHandler model_handler = getSoloHandler();
+  RobotDataHandler data_handler(model_handler);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
