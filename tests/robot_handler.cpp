@@ -10,17 +10,24 @@ BOOST_AUTO_TEST_SUITE(robot_handler)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(build_talos) {
-  RobotModelHandler handler = getTalosModelHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
-  BOOST_CHECK_EQUAL(handler.getModel().nq, 29);
-  BOOST_CHECK_EQUAL(handler.getModel().nv, 28);
-  BOOST_CHECK_EQUAL(handler.getMass(), 90.272192000000018);
+  BOOST_CHECK_EQUAL(model_handler.getModel().nq, 29);
+  BOOST_CHECK_EQUAL(model_handler.getModel().nv, 28);
+  BOOST_CHECK_EQUAL(model_handler.getMass(), 90.272192000000018);
 
-  Eigen::VectorXd q1(29);
-  q1 << 0, 0, 0, 0, 0, 0, 1, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.1, 0.1, 0.1,
-      0.1, 0, 0.1, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1;
+  Eigen::Vector<double, 29> q1 = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.1, 0.1, 0.1,
+                                  0.1, 0.1, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.0, 0.1,
+                                  0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1};
 
-  handler.updateConfiguration(q1, false);
+  Eigen::Vector<double, 28> v1 = Eigen::Vector<double, 28>::Zero();
+
+  Eigen::Vector<double, 57> x1;
+  x1 << q1, v1;
+
+  data_handler.updateInternalData(x1, false);
+
   BOOST_CHECK_EQUAL(handler.getConfiguration(), q1);
   BOOST_CHECK_EQUAL(handler.getFootName(1), "right_sole_link");
 

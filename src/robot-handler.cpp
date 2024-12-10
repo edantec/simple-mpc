@@ -14,7 +14,7 @@ namespace simple_mpc {
   {
     // Construct controlled and locked joints ids list
     std::vector<unsigned long> locked_joint_ids;
-    for(size_t i = 0; i< model_full_.names.size(); i++)
+    for(size_t i = 1; i< model_full_.names.size(); i++)
     {
       const std::string joint_name = model_full_.names.at(i);
       if(count(locked_joint_names.begin(), locked_joint_names.end(), joint_name) == 0)
@@ -34,7 +34,7 @@ namespace simple_mpc {
     base_id_ = model_.getFrameId(base_frame_name);
 
     // Set reference state
-    reference_state_ = shapeState(model_full_.referenceConfigurations[reference_configuration_name], Eigen::VectorXd::Zero(model_.nv));
+    reference_state_ = shapeState(model_full_.referenceConfigurations[reference_configuration_name], Eigen::VectorXd::Zero(model_full_.nv));
   }
 
 FrameIndex RobotModelHandler::addFoot(const std::string& foot_name, const std::string& placement_reference_frame_name, const SE3& placement)
@@ -67,13 +67,9 @@ Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd &q, const Ei
   assert(nq_full == q.size() && "Configuration vector has wrong size.");
   assert(nv_full == v.size() && "Velocity vector has wrong size.");
 
-  // Floating base
-  x.head<7>() = q.head<7>();
-  x.segment<6>(nq) = v.head<6>();
-
   // Copy each controlled joint to state vector
-  int iq = 7;
-  int iv = nq + 6;
+  int iq = 0;
+  int iv = nq;
   for (unsigned long jointId : controlled_joints_ids_)
   {
     const size_t j_idx_q = model_full_.idx_qs[jointId];

@@ -18,7 +18,7 @@ RobotModelHandler getTalosModelHandler() {
     srdf::loadRotorParameters(model, srdf_path, false);
 
     // Lock joint list
-    const std::vector<std::string> controlled_joints_names {
+    const std::vector<std::string> controlled_joints_names { "universe",
         "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
         "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
         "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
