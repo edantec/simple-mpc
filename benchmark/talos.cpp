@@ -51,11 +51,12 @@ int main() {
   // Actually create handler
   std::string base_joint = "root_joint";
   RobotModelHandler model_handler(model, "half_sitting", base_joint, locked_joints_names);
-  RobotDataHandler data_handler(model_handler);
 
   // Add feet
   model_handler.addFoot("left_sole_link", base_joint, pinocchio::SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.)));
   model_handler.addFoot("right_sole_link", base_joint, pinocchio::SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.)));
+
+  RobotDataHandler data_handler(model_handler);
 
   size_t T = 100;
 
@@ -90,7 +91,9 @@ int main() {
   problem_settings.w_cent = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_cent.diagonal() = w_cent;
   problem_settings.gravity = {0, 0, -9.81};
-  problem_settings.force_size = 6,
+  problem_settings.force_size = 6;
+  problem_settings.Kp_correction = Eigen::VectorXd::Ones(6);
+  problem_settings.Kd_correction = Eigen::VectorXd::Ones(6);
   problem_settings.w_forces = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_forces.diagonal() = w_forces;
   problem_settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
