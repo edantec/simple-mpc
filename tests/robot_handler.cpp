@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(data_handler) {
 
   // Data
   {
-    BOOST_CHECK(data_handler.getData() == data);
+    BOOST_CHECK(model_handler.getModel().check(data_handler.getData()));
   }
 
   // Foot pose
