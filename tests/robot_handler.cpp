@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(model_handler) {
     for(int n=0;n<2;n++) // First time with random data, second with reference state
     {
       // State vector without locked joints
-      for(size_t i = 1; i< model_handler.getModel().njoints; i++) {
+      for(int i = 1; i< model_handler.getModel().njoints; i++) {
         const std::string& joint_name = model_handler.getModel().names[i];
         const JointModel& joint_full = model.joints[model.getJointId(joint_name)];
         const JointModel& joint_red = model_handler.getModel().joints[i];
@@ -192,9 +192,20 @@ BOOST_AUTO_TEST_CASE(data_handler) {
       BOOST_CHECK(data.oMf[foot_id].isApprox(data_handler.getFootPose(foot_name)));
       BOOST_CHECK(data.oMf[ref_foot_id].isApprox(data_handler.getRefFootPose(foot_name)));
     }
-
   }
-  // const SE3 &getRootFramePose() const
+
+  // Base pose
+  {
+    data_handler.updateInternalData(x, true);
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+
+    const std::string base_name {"root_joint"};
+    const FrameIndex base_id = model.getFrameId(base_name);
+
+    BOOST_CHECK(data.oMf[base_id].isApprox(data_handler.getBaseFramePose()));
+  }
+
   // RobotDataHandler::CentroidalStateVector getCentroidalState()
 }
 

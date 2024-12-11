@@ -44,7 +44,7 @@ void exposeHandler() {
         .def("updateJacobiansMassMatrix", &RobotDataHandler::updateJacobiansMassMatrix)
         .def("getRefFootPose", &RobotDataHandler::getRefFootPose, bp::return_internal_reference<>())
         .def("getFootPose", &RobotDataHandler::getFootPose, bp::return_internal_reference<>())
-        .def("getRootFramePose", &RobotDataHandler::getRootFramePose, bp::return_internal_reference<>())
+        .def("getBaseFramePose", &RobotDataHandler::getBaseFramePose, bp::return_internal_reference<>())
         .def("getModelHandler", &RobotDataHandler::getModelHandler, bp::return_internal_reference<>())
         .def("getData", &RobotDataHandler::getData, bp::return_internal_reference<>())
         .def("getCentroidalState", &RobotDataHandler::getCentroidalState)

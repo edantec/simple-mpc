@@ -190,7 +190,7 @@ public:
   {
     return data_.oMf[model_handler_.getFootId(foot_name)];
   };
-  const SE3 &getRootFramePose() const {
+  const SE3 &getBaseFramePose() const {
     return data_.oMf[model_handler_.getBaseFrameId()];
   }
   const RobotModelHandler &getModelHandler() const
