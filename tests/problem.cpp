@@ -13,7 +13,8 @@ BOOST_AUTO_TEST_SUITE(problem)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(fulldynamics) {
-  RobotDataHandler handler = getTalosModelHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -26,8 +27,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   land_constraint.insert({contact_names[0], true});
   land_constraint.insert({contact_names[1], false});
 
-  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
-  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  pinocchio::SE3 p1 = data_handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = data_handler.getFootPose(contact_names[1]);
   p1.translation() << 0, 0.1, 0;
   p2.translation() << 0, -0.1, 0;
   contact_poses.insert({contact_names[0], p1});
@@ -39,8 +40,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
 
-  FullDynamicsSettings settings = getFullDynamicsSettings(handler);
-  FullDynamicsProblem fdproblem(settings, handler);
+  FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
+  FullDynamicsProblem fdproblem(settings, model_handler);
   StageModel sm = fdproblem.createStage(contact_states, contact_poses,
                                         force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
@@ -106,7 +107,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(kinodynamics) {
-  RobotDataHandler handler = getTalosModelHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -119,15 +121,15 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   land_constraint.insert({contact_names[0], true});
   land_constraint.insert({contact_names[1], false});
 
-  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
-  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  pinocchio::SE3 p1 = data_handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = data_handler.getFootPose(contact_names[1]);
   p1.translation() << 0, 0.1, 0;
   p2.translation() << 0, -0.1, 0;
   contact_poses.insert({contact_names[0], p1});
   contact_poses.insert({contact_names[1], p2});
 
-  KinodynamicsSettings settings = getKinodynamicsSettings(handler);
-  KinodynamicsProblem knproblem(settings, handler);
+  KinodynamicsSettings settings = getKinodynamicsSettings(model_handler);
+  KinodynamicsProblem knproblem(settings, model_handler);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -141,7 +143,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  knproblem.createProblem(handler.getState(), 100, 6, settings.gravity[2]);
+  knproblem.createProblem(data_handler.getState(), 100, 6, settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*knproblem.getProblem()->stages_[0]->cost_);
@@ -200,9 +202,11 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(centroidal) {
-  RobotDataHandler handler = getTalosModelHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
+
   CentroidalSettings settings = getCentroidalSettings();
-  CentroidalProblem cproblem(settings, handler);
+  CentroidalProblem cproblem(settings, model_handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -215,8 +219,8 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   land_constraint.insert({contact_names[0], true});
   land_constraint.insert({contact_names[1], false});
 
-  pinocchio::SE3 p1 = handler.getFootPose(contact_names[0]);
-  pinocchio::SE3 p2 = handler.getFootPose(contact_names[1]);
+  pinocchio::SE3 p1 = data_handler.getFootPose(contact_names[0]);
+  pinocchio::SE3 p2 = data_handler.getFootPose(contact_names[1]);
   p1.translation() << 0, 0.1, 0;
   p2.translation() << 0, -0.1, 0;
   contact_poses.insert({contact_names[0], p1});
@@ -234,7 +238,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 1);
 
-  cproblem.createProblem(handler.getCentroidalState(), 100, 6,
+  cproblem.createProblem(data_handler.getCentroidalState(), 100, 6,
                          settings.gravity[2]);
 
   CostStack *csp =
@@ -295,11 +299,13 @@ BOOST_AUTO_TEST_CASE(centroidal) {
 }
 
 BOOST_AUTO_TEST_CASE(centroidal_solo) {
-  RobotDataHandler handler = getSoloHandler();
+  RobotModelHandler model_handler = getSoloHandler();
+  RobotDataHandler data_handler(model_handler);
+
   CentroidalSettings settings = getCentroidalSettings();
   settings.force_size = 3;
 
-  CentroidalProblem cproblem(settings, handler);
+  CentroidalProblem cproblem(settings, model_handler);
 
   std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
                                             "HL_FOOT"};
@@ -310,10 +316,10 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   contact_states.insert({contact_names[1], true});
   contact_states.insert({contact_names[2], true});
   contact_states.insert({contact_names[3], false});
-  pinocchio::SE3 p1 = handler.getFootPose("FR_FOOT");
-  pinocchio::SE3 p2 = handler.getFootPose("FL_FOOT");
-  pinocchio::SE3 p3 = handler.getFootPose("HR_FOOT");
-  pinocchio::SE3 p4 = handler.getFootPose("HL_FOOT");
+  pinocchio::SE3 p1 = data_handler.getFootPose("FR_FOOT");
+  pinocchio::SE3 p2 = data_handler.getFootPose("FL_FOOT");
+  pinocchio::SE3 p3 = data_handler.getFootPose("HR_FOOT");
+  pinocchio::SE3 p4 = data_handler.getFootPose("HL_FOOT");
 
   contact_poses.insert({contact_names[0], p1});
   contact_poses.insert({contact_names[1], p2});
@@ -322,7 +328,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(3);
-  f1 << 0, 0, handler.getMass() / 3;
+  f1 << 0, 0, model_handler.getMass() / 3;
   force_refs.insert({"FR_FOOT", f1});
   force_refs.insert({"FL_FOOT", f1});
   force_refs.insert({"HR_FOOT", f1});
@@ -334,7 +340,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  cproblem.createProblem(handler.getCentroidalState(), 100, 3,
+  cproblem.createProblem(data_handler.getCentroidalState(), 100, 3,
                          settings.gravity[2]);
 
   CostStack *csp =

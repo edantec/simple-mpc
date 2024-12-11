@@ -1,6 +1,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "simple-mpc/robot-handler.hpp"
+#include "simple-mpc/fulldynamics.hpp"
+#include "simple-mpc/kinodynamics.hpp"
+#include "simple-mpc/centroidal-dynamics.hpp"
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/parsers/srdf.hpp>
@@ -73,8 +76,8 @@ RobotModelHandler getSoloHandler() {
     return handler;
 }
 
-FullDynamicsSettings getFullDynamicsSettings(RobotDataHandler handler) {
-  int nv = handler.getModel().nv;
+FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
+  int nv = model_handler.getModel().nv;
   int nu = nv - 6;
 
   FullDynamicsSettings settings;
@@ -104,13 +107,13 @@ FullDynamicsSettings getFullDynamicsSettings(RobotDataHandler handler) {
       0.0001;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
   settings.umin =
-      -handler.getModel().effortLimit.tail(handler.getModel().nv - 6);
+      -model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
   settings.umax =
-      handler.getModel().effortLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
   settings.qmin =
-      handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.qmax =
-      handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;
@@ -121,8 +124,8 @@ FullDynamicsSettings getFullDynamicsSettings(RobotDataHandler handler) {
   return settings;
 }
 
-KinodynamicsSettings getKinodynamicsSettings(RobotDataHandler handler) {
-  int nv = handler.getModel().nv;
+KinodynamicsSettings getKinodynamicsSettings(RobotModelHandler model_handler) {
+  int nv = model_handler.getModel().nv;
   int nu = nv + 6;
 
   KinodynamicsSettings settings;
@@ -157,9 +160,9 @@ KinodynamicsSettings getKinodynamicsSettings(RobotDataHandler handler) {
   settings.force_size = 6;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 50000;
   settings.qmin =
-      handler.getModel().lowerPositionLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.qmax =
-      handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;
