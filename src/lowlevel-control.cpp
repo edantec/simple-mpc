@@ -39,7 +39,7 @@ IDSolver::IDSolver(const IDSettings &settings, const pin::Model &model)
   H_.block(model_.nv, model_.nv, force_dim_, force_dim_).diagonal() =
       Eigen::VectorXd::Ones(force_dim_) * settings_.w_force;
   H_.bottomRightCorner(model_.nv - 6, model_.nv - 6).diagonal() =
-      Eigen::VectorXd::Ones(model_.nv) * settings_.w_tau;
+      Eigen::VectorXd::Ones(model_.nv - 6) * settings_.w_tau;
 
   // Initialize torque selection matrix
   S_ = Eigen::MatrixXd::Zero(model_.nv, model_.nv - 6);
