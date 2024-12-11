@@ -42,16 +42,15 @@ RobotModelHandler getTalosModelHandler() {
         ), locked_joints_names.end()
     );
 
-
     // Actually create handler
     std::string base_joint = "root_joint";
-    RobotModelHandler handler(model, "half_sitting", base_joint, locked_joints_names);
+    RobotModelHandler model_handler(model, "half_sitting", base_joint, locked_joints_names);
 
     // Add feet
-    handler.addFoot("left_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.)));
-    handler.addFoot("right_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.)));
+    model_handler.addFoot("left_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.)));
+    model_handler.addFoot("right_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.)));
 
-    return handler;
+    return model_handler;
 }
 
 RobotModelHandler getSoloHandler() {
@@ -65,15 +64,15 @@ RobotModelHandler getSoloHandler() {
 
     // Actually create handler
     std::string base_joint = "root_joint";
-    RobotModelHandler handler(model, "straight_standing", base_joint);
+    RobotModelHandler model_handler(model, "straight_standing", base_joint);
 
     // Add feet
-    handler.addFoot("FR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, -0.1, 0.)));
-    handler.addFoot("FL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, 0.1, 0.)));
-    handler.addFoot("HR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, -0.1, 0.)));
-    handler.addFoot("HL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, 0.1, 0.)));
+    model_handler.addFoot("FR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, -0.1, 0.)));
+    model_handler.addFoot("FL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, 0.1, 0.)));
+    model_handler.addFoot("HR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, -0.1, 0.)));
+    model_handler.addFoot("HL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, 0.1, 0.)));
 
-    return handler;
+    return model_handler;
 }
 
 FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
@@ -114,7 +113,7 @@ FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
       model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.qmax =
       model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
-      handler.getModel().upperPositionLimit.tail(handler.getModel().nv - 6);
+      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.Kp_correction = Eigen::VectorXd::Ones(6);
   settings.Kd_correction = Eigen::VectorXd::Ones(6);
   settings.mu = 0.8;
