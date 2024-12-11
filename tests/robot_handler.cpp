@@ -181,9 +181,19 @@ BOOST_AUTO_TEST_CASE(data_handler) {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
 
+    const std::vector<std::string> feet_names {"FR_FOOT", "FL_FOOT", "HR_FOOT", "HL_FOOT"};
+
+    for(std::string foot_name: feet_names)
+    {
+      const std::string ref_foot_name = foot_name + "_ref";
+      const FrameIndex foot_id = model.getFrameId(foot_name);
+      const FrameIndex ref_foot_id = model.getFrameId(ref_foot_name);
+
+      BOOST_CHECK(data.oMf[foot_id].isApprox(data_handler.getFootPose(foot_name)));
+      BOOST_CHECK(data.oMf[ref_foot_id].isApprox(data_handler.getRefFootPose(foot_name)));
+    }
+
   }
-  // const SE3 &getRefFootPose(const std::string &foot_name)
-  // const SE3 &getFootPose(const std::string &foot_name)
   // const SE3 &getRootFramePose() const
   // RobotDataHandler::CentroidalStateVector getCentroidalState()
 }
