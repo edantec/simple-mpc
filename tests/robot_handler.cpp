@@ -6,6 +6,12 @@
 #include "test_utils.cpp"
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/algorithm/center-of-mass.hpp>
+#include <pinocchio/algorithm/centroidal.hpp>
+#include <pinocchio/algorithm/compute-all-terms.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/crba.hpp>
+#include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
 
 
 BOOST_AUTO_TEST_SUITE(robot_handler)
@@ -206,7 +212,24 @@ BOOST_AUTO_TEST_CASE(data_handler) {
     BOOST_CHECK(data.oMf[base_id].isApprox(data_handler.getBaseFramePose()));
   }
 
-  // RobotDataHandler::CentroidalStateVector getCentroidalState()
+  // Centroidal state
+  {
+    data_handler.updateInternalData(x, true);
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    pinocchio::computeCentroidalMomentum(model, data, q, v);
+    pinocchio::computeJointJacobians(model, data);
+    pinocchio::computeJointJacobiansTimeVariation(model, data, q, v);
+    pinocchio::crba(model, data, q);
+    pinocchio::make_symmetric(data.M);
+    pinocchio::nonLinearEffects(model, data, q, v);
+    pinocchio::dccrba(model, data, q, v);
+
+    const Eigen::Vector<double, 9> x_centroidal = data_handler.getCentroidalState();
+    BOOST_CHECK(data.com[0].isApprox(x_centroidal.head(3)));
+    BOOST_CHECK(data.hg.linear().isApprox(x_centroidal.segment(3, 3)));
+    BOOST_CHECK(data.hg.angular().isApprox(x_centroidal.tail(3)));
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
