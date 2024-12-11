@@ -31,7 +31,9 @@ using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 KinodynamicsOCP::KinodynamicsOCP(const KinodynamicsSettings &settings,
                                  const RobotModelHandler &model_handler,
                                  const RobotDataHandler &data_handler)
-    : Base(model_handler, data_handler), settings_(settings) {
+: Base(model_handler, data_handler)
+, settings_(settings)
+{
 
   nu_ = nv_ - 6 + settings_.force_size * (int)robot_model_handler_.getFeetNames().size();
   x0_ = robot_model_handler_.getReferenceState();

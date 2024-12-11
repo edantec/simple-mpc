@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include "simple-mpc/lowlevel-control.hpp"
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/joint-configuration.hpp>
 #include <proxsuite/proxqp/settings.hpp>
 
 namespace simple_mpc {
@@ -107,8 +108,8 @@ void IDSolver::computeMatrices(pinocchio::Data &data,
   C_.block(0, 0, nforcein_ * nk_, model_.nv + force_dim_).setZero();
 
   // Update diff torque lower and upper limits
-  l_.tail(model_.nv - 6) = model_.lowerEffortLimit.tail(model_.nv - 6) - tau;
-  u_.tail(model_.nv - 6) = model_.upperEffortLimit.tail(model_.nv - 6) - tau;
+  l_.tail(model_.nv - 6) = -model_.effortLimit.tail(model_.nv - 6) - tau;
+  u_.tail(model_.nv - 6) = model_.effortLimit.tail(model_.nv - 6) - tau;
 
   // Update the problem with respect to current set of contacts
   for (long i = 0; i < nk_; i++) {
@@ -238,11 +239,11 @@ IKIDSolver::IKIDSolver(const IKIDSettings &settings,
   l_box_.resize(n);
   l_box_.setOnes();
   l_box_ *= -100000;
-  l_box_.tail(model.nv - 6) = model.lowerEffortLimit.tail(model.nv - 6);
+  l_box_.tail(model.nv - 6) = -model.effortLimit.tail(model.nv - 6);
   u_box_.resize(n);
   u_box_.setOnes();
   u_box_ *= 100000;
-  u_box_.tail(model.nv - 6) = model.upperEffortLimit.tail(model.nv - 6);
+  u_box_.tail(model.nv - 6) = model.effortLimit.tail(model.nv - 6);
 
   Cmin_.resize(nforcein_, settings.force_size);
   if (settings.force_size == 3) {
@@ -290,9 +291,9 @@ IKIDSolver::IKIDSolver(const IKIDSettings &settings,
 void IKIDSolver::computeDifferences(
     pinocchio::Data &data, const Eigen::VectorXd &x_measured,
     const std::vector<pinocchio::SE3> foot_refs,
-    const std::vector<pinocchio::SE3> foot_refs_next) {
-  difference(model_, x_measured.head(model_.nq), settings_.x0.head(model_.nq),
-             q_diff_);
+    const std::vector<pinocchio::SE3> foot_refs_next)
+{
+  difference(model_, x_measured.head(model_.nq), settings_.x0.head(model_.nq), q_diff_);
   dq_diff_ = settings_.x0.tail(model_.nv) - x_measured.tail(model_.nv);
 
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {

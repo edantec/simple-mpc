@@ -54,7 +54,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  explicit KinodynamicsOCP(const KinodynamicsSettings &settings, const RobotModelHandler &model_handler, , const RobotDataHandler &data_handler);
+  explicit KinodynamicsOCP(const KinodynamicsSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
 
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(KinodynamicsOCP);
 

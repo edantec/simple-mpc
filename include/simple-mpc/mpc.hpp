@@ -13,6 +13,7 @@
 #include "simple-mpc/deprecated.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
 #include "simple-mpc/robot-handler.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 
@@ -125,8 +126,9 @@ public:
 
   SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
   SolverProxDDP &getSolver() { return *solver_; }
-  const RobotDataHandler &getDataHandler() const { return problem_->getDataHandler(); }
-  const RobotModelHandler &getModelHandler() const { return problem_->getModelHandler(); }
+  const RobotDataHandler &getDataHandler() const { return ocp_handler_->getDataHandler(); }
+  const RobotModelHandler &getModelHandler() const { return ocp_handler_->getModelHandler(); }
+
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
   }

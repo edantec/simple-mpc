@@ -9,6 +9,7 @@
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
 #include "simple-mpc/ocp-handler.hpp"
+#include "simple-mpc/robot-handler.hpp"
 
 namespace simple_mpc {
 using namespace aligator;
@@ -181,7 +182,7 @@ void MPC::generateCycleHorizon(
 
 void MPC::iterate(const Eigen::VectorXd &x) {
 
-  ocp_handler_->updateState(x);
+  ocp_handler_->getDataHandler().updateInternalData(x, false);
 
   // Recede all horizons
   recedeWithCycle();
@@ -333,8 +334,6 @@ ConstVectorRef MPC::getPoseBase(const std::size_t t) const {
 }
 
 TrajOptProblem &MPC::getTrajOptProblem() { return ocp_handler_->getProblem(); }
-
-RobotHandler &MPC::getHandler() { return ocp_handler_->getHandler(); }
 
 void MPC::switchToWalk(const Vector6d &velocity_base) {
   now_ = WALKING;

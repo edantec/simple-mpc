@@ -78,8 +78,8 @@ int main() {
   problem_settings.w_forces = Eigen::MatrixXd::Zero(6, 6);
   problem_settings.w_forces.diagonal() = w_forces;
   problem_settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
-  problem_settings.umin = handler.getModel().lowerEffortLimit.tail(nu);
-  problem_settings.umax = handler.getModel().upperEffortLimit.tail(nu);
+  problem_settings.umin = -handler.getModel().effortLimit.tail(nu);
+  problem_settings.umax = handler.getModel().effortLimit.tail(nu);
   problem_settings.qmin = handler.getModel().lowerPositionLimit.tail(nu);
   problem_settings.qmax = handler.getModel().upperPositionLimit.tail(nu);
   problem_settings.mu = 0.8;

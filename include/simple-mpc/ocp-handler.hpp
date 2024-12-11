@@ -133,8 +133,9 @@ public:
     return *problem_;
   }
 
-  RobotHandler &getHandler() { return handler_; }
-  const RobotHandler &getHandler() const { return handler_; }
+  const RobotModelHandler &getModelHandler() const { return robot_model_handler_; }
+  const RobotDataHandler &getDataHandler() const { return robot_data_handler_; }
+  RobotDataHandler &getDataHandler() { return robot_data_handler_; }
   int getNu() { return nu_; }
 
 protected:

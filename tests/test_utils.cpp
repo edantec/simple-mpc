@@ -107,9 +107,9 @@ FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
       0.0001;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
   settings.umin =
-      model_handler.getModel().lowerEffortLimit.tail(model_handler.getModel().nv - 6);
+      -model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
   settings.umax =
-      model_handler.getModel().upperEffortLimit.tail(model_handler.getModel().nv - 6);
+      model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
   settings.qmin =
       model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
   settings.qmax =

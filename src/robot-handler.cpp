@@ -134,7 +134,7 @@ void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd &x) {
   computeJointJacobians(model_handler_.getModel(), data_);
   computeJointJacobiansTimeVariation(model_handler_.getModel(), data_, q, v);
   crba(model_handler_.getModel(), data_, q);
-  rdata_.M.triangularView<Eigen::StrictlyLower>() =
+  data_.M.triangularView<Eigen::StrictlyLower>() =
       data_.M.transpose().triangularView<Eigen::StrictlyLower>();
   nonLinearEffects(model_handler_.getModel(), data_, q, v);
   dccrba(model_handler_.getModel(), data_, q, v);
