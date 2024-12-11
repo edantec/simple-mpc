@@ -5,7 +5,7 @@
 
 namespace simple_mpc::python {
 
-auto *createCentroidal(const bp::dict &settings, const RobotHandler &handler) {
+auto *createCentroidal(const bp::dict &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler) {
   CentroidalSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_com = bp::extract<Eigen::Matrix3d>(settings["w_com"]);
@@ -22,7 +22,7 @@ auto *createCentroidal(const bp::dict &settings, const RobotHandler &handler) {
   conf.Lfoot = bp::extract<double>(settings["Lfoot"]);
   conf.Wfoot = bp::extract<double>(settings["Wfoot"]);
 
-  return new CentroidalOCP(conf, handler);
+  return new CentroidalOCP(conf, model_handler, data_handler);
 }
 
 StageModel createCentStage(CentroidalOCP &self, const bp::dict &phase_dict,
@@ -100,7 +100,7 @@ void exposeCentroidalOcp() {
       "CentroidalOCP", bp::no_init)
       .def("__init__",
            bp::make_constructor(&createCentroidal, bp::default_call_policies(),
-                                ("settings"_a, "handler")))
+                                ("settings"_a, "model_handler", "data_handler")))
       .def("getSettings", &getSettingsCent)
       .def("createStage", &createCentStage);
 }

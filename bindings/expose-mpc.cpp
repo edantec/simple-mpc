@@ -94,7 +94,7 @@ void exposeMPC() {
       .def("getFootLandCycle", &MPC::getFootLandCycle, ("self"_a, "ee_name"))
       .def("getCyclingContactState", &MPC::getCyclingContactState,
            ("self"_a, "t", "ee_name"))
-      .def("getModelHandler", &MPC::getModelHandler, bp::args("self"),
+      .def("getModelHandler", &MPC::getModelHandler, "self"_a,
            bp::return_internal_reference<>(), "Get the robot model handler.")
       .def("getDataHandler", &MPC::getDataHandler, "self"_a,
            bp::return_internal_reference<>(), "Get the robot data handler.")

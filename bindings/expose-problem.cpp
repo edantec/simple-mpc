@@ -43,7 +43,7 @@ void exposeContainers() {
 void exposeOcpHandler() {
   bp::register_ptr_to_python<std::shared_ptr<OCPHandler>>();
   bp::class_<PyOCPHandler, boost::noncopyable>("OCPHandler", bp::no_init)
-      .def(bp::init<const RobotModelHandler &, const RobotDataHandler&>(("self", "model_handler", "data_handler")))
+      .def(bp::init<const RobotModelHandler &, const RobotDataHandler&>(("self"_a, "model_handler", "data_handler")))
       .def("createStage", bp::pure_virtual(&OCPHandler::createStage),
            ("self"_a, "contact_map", "force_refs", "land_constraint"))
       .def("createTerminalCost",
