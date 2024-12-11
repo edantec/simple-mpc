@@ -110,6 +110,7 @@ RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)
 : model_handler_(model_handler)
 , data_(model_handler.getModel())
 {
+  updateInternalData(model_handler.getReferenceState(), true);
 }
 
 void RobotDataHandler::updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians) {
