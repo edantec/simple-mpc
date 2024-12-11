@@ -4,8 +4,8 @@
 #include "simple-mpc/robot-handler.hpp"
 
 using simple_mpc::ContactMap;
-using simple_mpc::RobotHandler;
-using simple_mpc::RobotHandlerSettings;
+using simple_mpc::RobotDataHandler;
+using simple_mpc::RobotModelHandler;
 using PoseVec = aligator::StdVectorEigenAligned<Eigen::Vector3d>;
 using simple_mpc::FullDynamicsProblem;
 using simple_mpc::FullDynamicsSettings;
@@ -14,7 +14,7 @@ using simple_mpc::MPCSettings;
 using simple_mpc::OCPHandler;
 
 int main() {
-  RobotHandlerSettings settings;
+  RobotModelHandler settings;
   settings.urdf_path =
       EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
   settings.srdf_path =
@@ -36,7 +36,7 @@ int main() {
   settings.root_name = "root_joint";
   settings.base_configuration = "half_sitting";
 
-  RobotHandler handler = RobotHandler();
+  RobotDataHandler handler = RobotDataHandler();
   handler.initialize(settings);
 
   size_t T = 100;

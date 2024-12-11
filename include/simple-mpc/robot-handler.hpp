@@ -10,10 +10,6 @@
 #include <pinocchio/fwd.hpp>
 // Include pinocchio first
 #include <Eigen/Dense>
-#include <pinocchio/algorithm/crba.hpp>
-#include <pinocchio/algorithm/model.hpp>
-#include <pinocchio/algorithm/rnea.hpp>
-#include <pinocchio/spatial/se3.hpp>
 #include <string>
 #include <vector>
 
@@ -21,125 +17,191 @@
 
 namespace simple_mpc {
 using namespace pinocchio;
+
 /**
  * @brief Class managing every robot-related quantities.
  *
  * It holds the robot data, controlled joints, end-effector names
  * and other useful items.
  */
+struct RobotModelHandler {
+private:
+  /**
+   * @brief Robot model with all joints unlocked
+   */
+  Model model_full_;
 
-struct RobotHandlerSettings {
+  /**
+   * @brief Reduced model to be used by ocp
+   */
+  Model model_;
+
+  /**
+   * @brief Robot total mass
+   */
+  double mass_;
+
+  /**
+   * @brief Joint id to be controlled in full model
+   */
+  std::vector<unsigned long> controlled_joints_ids_;
+
+  /**
+   * @brief Reference configuration and velocity (most probably null velocity) to use
+   */
+  Eigen::VectorXd reference_state_;
+
+  /**
+   * @brief Names of the frames to be in contact with the environment
+   */
+  std::vector<std::string> feet_names_;
+
+  /**
+   * @brief Ids of the frames to be in contact with the environment
+   */
+  std::vector<FrameIndex> feet_ids_;
+
+  /**
+   * @brief Ids of the frames that are reference position for the feet
+   */
+  std::vector<FrameIndex> ref_feet_ids_;
+
+  /**
+   * @brief Base frame id
+   */
+  pinocchio::FrameIndex base_id_;
+
 public:
-  // Path to fetch the robot model.
-  // Either urdf_path or robot_description should
-  // be filled.
-  std::string urdf_path = "";
-  std::string srdf_path = "";
-  std::string robot_description = "";
+  /**
+   * @brief Construct a new Robot Model Handler object
+   *
+   * @param model Model of the full robot
+   * @param feet_names Name of the frames corresponding to the feet (e.g. can be used for contact with the ground)
+   * @param reference_configuration_name Reference configuration to use
+   * @param locked_joint_names List of joints to lock (values will be fixed at the reference configuration)
+   */
+  RobotModelHandler(const Model& model, const std::string& reference_configuration_name, const std::string& base_frame_name, const std::vector<std::string>& locked_joint_names = {});
 
-  // Joint-related items
-  std::vector<std::string> controlled_joints_names;
-  std::vector<std::string> end_effector_names;
-  std::vector<Eigen::Vector3d> feet_to_base_trans;
+  /**
+   * @brief
+   *
+   * @param foot_name Frame name that will be used a a foot
+   * @param placement_reference_frame_name Frame to which the foot reference frame will be attached.
+   * @param placement Transformation from `base_ref_frame_name` to foot reference frame
+   */
+   FrameIndex addFoot(const std::string& foot_name, const std::string& placement_reference_frame_name, const SE3& placement);
 
-  // Useful names
-  std::string root_name = "";
-  std::string base_configuration = "";
+  /**
+   * @brief Perform a finite difference on the sates.
+   *
+   * @param[in] x1 Initial state
+   * @param[in] x2 Desired state
+   * @return Eigen::VectorXd The vector that must be integrated during a unit of time to go from x1 to x2.
+   */
+  Eigen::VectorXd difference(const Eigen::VectorXd &x1, const Eigen::VectorXd &x2) const;
 
-  // Wether to use rotor parameters in joint dynamics
-  bool load_rotor = false;
+  /**
+   * @brief Compute reduced state from measures by concatenating q,v of the reduced model.
+   *
+   * @param q Configuration vector of the full model
+   * @param v Velocity vector of the full model
+   * @return const Eigen::VectorXd State vector of the reduced model.
+   */
+  Eigen::VectorXd shapeState(const Eigen::VectorXd &q, const Eigen::VectorXd &v) const;
+
+
+  // Const getters
+  const Eigen::VectorXd& getReferenceState() const
+  {
+    return reference_state_;
+  }
+  size_t getFootNb(const std::string &foot_name) const
+  {
+    return std::find(feet_names_.begin(), feet_names_.end(), foot_name) - feet_names_.begin();
+  }
+
+  const std::vector<FrameIndex>& getFeetIds() const
+  {
+    return feet_ids_;
+  }
+
+  const std::string &getFootName(size_t i) const
+  {
+    return feet_names_.at(i);
+  }
+
+  const std::vector<std::string> &getFeetNames() const
+  {
+    return feet_names_;
+  }
+
+  FrameIndex getBaseFrameId() const
+  {
+    return base_id_;
+  }
+
+  FrameIndex getFootId(const std::string &foot_name) const
+  {
+    return feet_ids_.at(getFootNb(foot_name));
+  }
+
+  FrameIndex getRefFootId(const std::string &foot_name) const
+  {
+    return ref_feet_ids_.at(getFootNb(foot_name));
+  }
+
+  double getMass() const
+  {
+    return mass_;
+  }
+
+  const Model& getModel() const
+  {
+    return model_;
+  }
+
+  const Model& getCompleteModel() const
+  {
+    return model_full_;
+  }
 };
 
-class RobotHandler {
+class RobotDataHandler {
+public:
+  typedef Eigen::Matrix<double,9,1> CentroidalStateVector;
+
 private:
-  RobotHandlerSettings settings_;
-
-  // Useful index
-  std::vector<unsigned long> controlled_joints_ids_;
-  std::map<std::string, FrameIndex> end_effector_map_;
-  std::vector<FrameIndex> end_effector_ids_;
-  std::map<std::string, FrameIndex> ref_end_effector_map_;
-
-  unsigned long root_ids_;
-
-  // Pinocchio objects
-  Model rmodel_complete_, rmodel_;
-  Data rdata_;
-
-  // State vectors
-  Eigen::VectorXd q_complete_, q_;
-  Eigen::VectorXd v_complete_, v_;
-  Eigen::VectorXd x_;
-  Eigen::VectorXd x_centroidal_;
-  Eigen::MatrixXd M_; // Mass matrix
-
-  // Robot total mass and CoM
-  double mass_ = 0;
-  Eigen::Vector3d com_position_;
+  RobotModelHandler model_handler_;
+  Data data_;
 
 public:
-  RobotHandler();
-  RobotHandler(const RobotHandlerSettings &settings);
-  void initialize(const RobotHandlerSettings &settings);
-  bool initialized_ = false;
+  RobotDataHandler(const RobotModelHandler &model_handler);
 
   // Set new robot state
-  void updateConfiguration(const Eigen::VectorXd &q,
-                           const bool updateJacobians);
-  void updateState(const Eigen::VectorXd &q, const Eigen::VectorXd &v,
-                   const bool updateJacobians);
-  void updateInternalData(const bool updateJacobians);
-  void updateJacobiansMassMatrix();
+  void updateInternalData(const Eigen::VectorXd &x, const bool updateJacobians);
+  void updateJacobiansMassMatrix(const Eigen::VectorXd &x);
 
-  pinocchio::FrameIndex addFrameToBase(Eigen::Vector3d translation,
-                                       std::string name);
-
-  // Return reduced state from measures
-  const Eigen::VectorXd shapeState(const Eigen::VectorXd &q,
-                                   const Eigen::VectorXd &v);
-
-  Eigen::VectorXd difference(const Eigen::VectorXd &x1,
-                             const Eigen::VectorXd &x2);
-  // Getters
-  const FrameIndex &getRootId() { return root_ids_; }
-  const std::vector<FrameIndex> &getFeetIds() { return end_effector_ids_; }
-  const FrameIndex &getFootId(const std::string &ee_name) {
-    return end_effector_map_.at(ee_name);
-  }
-  const SE3 &getFootPose(const std::string &ee_name) {
-    return rdata_.oMf[getFootId(ee_name)];
+  // Const getters
+  const SE3 &getRefFootPose(const std::string &foot_name) const
+  {
+    return data_.oMf[model_handler_.getRefFootId(foot_name)];
   };
-  const FrameIndex &getRefFootId(const std::string &ee_name) {
-    return ref_end_effector_map_.at(ee_name);
-  }
-  const SE3 &getRefFootPose(const std::string &ee_name) {
-    return rdata_.oMf[getRefFootId(ee_name)];
+  const SE3 &getFootPose(const std::string &foot_name) const
+  {
+    return data_.oMf[model_handler_.getFootId(foot_name)];
   };
-  const SE3 &getRootFrame() { return rdata_.oMf[root_ids_]; }
-  const Eigen::VectorXd &getCentroidalState() { return x_centroidal_; }
-  const double &getMass() { return mass_; }
-  const Model &getModel() { return rmodel_; }
-  const Model &getCompleteModel() { return rmodel_complete_; }
-  const Data &getData() { return rdata_; }
-  const Eigen::VectorXd &getConfiguration() { return q_; }
-  const Eigen::VectorXd &getVelocity() { return v_; }
-  const Eigen::VectorXd &getCompleteConfiguration() { return q_complete_; }
-  const Eigen::VectorXd &getCompleteVelocity() { return v_complete_; }
-  const Eigen::VectorXd &getState() { return x_; }
-  const std::string &getFootName(const unsigned long &i) {
-    return settings_.end_effector_names[i];
+  const SE3 &getBaseFramePose() const {
+    return data_.oMf[model_handler_.getBaseFrameId()];
   }
-  const std::vector<std::string> &getFeetNames() {
-    return settings_.end_effector_names;
+  const RobotModelHandler &getModelHandler() const
+  {
+    return model_handler_;
   }
-  const RobotHandlerSettings &getSettings() { return settings_; }
-  const std::vector<unsigned long> &getControlledJointsIDs() {
-    return controlled_joints_ids_;
+  const Data &getData() const
+  {
+    return data_;
   }
-  const Eigen::Vector3d &getComPosition() { return com_position_; }
-  const Eigen::MatrixXd &getMassMatrix() { return rdata_.M; }
-  // Compute the total robot mass
-  void computeMass();
+  RobotDataHandler::CentroidalStateVector getCentroidalState() const;
 };
 
 } // namespace simple_mpc

@@ -13,19 +13,20 @@ BOOST_AUTO_TEST_SUITE(mpc)
 using namespace simple_mpc;
 
 BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
-  RobotHandler handler = getTalosHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
-  FullDynamicsSettings settings = getFullDynamicsSettings(handler);
-  auto problem = std::make_shared<FullDynamicsOCP>(settings, handler);
+  FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
+  auto problem = std::make_shared<FullDynamicsOCP>(settings, model_handler, data_handler);
   FullDynamicsOCP &fdproblem = *problem;
 
   const size_t T = 100;
-  fdproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2], true);
+  fdproblem.createProblem(model_handler.getReferenceState(), T, 6, -settings.gravity[2], true);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;
 
-  mpc_settings.support_force = -handler.getMass() * settings.gravity[2];
+  mpc_settings.support_force = -model_handler.getMass() * settings.gravity[2];
 
   mpc_settings.TOL = 1e-6;
   mpc_settings.mu_init = 1e-8;
@@ -44,26 +45,26 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   std::vector<std::map<std::string, bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), false});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), false});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), false});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), false});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
 
@@ -74,8 +75,7 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 219);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 160);
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(handler.getState().head(handler.getModel().nq),
-                handler.getState().tail(handler.getModel().nv));
+    mpc.iterate(model_handler.getReferenceState());
   }
 
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("left_sole_link")[0], 160);
@@ -85,17 +85,18 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
-  RobotHandler handler = getTalosHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
-  KinodynamicsSettings settings = getKinodynamicsSettings(handler);
-  auto problem = std::make_shared<KinodynamicsOCP>(settings, handler);
+  KinodynamicsSettings settings = getKinodynamicsSettings(model_handler);
+  auto problem = std::make_shared<KinodynamicsOCP>(settings, model_handler, data_handler);
   KinodynamicsOCP &kinoproblem = *problem;
   const std::size_t T = 100;
-  const double support_force = -handler.getMass() * settings.gravity[2];
+  const double support_force = -model_handler.getMass() * settings.gravity[2];
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force, 0, 0, 0;
 
-  kinoproblem.createProblem(handler.getState(), T, 6, -settings.gravity[2],
+  kinoproblem.createProblem(model_handler.getReferenceState(), T, 6, -settings.gravity[2],
                             true);
 
   MPCSettings mpc_settings;
@@ -121,53 +122,53 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   // std::vector<std::vector<bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), false});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), false});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), false});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), false});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
 
   mpc.generateCycleHorizon(contact_states);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(handler.getState().head(handler.getModel().nq),
-                handler.getState().tail(handler.getModel().nv));
+    mpc.iterate(model_handler.getReferenceState());
   }
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal) {
-  RobotHandler handler = getTalosHandler();
+  RobotModelHandler model_handler = getTalosModelHandler();
+  RobotDataHandler data_handler(model_handler);
 
   CentroidalSettings settings = getCentroidalSettings();
-  auto problem = std::make_shared<CentroidalOCP>(settings, handler);
+  auto problem = std::make_shared<CentroidalOCP>(settings, model_handler, data_handler);
   CentroidalOCP &centproblem = *problem;
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
-  const double support_force = -handler.getMass() * settings.gravity[2];
+  const double support_force = -model_handler.getMass() * settings.gravity[2];
   const std::size_t T = 100;
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force / 2., 0, 0, 0;
-  Eigen::VectorXd x_multibody = handler.getState();
+  Eigen::VectorXd x_multibody = model_handler.getReferenceState();
 
-  centproblem.createProblem(handler.getCentroidalState(), T, 6,
+  centproblem.createProblem(data_handler.getCentroidalState(), T, 6,
                             -settings.gravity[2], false);
 
   MPCSettings mpc_settings;
@@ -192,34 +193,33 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   std::vector<std::map<std::string, bool>> contact_states;
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), false});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), false});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 10; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), true});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), true});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
   for (std::size_t i = 0; i < 50; i++) {
     std::map<std::string, bool> contact_state;
-    contact_state.insert({handler.getFootName(0), false});
-    contact_state.insert({handler.getFootName(1), true});
+    contact_state.insert({model_handler.getFootName(0), false});
+    contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
 
   mpc.generateCycleHorizon(contact_states);
 
   for (std::size_t i = 0; i < 10; i++) {
-    mpc.iterate(x_multibody.head(handler.getModel().nq),
-                x_multibody.tail(handler.getModel().nv));
+    mpc.iterate(x_multibody);
   }
 }
 

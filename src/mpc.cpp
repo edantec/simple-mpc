@@ -25,13 +25,13 @@ void MPC::initialize(const MPCSettings &settings,
   settings_ = settings;
   ocp_handler_ = problem;
   std::map<std::string, Eigen::Vector3d> starting_poses;
-  for (auto const &name : ocp_handler_->getHandler().getFeetNames()) {
+  for (auto const &name : ocp_handler_->getModelHandler().getFeetNames()) {
     starting_poses.insert(
-        {name, ocp_handler_->getHandler().getFootPose(name).translation()});
+        {name, ocp_handler_->getDataHandler().getFootPose(name).translation()});
 
     relative_feet_poses_.insert(
-        {name, ocp_handler_->getHandler().getRootFrame().inverse() *
-                   ocp_handler_->getHandler().getFootPose(name)});
+        {name, ocp_handler_->getDataHandler().getBaseFramePose().inverse() *
+                   ocp_handler_->getDataHandler().getFootPose(name)});
   }
   foot_trajectories_ =
       FootTrajectory(starting_poses, settings_.swing_apex, settings_.T_fly,
@@ -52,9 +52,9 @@ void MPC::initialize(const MPCSettings &settings,
   solver_->force_initial_condition_ = true;
   // solver_->reg_min = 1e-6;
 
-  ee_names_ = ocp_handler_->getHandler().getFeetNames();
+  ee_names_ = ocp_handler_->getModelHandler().getFeetNames();
   Eigen::VectorXd force_ref(ocp_handler_->getReferenceForce(
-      0, ocp_handler_->getHandler().getFootName(0)));
+      0, ocp_handler_->getModelHandler().getFootName(0)));
 
   std::map<std::string, bool> contact_states;
   std::map<std::string, bool> land_constraint;
@@ -64,7 +64,7 @@ void MPC::initialize(const MPCSettings &settings,
   for (auto const &name : ee_names_) {
     contact_states.insert({name, true});
     land_constraint.insert({name, false});
-    contact_poses.insert({name, ocp_handler_->getHandler().getFootPose(name)});
+    contact_poses.insert({name, ocp_handler_->getDataHandler().getFootPose(name)});
     force_map.insert({name, force_ref});
   }
 
@@ -89,7 +89,7 @@ void MPC::initialize(const MPCSettings &settings,
 
   solver_->max_iters = settings_.max_iters;
 
-  com0_ = ocp_handler_->getHandler().getComPosition();
+  com0_ = ocp_handler_->getDataHandler().getData().com[0];
   now_ = WALKING;
   pose_base_ = x0_.head<7>();
   velocity_base_.setZero();
@@ -143,9 +143,9 @@ void MPC::generateCycleHorizon(
     }
 
     Eigen::VectorXd force_ref(ocp_handler_->getReferenceForce(
-        0, ocp_handler_->getHandler().getFootName(0)));
+        0, ocp_handler_->getModelHandler().getFootName(0)));
     Eigen::VectorXd force_zero(ocp_handler_->getReferenceForce(
-        0, ocp_handler_->getHandler().getFootName(0)));
+        0, ocp_handler_->getModelHandler().getFootName(0)));
     force_ref.setZero();
     force_zero.setZero();
     force_ref[2] = settings_.support_force / active_contacts;
@@ -155,7 +155,7 @@ void MPC::generateCycleHorizon(
 
     for (auto const &name : ee_names_) {
       contact_poses.insert(
-          {name, ocp_handler_->getHandler().getFootPose(name)});
+          {name, ocp_handler_->getDataHandler().getFootPose(name)});
       if (state.at(name))
         force_map.insert({name, force_ref});
       else
@@ -179,10 +179,9 @@ void MPC::generateCycleHorizon(
   }
 }
 
-void MPC::iterate(const Eigen::VectorXd &q_current,
-                  const Eigen::VectorXd &v_current) {
+void MPC::iterate(const Eigen::VectorXd &x) {
 
-  ocp_handler_->getHandler().updateState(q_current, v_current, false);
+  ocp_handler_->updateState(x);
 
   // Recede all horizons
   recedeWithCycle();
@@ -276,22 +275,22 @@ void MPC::updateStepTrackerReferences() {
 
     // Use the Raibert heuristics to compute the next foot pose
     twist_vect_[0] =
-        -(ocp_handler_->getHandler().getRefFootPose(name).translation()[1] -
-          ocp_handler_->getHandler().getRootFrame().translation()[1]);
+        -(ocp_handler_->getDataHandler().getRefFootPose(name).translation()[1] -
+          ocp_handler_->getDataHandler().getBaseFramePose().translation()[1]);
     twist_vect_[1] =
-        ocp_handler_->getHandler().getRefFootPose(name).translation()[0] -
-        ocp_handler_->getHandler().getRootFrame().translation()[0];
+        ocp_handler_->getDataHandler().getRefFootPose(name).translation()[0] -
+        ocp_handler_->getDataHandler().getBaseFramePose().translation()[0];
     next_pose_.head(2) =
-        ocp_handler_->getHandler().getRefFootPose(name).translation().head(2);
+        ocp_handler_->getDataHandler().getRefFootPose(name).translation().head(2);
     next_pose_.head(2) +=
         (velocity_base_.head(2) + velocity_base_[5] * twist_vect_) *
         (settings_.T_fly + settings_.T_contact) * settings_.timestep;
     next_pose_[2] =
-        ocp_handler_->getHandler().getFootPose(name).translation()[2];
+        ocp_handler_->getDataHandler().getFootPose(name).translation()[2];
 
     foot_trajectories_.updateTrajectory(
         update, foot_land_time,
-        ocp_handler_->getHandler().getFootPose(name).translation(), next_pose_,
+        ocp_handler_->getDataHandler().getFootPose(name).translation(), next_pose_,
         name);
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     for (unsigned long time = 0; time < ocp_handler_->getSize(); time++) {

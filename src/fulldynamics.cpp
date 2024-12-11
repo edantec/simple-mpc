@@ -32,15 +32,16 @@ using CenterOfMassTranslationResidual =
 using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
 FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings &settings,
-                                 const RobotHandler &handler)
-    : Base(handler), settings_(settings) {
+                                 const RobotModelHandler &model_handler,
+                                 const RobotDataHandler &data_handler)
+    : Base(model_handler, data_handler), settings_(settings) {
 
   actuation_matrix_.resize(nv_, nu_);
   actuation_matrix_.setZero();
   actuation_matrix_.bottomRows(nu_).setIdentity();
 
   prox_settings_ = ProximalSettings(1e-9, 1e-10, 10);
-  x0_ = handler_.getState();
+  x0_ = robot_model_handler_.getReferenceState();
   if (settings.force_size != settings.Kp_correction.size()) {
     throw std::runtime_error("Force must be of same size as Kp correction");
   }
@@ -48,15 +49,15 @@ FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings &settings,
     throw std::runtime_error("Force must be of same size as Kd correction");
   }
 
-  for (auto const &name : handler_.getFeetNames()) {
-    auto frame_ids = handler_.getFootId(name);
-    auto joint_ids = handler_.getModel().frames[frame_ids].parentJoint;
-    pinocchio::SE3 pl1 = handler_.getModel().frames[frame_ids].placement;
-    pinocchio::SE3 pl2 = handler_.getFootPose(name);
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
+    auto frame_ids = robot_model_handler_.getFootId(name);
+    auto joint_ids = robot_model_handler_.getModel().frames[frame_ids].parentJoint;
+    pinocchio::SE3 pl1 = robot_model_handler_.getModel().frames[frame_ids].placement;
+    pinocchio::SE3 pl2 = robot_data_handler_.getFootPose(name);
     if (settings_.force_size == 6) {
       pinocchio::RigidConstraintModel constraint_model =
           pinocchio::RigidConstraintModel(
-              pinocchio::ContactType::CONTACT_6D, handler_.getModel(),
+              pinocchio::ContactType::CONTACT_6D, robot_model_handler_.getModel(),
               joint_ids, pl1, 0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
       constraint_model.corrector.Kp = settings.Kp_correction;
       constraint_model.corrector.Kd = settings.Kd_correction;
@@ -65,7 +66,7 @@ FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings &settings,
     } else {
       pinocchio::RigidConstraintModel constraint_model =
           pinocchio::RigidConstraintModel(
-              pinocchio::ContactType::CONTACT_3D, handler_.getModel(),
+              pinocchio::ContactType::CONTACT_3D, robot_model_handler_.getModel(),
               joint_ids, pl1, 0, pl2, pinocchio::LOCAL_WORLD_ALIGNED);
       constraint_model.corrector.Kp = settings.Kp_correction;
       constraint_model.corrector.Kd = settings.Kd_correction;
@@ -81,7 +82,7 @@ StageModel FullDynamicsOCP::createStage(
     const std::map<std::string, Eigen::VectorXd> &contact_force,
     const std::map<std::string, bool> &land_constraint) {
 
-  auto space = MultibodyPhaseSpace(handler_.getModel());
+  auto space = MultibodyPhaseSpace(robot_model_handler_.getModel());
   auto rcost = CostStack(space, nu_);
 
   rcost.addCost("state_cost",
@@ -91,26 +92,26 @@ StageModel FullDynamicsOCP::createStage(
       QuadraticControlCost(space, Eigen::VectorXd::Zero(nu_), settings_.w_u));
 
   auto cent_mom = CentroidalMomentumResidual(
-      space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
+      space.ndx(), nu_, robot_model_handler_.getModel(), Eigen::VectorXd::Zero(6));
   rcost.addCost("centroidal_cost",
                 QuadraticResidualCost(space, cent_mom, settings_.w_cent));
 
   pinocchio::context::RigidConstraintModelVector cms;
 
   size_t c_id = 0;
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     if (settings_.force_size == 6) {
       FramePlacementResidual frame_residual = FramePlacementResidual(
-          space.ndx(), nu_, handler_.getModel(), contact_pose.at(name),
-          handler_.getFootId(name));
+          space.ndx(), nu_, robot_model_handler_.getModel(), contact_pose.at(name),
+          robot_model_handler_.getFootId(name));
 
       rcost.addCost(
           name + "_pose_cost",
           QuadraticResidualCost(space, frame_residual, settings_.w_frame));
     } else {
       FrameTranslationResidual frame_residual = FrameTranslationResidual(
-          space.ndx(), nu_, handler_.getModel(),
-          contact_pose.at(name).translation(), handler_.getFootId(name));
+          space.ndx(), nu_, robot_model_handler_.getModel(),
+          contact_pose.at(name).translation(), robot_model_handler_.getFootId(name));
 
       rcost.addCost(
           name + "_pose_cost",
@@ -123,7 +124,7 @@ StageModel FullDynamicsOCP::createStage(
     c_id++;
   }
 
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     std::shared_ptr<ContactForceResidual> frame_force;
     if (contact_force.at(name).size() != settings_.force_size) {
       throw std::runtime_error(
@@ -131,7 +132,7 @@ StageModel FullDynamicsOCP::createStage(
     }
     if (contact_phase.at(name)) {
       frame_force = std::make_shared<ContactForceResidual>(
-          space.ndx(), handler_.getModel(), actuation_matrix_, cms,
+          space.ndx(), robot_model_handler_.getModel(), actuation_matrix_, cms,
           prox_settings_, contact_force.at(name), name);
 
       rcost.addCost(
@@ -165,11 +166,11 @@ StageModel FullDynamicsOCP::createStage(
                       BoxConstraint(-settings_.qmax, -settings_.qmin));
   }
 
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     if (settings_.force_size == 6 and contact_phase.at(name)) {
       if (settings_.force_cone) {
         MultibodyWrenchConeResidual wrench_residual =
-            MultibodyWrenchConeResidual(space.ndx(), handler_.getModel(),
+            MultibodyWrenchConeResidual(space.ndx(), robot_model_handler_.getModel(),
                                         actuation_matrix_, cms, prox_settings_,
                                         name, settings_.mu, settings_.Lfoot,
                                         settings_.Wfoot);
@@ -178,14 +179,14 @@ StageModel FullDynamicsOCP::createStage(
 
       if (land_constraint.at(name)) {
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
-            space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-            handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
+            space.ndx(), nu_, robot_model_handler_.getModel(), Motion::Zero(),
+            robot_model_handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
         stm.addConstraint(velocity_residual, EqualityConstraint());
       }
     } else if (settings_.force_size == 3 and contact_phase.at(name)) {
       if (settings_.force_cone) {
         MultibodyFrictionConeResidual friction_residual =
-            MultibodyFrictionConeResidual(space.ndx(), handler_.getModel(),
+            MultibodyFrictionConeResidual(space.ndx(), robot_model_handler_.getModel(),
                                           actuation_matrix_, cms,
                                           prox_settings_, name, settings_.mu);
         stm.addConstraint(friction_residual, NegativeOrthant());
@@ -193,8 +194,8 @@ StageModel FullDynamicsOCP::createStage(
       if (land_constraint.at(name)) {
         std::vector<int> vel_id = {0, 1, 2};
         FrameVelocityResidual velocity_residual = FrameVelocityResidual(
-            space.ndx(), nu_, handler_.getModel(), Motion::Zero(),
-            handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
+            space.ndx(), nu_, robot_model_handler_.getModel(), Motion::Zero(),
+            robot_model_handler_.getFootId(name), pinocchio::LOCAL_WORLD_ALIGNED);
         FunctionSliceXpr vel_slice =
             FunctionSliceXpr(velocity_residual, vel_id);
         stm.addConstraint(vel_slice, EqualityConstraint());
@@ -202,8 +203,8 @@ StageModel FullDynamicsOCP::createStage(
         std::vector<int> frame_id = {2};
 
         FrameTranslationResidual frame_residual = FrameTranslationResidual(
-            space.ndx(), nu_, handler_.getModel(),
-            contact_pose.at(name).translation(), handler_.getFootId(name));
+            space.ndx(), nu_, robot_model_handler_.getModel(),
+            contact_pose.at(name).translation(), robot_model_handler_.getFootId(name));
 
         FunctionSliceXpr frame_slice =
             FunctionSliceXpr(frame_residual, frame_id);
@@ -219,13 +220,13 @@ StageModel FullDynamicsOCP::createStage(
 void FullDynamicsOCP::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
-  if (pose_refs.size() != handler_.getFeetNames().size()) {
+  if (pose_refs.size() != robot_model_handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
 
   CostStack *cs = getCostStack(t);
-  for (auto ee_name : handler_.getFeetNames()) {
+  for (auto ee_name : robot_model_handler_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
 
@@ -275,11 +276,11 @@ void FullDynamicsOCP::setReferenceForces(
     const std::size_t t,
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
   CostStack *cs = getCostStack(t);
-  if (force_refs.size() != handler_.getFeetNames().size()) {
+  if (force_refs.size() != robot_model_handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "force_refs size does not match number of end effectors");
   }
-  for (auto ee_name : handler_.getFeetNames()) {
+  for (auto ee_name : robot_model_handler_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_force_cost");
     ContactForceResidual *cfr = qrc->getResidual<ContactForceResidual>();
@@ -360,7 +361,7 @@ void FullDynamicsOCP::setPoseBase(const std::size_t t,
 }
 
 const Eigen::VectorXd FullDynamicsOCP::getProblemState() {
-  return handler_.getState();
+  return x0_;
 }
 
 size_t FullDynamicsOCP::getContactSupport(const std::size_t t) {
@@ -373,10 +374,10 @@ size_t FullDynamicsOCP::getContactSupport(const std::size_t t) {
 }
 
 CostStack FullDynamicsOCP::createTerminalCost() {
-  auto ter_space = MultibodyPhaseSpace(handler_.getModel());
+  auto ter_space = MultibodyPhaseSpace(robot_model_handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);
   auto cent_mom = CentroidalMomentumResidual(
-      ter_space.ndx(), nu_, handler_.getModel(), Eigen::VectorXd::Zero(6));
+      ter_space.ndx(), nu_, robot_model_handler_.getModel(), Eigen::VectorXd::Zero(6));
 
   term_cost.addCost("state_cost",
                     QuadraticStateCost(ter_space, nu_, x0_, settings_.w_x));
@@ -392,18 +393,18 @@ void FullDynamicsOCP::createTerminalConstraint() {
     throw std::runtime_error("Create problem first!");
   }
   CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
-      ndx_, nu_, handler_.getModel(), handler_.getComPosition());
+      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler_.getData().com[0]);
 
-  double tau = sqrt(handler_.getComPosition()[2] / 9.81);
+  double tau = sqrt(robot_data_handler_.getData().com[0][2] / 9.81);
   DCMPositionResidual dcm_cstr = DCMPositionResidual(
-      ndx_, nu_, handler_.getModel(), handler_.getComPosition(), tau);
+      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler_.getData().com[0], tau);
 
   problem_->addTerminalConstraint(dcm_cstr, EqualityConstraint());
 
   Motion v_ref = Motion::Zero();
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     FrameVelocityResidual frame_vel = FrameVelocityResidual(
-        ndx_, nu_, handler_.getModel(), v_ref, handler_.getFootId(name),
+        ndx_, nu_, robot_model_handler_.getModel(), v_ref, robot_model_handler_.getFootId(name),
         pinocchio::LOCAL_WORLD_ALIGNED);
     if (settings_.force_size == 6)
       problem_->addTerminalConstraint(frame_vel, EqualityConstraint());

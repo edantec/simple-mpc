@@ -5,11 +5,14 @@ using namespace aligator;
 
 OCPHandler::~OCPHandler() {}
 
-OCPHandler::OCPHandler(const RobotHandler &handler)
-    : handler_(handler), problem_(nullptr) {
-  nq_ = handler_.getModel().nq;
-  nv_ = handler_.getModel().nv;
-  ndx_ = 2 * handler_.getModel().nv;
+OCPHandler::OCPHandler(const RobotModelHandler &model_handler, const RobotDataHandler &data_handler)
+: robot_data_handler_(data_handler)
+, robot_model_handler_(model_handler)
+, problem_(nullptr)
+{
+  nq_ = model_handler.getModel().nq;
+  nv_ = model_handler.getModel().nv;
+  ndx_ = 2 * model_handler.getModel().nv;
   nu_ = nv_ - 6;
 }
 
@@ -26,13 +29,13 @@ std::vector<xyz::polymorphic<StageModel>> OCPHandler::createStages(
         "Contact phases and forces sequences do not have the same size");
   }
   std::map<std::string, bool> previous_phases;
-  for (auto const &name : handler_.getFeetNames()) {
+  for (auto const &name : robot_model_handler_.getFeetNames()) {
     previous_phases.insert({name, true});
   }
   std::vector<xyz::polymorphic<StageModel>> stage_models;
   for (std::size_t i = 0; i < contact_phases.size(); i++) {
     std::map<std::string, bool> land_constraint;
-    for (auto const &name : handler_.getFeetNames()) {
+    for (auto const &name : robot_model_handler_.getFeetNames()) {
       if (!previous_phases.at(name) and contact_phases[i].at(name))
         land_constraint.insert({name, true});
       else
@@ -92,14 +95,14 @@ void OCPHandler::createProblem(const Eigen::VectorXd &x0, const size_t horizon,
   Eigen::VectorXd force_ref(force_size);
   force_ref.setZero();
   force_ref[2] =
-      -handler_.getMass() * gravity / (double)handler_.getFeetNames().size();
+      -robot_model_handler_.getMass() * gravity / (double)robot_model_handler_.getFeetNames().size();
 
   std::map<std::string, bool> contact_phase;
   std::map<std::string, pinocchio::SE3> contact_pose;
   std::map<std::string, Eigen::VectorXd> contact_force;
-  for (auto &name : handler_.getFeetNames()) {
+  for (auto &name : robot_model_handler_.getFeetNames()) {
     contact_phase.insert({name, true});
-    contact_pose.insert({name, handler_.getFootPose(name)});
+    contact_pose.insert({name, robot_data_handler_.getFootPose(name)});
     contact_force.insert({name, force_ref});
   }
 
