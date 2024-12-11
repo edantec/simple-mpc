@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
 
   FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
-  FullDynamicsProblem fdproblem(settings, model_handler);
+  FullDynamicsProblem fdproblem(settings, model_handler, data_handler);
   StageModel sm = fdproblem.createStage(contact_states, contact_poses,
                                         force_refs, land_constraint);
   CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 4);
 
-  fdproblem.createProblem(handler.getState(), 100, 6, settings.gravity[2]);
+  fdproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*fdproblem.getProblem()->stages_[0]->cost_);
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   contact_poses.insert({contact_names[1], p2});
 
   KinodynamicsSettings settings = getKinodynamicsSettings(model_handler);
-  KinodynamicsProblem knproblem(settings, model_handler);
+  KinodynamicsProblem knproblem(settings, model_handler, data_handler);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  knproblem.createProblem(data_handler.getState(), 100, 6, settings.gravity[2]);
+  knproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2]);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*knproblem.getProblem()->stages_[0]->cost_);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   RobotDataHandler data_handler(model_handler);
 
   CentroidalSettings settings = getCentroidalSettings();
-  CentroidalProblem cproblem(settings, model_handler);
+  CentroidalProblem cproblem(settings, model_handler, data_handler);
 
   std::vector<std::string> contact_names = {"left_sole_link",
                                             "right_sole_link"};
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   CentroidalSettings settings = getCentroidalSettings();
   settings.force_size = 3;
 
-  CentroidalProblem cproblem(settings, model_handler);
+  CentroidalProblem cproblem(settings, model_handler, data_handler);
 
   std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
                                             "HL_FOOT"};
