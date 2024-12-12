@@ -30,10 +30,10 @@ using aligator::context::TrajOptProblem;
 
 struct Settings;
 struct FullDynamicsSettings;
-class RobotHandler;
-class FullDynamicsProblem;
-class KinodynamicsProblem;
-class CentroidalProblem;
+class RobotDataHandler;
+class FullDynamicsOCP;
+class KinodynamicsOCP;
+class CentroidalOCP;
 class OCPHandler;
 class IDSolver;
 class IKIDSolver;

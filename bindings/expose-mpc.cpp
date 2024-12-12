@@ -75,7 +75,7 @@ void exposeMPC() {
       .def("getSettings", &getSettings)
       .def("generateCycleHorizon", &MPC::generateCycleHorizon,
            bp::args("self", "contact_states"))
-      .def("iterate", &MPC::iterate, bp::args("self", "q_current", "v_current"))
+      .def("iterate", &MPC::iterate, bp::args("self", "x"))
       .def("setReferencePose", &MPC::setReferencePose,
            bp::args("self", "t", "ee_name", "pose_ref"))
       .def("getReferencePose", &MPC::getReferencePose,
@@ -94,8 +94,10 @@ void exposeMPC() {
       .def("getFootLandCycle", &MPC::getFootLandCycle, ("self"_a, "ee_name"))
       .def("getCyclingContactState", &MPC::getCyclingContactState,
            ("self"_a, "t", "ee_name"))
-      .def("getHandler", &MPC::getHandler, "self"_a,
-           bp::return_internal_reference<>(), "Get the robot handler.")
+      .def("getModelHandler", &MPC::getModelHandler, "self"_a,
+           bp::return_internal_reference<>(), "Get the robot model handler.")
+      .def("getDataHandler", &MPC::getDataHandler, "self"_a,
+           bp::return_internal_reference<>(), "Get the robot data handler.")
       .def("getTrajOptProblem", &MPC::getTrajOptProblem, "self"_a,
            bp::return_internal_reference<>(),
            "Get the trajectory optimal problem.")

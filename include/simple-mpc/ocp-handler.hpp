@@ -46,7 +46,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// Constructor
-  explicit OCPHandler(const RobotHandler &handler);
+  explicit OCPHandler(const RobotModelHandler &model_handler,
+                      const RobotDataHandler &data_handler);
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(OCPHandler);
   virtual ~OCPHandler();
 
@@ -133,8 +134,9 @@ public:
     return *problem_;
   }
 
-  RobotHandler &getHandler() { return handler_; }
-  const RobotHandler &getHandler() const { return handler_; }
+  const RobotModelHandler &getModelHandler() const { return model_handler_; }
+  const RobotDataHandler &getDataHandler() const { return data_handler_; }
+  RobotDataHandler &getDataHandler() { return data_handler_; }
   int getNu() { return nu_; }
 
 protected:
@@ -147,7 +149,8 @@ protected:
   bool terminal_constraint_ = false;
 
   /// The robot model
-  RobotHandler handler_;
+  RobotDataHandler data_handler_;
+  RobotModelHandler model_handler_;
 
   /// The reference shooting problem storing all shooting nodes
   std::unique_ptr<TrajOptProblem> problem_;

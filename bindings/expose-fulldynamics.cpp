@@ -7,7 +7,8 @@
 namespace simple_mpc::python {
 
 auto *createFulldynamics(const bp::dict &settings,
-                         const RobotHandler &handler) {
+                         const RobotModelHandler &model_handler,
+                         const RobotDataHandler &data_handler) {
   FullDynamicsSettings conf;
   conf.timestep = bp::extract<double>(settings["timestep"]);
   conf.w_x = bp::extract<Eigen::MatrixXd>(settings["w_x"]);
@@ -39,7 +40,7 @@ auto *createFulldynamics(const bp::dict &settings,
   conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
   conf.force_cone = bp::extract<bool>(settings["force_cone"]);
 
-  return new FullDynamicsOCP(conf, handler);
+  return new FullDynamicsOCP(conf, model_handler, data_handler);
 }
 
 StageModel createFullStage(FullDynamicsOCP &self, const bp::dict &phase_dict,
@@ -123,9 +124,9 @@ void exposeFullDynamicsOcp() {
 
   bp::class_<FullDynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
       "FullDynamicsOCP", bp::no_init)
-      .def("__init__", bp::make_constructor(&createFulldynamics,
-                                            bp::default_call_policies(),
-                                            ("settings"_a, "handler")))
+      .def("__init__", bp::make_constructor(
+                           &createFulldynamics, bp::default_call_policies(),
+                           ("settings"_a, "model_handler", "data_handler")))
       .def("getSettings", &getSettingsFull)
       .def("createStage", &createFullStage);
 }

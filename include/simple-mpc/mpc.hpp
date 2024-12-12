@@ -13,6 +13,7 @@
 #include "simple-mpc/deprecated.hpp"
 #include "simple-mpc/foot-trajectory.hpp"
 #include "simple-mpc/robot-handler.hpp"
+#include "simple-mpc/ocp-handler.hpp"
 
 namespace simple_mpc {
 
@@ -88,8 +89,7 @@ public:
       const std::vector<std::map<std::string, bool>> &contact_states);
 
   // Perform one iteration of MPC
-  void iterate(const Eigen::VectorXd &q_current,
-               const Eigen::VectorXd &v_current);
+  void iterate(const Eigen::VectorXd &x);
 
   void updateCycleTiming(const bool updateOnlyHorizon);
 
@@ -126,8 +126,12 @@ public:
 
   SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
   SolverProxDDP &getSolver() { return *solver_; }
-
-  RobotHandler &getHandler();
+  const RobotDataHandler &getDataHandler() const {
+    return ocp_handler_->getDataHandler();
+  }
+  const RobotModelHandler &getModelHandler() const {
+    return ocp_handler_->getModelHandler();
+  }
 
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;
