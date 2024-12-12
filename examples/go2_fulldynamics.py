@@ -265,7 +265,7 @@ for t in range(500):
         qp.solveQP(
             mpc.getDataHandler().getData(),
             contact_states,
-            x_measured[nv:],
+            x_measured[nq:],
             a0,
             current_torque,
             total_forces,
