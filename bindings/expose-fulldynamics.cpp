@@ -124,9 +124,9 @@ void exposeFullDynamicsOcp() {
 
   bp::class_<FullDynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
       "FullDynamicsOCP", bp::no_init)
-      .def("__init__", bp::make_constructor(&createFulldynamics,
-                                            bp::default_call_policies(),
-                                            ("settings"_a, "model_handler", "data_handler")))
+      .def("__init__", bp::make_constructor(
+                           &createFulldynamics, bp::default_call_policies(),
+                           ("settings"_a, "model_handler", "data_handler")))
       .def("getSettings", &getSettingsFull)
       .def("createStage", &createFullStage);
 }

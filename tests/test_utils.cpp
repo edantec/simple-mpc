@@ -11,68 +11,85 @@
 using namespace simple_mpc;
 
 RobotModelHandler getTalosModelHandler() {
-    // Load pinocchio model from example robot data
-    Model model;
-    std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
-    std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
+  // Load pinocchio model from example robot data
+  Model model;
+  std::string urdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
+  std::string srdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
 
-    pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
-    srdf::loadReferenceConfigurations(model, srdf_path, false);
-    srdf::loadRotorParameters(model, srdf_path, false);
+  pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
+  srdf::loadReferenceConfigurations(model, srdf_path, false);
+  srdf::loadRotorParameters(model, srdf_path, false);
 
-    // Lock joint list
-    const std::vector<std::string> controlled_joints_names { "universe",
-        "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",
-        "leg_left_3_joint",  "leg_left_4_joint",  "leg_left_5_joint",
-        "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
-        "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint",
-        "leg_right_6_joint", "torso_1_joint",     "torso_2_joint",
-        "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",
-        "arm_left_4_joint",  "arm_right_1_joint", "arm_right_2_joint",
-        "arm_right_3_joint", "arm_right_4_joint",
-    };
+  // Lock joint list
+  const std::vector<std::string> controlled_joints_names{
+      "universe",          "root_joint",        "leg_left_1_joint",
+      "leg_left_2_joint",  "leg_left_3_joint",  "leg_left_4_joint",
+      "leg_left_5_joint",  "leg_left_6_joint",  "leg_right_1_joint",
+      "leg_right_2_joint", "leg_right_3_joint", "leg_right_4_joint",
+      "leg_right_5_joint", "leg_right_6_joint", "torso_1_joint",
+      "torso_2_joint",     "arm_left_1_joint",  "arm_left_2_joint",
+      "arm_left_3_joint",  "arm_left_4_joint",  "arm_right_1_joint",
+      "arm_right_2_joint", "arm_right_3_joint", "arm_right_4_joint",
+  };
 
-    std::vector<std::string> locked_joints_names {model.names};
-    locked_joints_names.erase(
-        std::remove_if(locked_joints_names.begin(), locked_joints_names.end(),
-            [&controlled_joints_names](const std::string& name)
-            {
-                return std::find(controlled_joints_names.begin(), controlled_joints_names.end(), name) != controlled_joints_names.end();
-            }
-        ), locked_joints_names.end()
-    );
+  std::vector<std::string> locked_joints_names{model.names};
+  locked_joints_names.erase(
+      std::remove_if(locked_joints_names.begin(), locked_joints_names.end(),
+                     [&controlled_joints_names](const std::string &name) {
+                       return std::find(controlled_joints_names.begin(),
+                                        controlled_joints_names.end(),
+                                        name) != controlled_joints_names.end();
+                     }),
+      locked_joints_names.end());
 
-    // Actually create handler
-    std::string base_joint = "root_joint";
-    RobotModelHandler model_handler(model, "half_sitting", base_joint, locked_joints_names);
+  // Actually create handler
+  std::string base_joint = "root_joint";
+  RobotModelHandler model_handler(model, "half_sitting", base_joint,
+                                  locked_joints_names);
 
-    // Add feet
-    model_handler.addFoot("left_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., 0.1, 0.)));
-    model_handler.addFoot("right_sole_link", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0., -0.1, 0.)));
+  // Add feet
+  model_handler.addFoot(
+      "left_sole_link", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0., 0.1, 0.)));
+  model_handler.addFoot(
+      "right_sole_link", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0., -0.1, 0.)));
 
-    return model_handler;
+  return model_handler;
 }
 
 RobotModelHandler getSoloHandler() {
-    // Load pinocchio model from example robot data
-    Model model;
-    const std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
-    const std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/srdf/solo.srdf";
+  // Load pinocchio model from example robot data
+  Model model;
+  const std::string urdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/robots/solo12.urdf";
+  const std::string srdf_path =
+      EXAMPLE_ROBOT_DATA_MODEL_DIR "/solo_description/srdf/solo.srdf";
 
-    pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
-    srdf::loadReferenceConfigurations(model, srdf_path, false);
+  pinocchio::urdf::buildModel(urdf_path, JointModelFreeFlyer(), model);
+  srdf::loadReferenceConfigurations(model, srdf_path, false);
 
-    // Actually create handler
-    std::string base_joint = "root_joint";
-    RobotModelHandler model_handler(model, "straight_standing", base_joint);
+  // Actually create handler
+  std::string base_joint = "root_joint";
+  RobotModelHandler model_handler(model, "straight_standing", base_joint);
 
-    // Add feet
-    model_handler.addFoot("FR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, -0.1, 0.)));
-    model_handler.addFoot("FL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(0.1, 0.1, 0.)));
-    model_handler.addFoot("HR_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, -0.1, 0.)));
-    model_handler.addFoot("HL_FOOT", base_joint, SE3(Eigen::Quaternion(0.,0.,0.,1.), Eigen::Vector3d(-0.1, 0.1, 0.)));
+  // Add feet
+  model_handler.addFoot(
+      "FR_FOOT", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0.1, -0.1, 0.)));
+  model_handler.addFoot(
+      "FL_FOOT", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0.1, 0.1, 0.)));
+  model_handler.addFoot(
+      "HR_FOOT", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(-0.1, -0.1, 0.)));
+  model_handler.addFoot(
+      "HL_FOOT", base_joint,
+      SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(-0.1, 0.1, 0.)));
 
-    return model_handler;
+  return model_handler;
 }
 
 FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
@@ -105,15 +122,16 @@ FullDynamicsSettings getFullDynamicsSettings(RobotModelHandler model_handler) {
   settings.w_forces.diagonal() << 0.0001, 0.0001, 0.0001, 0.0001, 0.0001,
       0.0001;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 2000;
-  settings.umin =
-      -model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
-  settings.umax =
-      model_handler.getModel().effortLimit.tail(model_handler.getModel().nv - 6);
-  settings.qmin =
-      model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
-  settings.qmax =
-      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
-      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
+  settings.umin = -model_handler.getModel().effortLimit.tail(
+      model_handler.getModel().nv - 6);
+  settings.umax = model_handler.getModel().effortLimit.tail(
+      model_handler.getModel().nv - 6);
+  settings.qmin = model_handler.getModel().lowerPositionLimit.tail(
+      model_handler.getModel().nv - 6);
+  settings.qmax = model_handler.getModel().upperPositionLimit.tail(
+      model_handler.getModel().nv - 6);
+  model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv -
+                                                   6);
   settings.Kp_correction = Eigen::VectorXd::Ones(6);
   settings.Kd_correction = Eigen::VectorXd::Ones(6);
   settings.mu = 0.8;
@@ -161,10 +179,10 @@ KinodynamicsSettings getKinodynamicsSettings(RobotModelHandler model_handler) {
   settings.gravity << 0, 0, -9.81;
   settings.force_size = 6;
   settings.w_frame = Eigen::MatrixXd::Identity(6, 6) * 50000;
-  settings.qmin =
-      model_handler.getModel().lowerPositionLimit.tail(model_handler.getModel().nv - 6);
-  settings.qmax =
-      model_handler.getModel().upperPositionLimit.tail(model_handler.getModel().nv - 6);
+  settings.qmin = model_handler.getModel().lowerPositionLimit.tail(
+      model_handler.getModel().nv - 6);
+  settings.qmax = model_handler.getModel().upperPositionLimit.tail(
+      model_handler.getModel().nv - 6);
   settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;

@@ -65,7 +65,8 @@ void MPC::initialize(const MPCSettings &settings,
   for (auto const &name : ee_names_) {
     contact_states.insert({name, true});
     land_constraint.insert({name, false});
-    contact_poses.insert({name, ocp_handler_->getDataHandler().getFootPose(name)});
+    contact_poses.insert(
+        {name, ocp_handler_->getDataHandler().getFootPose(name)});
     force_map.insert({name, force_ref});
   }
 
@@ -282,7 +283,8 @@ void MPC::updateStepTrackerReferences() {
         ocp_handler_->getDataHandler().getRefFootPose(name).translation()[0] -
         ocp_handler_->getDataHandler().getBaseFramePose().translation()[0];
     next_pose_.head(2) =
-        ocp_handler_->getDataHandler().getRefFootPose(name).translation().head(2);
+        ocp_handler_->getDataHandler().getRefFootPose(name).translation().head(
+            2);
     next_pose_.head(2) +=
         (velocity_base_.head(2) + velocity_base_[5] * twist_vect_) *
         (settings_.T_fly + settings_.T_contact) * settings_.timestep;
@@ -291,8 +293,8 @@ void MPC::updateStepTrackerReferences() {
 
     foot_trajectories_.updateTrajectory(
         update, foot_land_time,
-        ocp_handler_->getDataHandler().getFootPose(name).translation(), next_pose_,
-        name);
+        ocp_handler_->getDataHandler().getFootPose(name).translation(),
+        next_pose_, name);
     pinocchio::SE3 pose = pinocchio::SE3::Identity();
     for (unsigned long time = 0; time < ocp_handler_->getSize(); time++) {
       pose.translation() = foot_trajectories_.getReference(name)[time];

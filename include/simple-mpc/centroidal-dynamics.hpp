@@ -56,7 +56,9 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructor
-  explicit CentroidalOCP(const CentroidalSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
+  explicit CentroidalOCP(const CentroidalSettings &settings,
+                         const RobotModelHandler &model_handler,
+                         const RobotDataHandler &data_handler);
 
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalOCP);
 

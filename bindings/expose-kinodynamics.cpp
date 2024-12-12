@@ -108,9 +108,9 @@ void exposeKinodynamicsOcp() {
 
   bp::class_<KinodynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>(
       "KinodynamicsOCP", bp::no_init)
-      .def("__init__", bp::make_constructor(&createKinodynamics,
-                                            bp::default_call_policies(),
-                                            ("settings"_a, "model_handler", "data_handler")))
+      .def("__init__", bp::make_constructor(
+                           &createKinodynamics, bp::default_call_policies(),
+                           ("settings"_a, "model_handler", "data_handler")))
       .def("getSettings", &getSettingsKino)
       .def("createStage", &createKinoStage);
 }

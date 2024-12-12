@@ -291,9 +291,9 @@ IKIDSolver::IKIDSolver(const IKIDSettings &settings,
 void IKIDSolver::computeDifferences(
     pinocchio::Data &data, const Eigen::VectorXd &x_measured,
     const std::vector<pinocchio::SE3> foot_refs,
-    const std::vector<pinocchio::SE3> foot_refs_next)
-{
-  difference(model_, x_measured.head(model_.nq), settings_.x0.head(model_.nq), q_diff_);
+    const std::vector<pinocchio::SE3> foot_refs_next) {
+  difference(model_, x_measured.head(model_.nq), settings_.x0.head(model_.nq),
+             q_diff_);
   dq_diff_ = settings_.x0.tail(model_.nv) - x_measured.tail(model_.nv);
 
   for (size_t i = 0; i < settings_.contact_ids.size(); i++) {

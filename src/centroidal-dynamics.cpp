@@ -25,11 +25,12 @@ using CentroidalFrictionConeResidual =
     CentroidalFrictionConeResidualTpl<double>;
 using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 
-CentroidalOCP::CentroidalOCP(const CentroidalSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler)
-    : Base(model_handler, data_handler), settings_(settings)
-{
+CentroidalOCP::CentroidalOCP(const CentroidalSettings &settings,
+                             const RobotModelHandler &model_handler,
+                             const RobotDataHandler &data_handler)
+    : Base(model_handler, data_handler), settings_(settings) {
   nx_ = 9;
-  nu_ = (int)robot_model_handler_.getFeetNames().size() * settings_.force_size;
+  nu_ = (int)model_handler_.getFeetNames().size() * settings_.force_size;
   control_ref_.resize(nu_);
   control_ref_.setZero();
   com_ref_.setZero();
@@ -55,18 +56,18 @@ StageModel CentroidalOCP::createStage(
   computeControlFromForces(contact_force);
 
   ContactMap contact_map =
-      ContactMap(robot_model_handler_.getFeetNames(), contact_states, contact_poses);
+      ContactMap(model_handler_.getFeetNames(), contact_states, contact_poses);
 
   auto com_res = CentroidalCoMResidual(nx_, nu_, com_ref_);
   auto linear_mom = LinearMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
   auto angular_mom = AngularMomentumResidual(nx_, nu_, Eigen::Vector3d::Zero());
 
   auto linear_acc = CentroidalAccelerationResidual(
-      space.ndx(), nu_, robot_model_handler_.getMass(), settings_.gravity, contact_map,
-      settings_.force_size);
+      space.ndx(), nu_, model_handler_.getMass(), settings_.gravity,
+      contact_map, settings_.force_size);
   auto angular_acc = AngularAccelerationResidual(
-      space.ndx(), nu_, robot_model_handler_.getMass(), settings_.gravity, contact_map,
-      settings_.force_size);
+      space.ndx(), nu_, model_handler_.getMass(), settings_.gravity,
+      contact_map, settings_.force_size);
 
   rcost.addCost("com_cost",
                 QuadraticResidualCost(space, com_res, settings_.w_com));
@@ -86,14 +87,14 @@ StageModel CentroidalOCP::createStage(
       QuadraticResidualCost(space, angular_acc, settings_.w_angular_acc));
 
   CentroidalFwdDynamics ode =
-      CentroidalFwdDynamics(space, robot_model_handler_.getMass(), settings_.gravity,
+      CentroidalFwdDynamics(space, model_handler_.getMass(), settings_.gravity,
                             contact_map, settings_.force_size);
   IntegratorEuler dyn_model = IntegratorEuler(ode, settings_.timestep);
 
   StageModel stm = StageModel(rcost, dyn_model);
 
   int i = 0;
-  for (auto const &name : robot_model_handler_.getFeetNames()) {
+  for (auto const &name : model_handler_.getFeetNames()) {
     if (contact_phase.at(name)) {
       if (settings_.force_size == 6) {
         CentroidalWrenchConeResidual wrench_residual =
@@ -114,13 +115,14 @@ StageModel CentroidalOCP::createStage(
 
 void CentroidalOCP::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < robot_model_handler_.getFeetNames().size(); i++) {
-    if (settings_.force_size != force_refs.at(robot_model_handler_.getFootName(i)).size()) {
+  for (std::size_t i = 0; i < model_handler_.getFeetNames().size(); i++) {
+    if (settings_.force_size !=
+        force_refs.at(model_handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs.at(robot_model_handler_.getFootName(i));
+        force_refs.at(model_handler_.getFootName(i));
   }
 }
 
@@ -130,7 +132,7 @@ void CentroidalOCP::setReferencePoses(
   if (t >= problem_->stages_.size()) {
     throw std::runtime_error("Stage index exceeds stage vector size");
   }
-  if (pose_refs.size() != robot_model_handler_.getFeetNames().size()) {
+  if (pose_refs.size() != model_handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
@@ -144,7 +146,7 @@ void CentroidalOCP::setReferencePoses(
   }
   CostStack *cs = getCostStack(t);
 
-  for (auto ee_name : robot_model_handler_.getFeetNames()) {
+  for (auto ee_name : model_handler_.getFeetNames()) {
     QuadraticResidualCost *qrc1 =
         cs->getComponent<QuadraticResidualCost>("linear_acc_cost");
     QuadraticResidualCost *qrc2 =
@@ -210,7 +212,7 @@ void CentroidalOCP::setReferenceForces(
 void CentroidalOCP::setReferenceForce(const std::size_t t,
                                       const std::string &ee_name,
                                       const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
+  std::vector<std::string> hname = model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -222,7 +224,7 @@ void CentroidalOCP::setReferenceForce(const std::size_t t,
 const Eigen::VectorXd
 CentroidalOCP::getReferenceForce(const std::size_t t,
                                  const std::string &ee_name) {
-  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
+  std::vector<std::string> hname = model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -243,8 +245,8 @@ const Eigen::VectorXd CentroidalOCP::getVelocityBase(const std::size_t t) {
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  v.head(3) = cfm->getReference() / robot_model_handler_.getMass();
-  v.tail(3) = cfa->getReference() / robot_model_handler_.getMass();
+  v.head(3) = cfm->getReference() / model_handler_.getMass();
+  v.tail(3) = cfa->getReference() / model_handler_.getMass();
   return v;
 }
 
@@ -259,8 +261,8 @@ void CentroidalOCP::setVelocityBase(const std::size_t t,
       cs->getComponent<QuadraticResidualCost>("angular_mom_cost");
   AngularMomentumResidual *cfa = qca->getResidual<AngularMomentumResidual>();
 
-  cfm->setReference(velocity_base.head(3) * robot_model_handler_.getMass());
-  cfa->setReference(velocity_base.tail(3) * robot_model_handler_.getMass());
+  cfm->setReference(velocity_base.head(3) * model_handler_.getMass());
+  cfa->setReference(velocity_base.tail(3) * model_handler_.getMass());
 }
 
 const Eigen::VectorXd CentroidalOCP::getPoseBase(const std::size_t t) {
@@ -285,7 +287,7 @@ void CentroidalOCP::setPoseBase(const std::size_t t,
 }
 
 const Eigen::VectorXd CentroidalOCP::getProblemState() {
-  return robot_data_handler_.getCentroidalState();
+  return data_handler_.getCentroidalState();
 }
 
 size_t CentroidalOCP::getContactSupport(const std::size_t t) {
@@ -294,7 +296,7 @@ size_t CentroidalOCP::getContactSupport(const std::size_t t) {
                                    ->getDynamics<CentroidalFwdDynamics>();
 
   size_t active_contacts = 0;
-  for (auto name : robot_model_handler_.getFeetNames()) {
+  for (auto name : model_handler_.getFeetNames()) {
     if (ode->contact_map_.getContactState(name)) {
       active_contacts += 1;
     }
@@ -322,7 +324,7 @@ void CentroidalOCP::createTerminalConstraint() {
     throw std::runtime_error("Create problem first!");
   }
   CentroidalCoMResidual com_cstr =
-      CentroidalCoMResidual(ndx_, nu_, robot_data_handler_.getData().com[0]);
+      CentroidalCoMResidual(ndx_, nu_, data_handler_.getData().com[0]);
 
   // problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
   terminal_constraint_ = false;

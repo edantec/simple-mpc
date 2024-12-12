@@ -150,7 +150,9 @@ device = BulletRobot(
     model_handler.getModel(),
     model_handler.getReferenceState()[:3],
 )
-device.initializeJoints(model_handler.getReferenceState()[7:model_handler.getModel().nq])
+
+device.initializeJoints(model_handler.getReferenceState()[:model_handler.getModel().nq])
+
 for i in range(40):
     device.setFrictionCoefficients(i, 10, 0)
 #device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
@@ -158,9 +160,7 @@ q_current, v_current = device.measureState()
 nq = mpc.getModelHandler().getModel().nq
 nv = mpc.getModelHandler().getModel().nv
 
-x_measured = mpc.getModelHandler().shapeState(q_current, v_current)
-q_current = x_measured[:nq]
-v_current = x_measured[nq:]
+x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
 """ device.showQuadrupedFeet(
     mpc.getDataHandler().getFootPose("FL_foot"),
@@ -202,7 +202,7 @@ L_measured = []
 v = np.zeros(6)
 v[0] = 0.2
 mpc.velocity_base = v
-for t in range(300):
+for t in range(500):
     print("Time " + str(t))
     land_LF = mpc.getFootLandCycle("FL_foot")
     land_RF = mpc.getFootLandCycle("RL_foot")
@@ -214,13 +214,13 @@ for t in range(300):
         str(land_LF),
     ) """
 
-    """ if t == 1000:
+    """ if t == 200:
         for s in range(T):
             device.resetState(mpc.xs[s][:nq])
             #device.resetState(state_ref[s])
-            time.sleep(0.1)
+            time.sleep(0.02)
             print("s = " + str(s))
-        exit() """
+        exit()  """
 
     device.moveQuadrupedFeet(
         mpc.getReferencePose(0, "FL_foot").translation,
@@ -230,7 +230,7 @@ for t in range(300):
     )
 
     start = time.time()
-    mpc.iterate(model_handler.shapeState(q_current, v_current))
+    mpc.iterate(x_measured)
     end = time.time()
     solve_time.append(end - start)
 
@@ -272,8 +272,6 @@ for t in range(300):
         K_interp = (N_simu - j) / N_simu * mpc.Ks[0] + j / N_simu * mpc.Ks[1]
 
         x_measured = model_handler.shapeState(*device.measureState())
-        q_current = x_measured[:nq]
-        v_current = x_measured[nq:]
 
         mpc.getDataHandler().updateInternalData(x_measured, True)
 
@@ -284,7 +282,7 @@ for t in range(300):
         qp.solveQP(
             mpc.getDataHandler().getData(),
             contact_states,
-            v_current,
+            x_measured[nv:],
             a0,
             current_torque,
             total_forces,
@@ -312,6 +310,6 @@ RR_references = np.array(RR_references)
 com_measured = np.array(com_measured)
 L_measured = np.array(L_measured)
 
-save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
+""" save_trajectory(x_multibody, u_multibody, com_measured, force_FL, force_FR, force_RL, force_RR, solve_time,
                 FL_measured, FR_measured, RL_measured, RR_measured,
-                FL_references, FR_references, RL_references, RR_references, L_measured, "fulldynamics")
+                FL_references, FR_references, RL_references, RR_references, L_measured, "fulldynamics") """

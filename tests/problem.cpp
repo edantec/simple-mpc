@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 4);
 
-  fdproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2],
-                          true);
+  fdproblem.createProblem(model_handler.getReferenceState(), 100, 6,
+                          settings.gravity[2], true);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*fdproblem.getProblem().stages_[0]->cost_);
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  knproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2],
-                          true);
+  knproblem.createProblem(model_handler.getReferenceState(), 100, 6,
+                          settings.gravity[2], true);
 
   CostStack *csp =
       dynamic_cast<CostStack *>(&*knproblem.getProblem().stages_[0]->cost_);

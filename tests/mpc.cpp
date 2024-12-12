@@ -17,11 +17,13 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics) {
   RobotDataHandler data_handler(model_handler);
 
   FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
-  auto problem = std::make_shared<FullDynamicsOCP>(settings, model_handler, data_handler);
+  auto problem =
+      std::make_shared<FullDynamicsOCP>(settings, model_handler, data_handler);
   FullDynamicsOCP &fdproblem = *problem;
 
   const size_t T = 100;
-  fdproblem.createProblem(model_handler.getReferenceState(), T, 6, -settings.gravity[2], true);
+  fdproblem.createProblem(model_handler.getReferenceState(), T, 6,
+                          -settings.gravity[2], true);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;
@@ -89,15 +91,16 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics) {
   RobotDataHandler data_handler(model_handler);
 
   KinodynamicsSettings settings = getKinodynamicsSettings(model_handler);
-  auto problem = std::make_shared<KinodynamicsOCP>(settings, model_handler, data_handler);
+  auto problem =
+      std::make_shared<KinodynamicsOCP>(settings, model_handler, data_handler);
   KinodynamicsOCP &kinoproblem = *problem;
   const std::size_t T = 100;
   const double support_force = -model_handler.getMass() * settings.gravity[2];
   Eigen::VectorXd f1(6);
   f1 << 0, 0, support_force, 0, 0, 0;
 
-  kinoproblem.createProblem(model_handler.getReferenceState(), T, 6, -settings.gravity[2],
-                            true);
+  kinoproblem.createProblem(model_handler.getReferenceState(), T, 6,
+                            -settings.gravity[2], true);
 
   MPCSettings mpc_settings;
   mpc_settings.ddpIteration = 1;
@@ -157,7 +160,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal) {
   RobotDataHandler data_handler(model_handler);
 
   CentroidalSettings settings = getCentroidalSettings();
-  auto problem = std::make_shared<CentroidalOCP>(settings, model_handler, data_handler);
+  auto problem =
+      std::make_shared<CentroidalOCP>(settings, model_handler, data_handler);
   CentroidalOCP &centproblem = *problem;
 
   std::vector<std::string> contact_names = {"left_sole_link",

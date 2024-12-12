@@ -126,8 +126,12 @@ public:
 
   SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
   SolverProxDDP &getSolver() { return *solver_; }
-  const RobotDataHandler &getDataHandler() const { return ocp_handler_->getDataHandler(); }
-  const RobotModelHandler &getModelHandler() const { return ocp_handler_->getModelHandler(); }
+  const RobotDataHandler &getDataHandler() const {
+    return ocp_handler_->getDataHandler();
+  }
+  const RobotModelHandler &getModelHandler() const {
+    return ocp_handler_->getModelHandler();
+  }
 
   std::vector<std::shared_ptr<StageModel>> &getCycleHorizon() {
     return cycle_horizon_;

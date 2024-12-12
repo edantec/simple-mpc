@@ -31,12 +31,11 @@ using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 KinodynamicsOCP::KinodynamicsOCP(const KinodynamicsSettings &settings,
                                  const RobotModelHandler &model_handler,
                                  const RobotDataHandler &data_handler)
-: Base(model_handler, data_handler)
-, settings_(settings)
-{
+    : Base(model_handler, data_handler), settings_(settings) {
 
-  nu_ = nv_ - 6 + settings_.force_size * (int)robot_model_handler_.getFeetNames().size();
-  x0_ = robot_model_handler_.getReferenceState();
+  nu_ = nv_ - 6 +
+        settings_.force_size * (int)model_handler_.getFeetNames().size();
+  x0_ = model_handler_.getReferenceState();
   control_ref_.resize(nu_);
   control_ref_.setZero();
 }
@@ -46,7 +45,7 @@ StageModel KinodynamicsOCP::createStage(
     const std::map<std::string, pinocchio::SE3> &contact_pose,
     const std::map<std::string, Eigen::VectorXd> &contact_force,
     const std::map<std::string, bool> &land_constraint) {
-  auto space = MultibodyPhaseSpace(robot_model_handler_.getModel());
+  auto space = MultibodyPhaseSpace(model_handler_.getModel());
   auto rcost = CostStack(space, nu_);
   std::vector<bool> contact_states;
   for (auto const &x : contact_phase) {
@@ -56,10 +55,10 @@ StageModel KinodynamicsOCP::createStage(
   computeControlFromForces(contact_force);
 
   auto cent_mom = CentroidalMomentumResidual(
-      space.ndx(), nu_, robot_model_handler_.getModel(), Eigen::VectorXd::Zero(6));
+      space.ndx(), nu_, model_handler_.getModel(), Eigen::VectorXd::Zero(6));
   auto centder_mom = CentroidalMomentumDerivativeResidual(
-      space.ndx(), robot_model_handler_.getModel(), settings_.gravity, contact_states,
-      robot_model_handler_.getFeetIds(), settings_.force_size);
+      space.ndx(), model_handler_.getModel(), settings_.gravity, contact_states,
+      model_handler_.getFeetIds(), settings_.force_size);
   rcost.addCost("state_cost",
                 QuadraticStateCost(space, nu_, x0_, settings_.w_x));
   rcost.addCost("control_cost",
@@ -69,19 +68,19 @@ StageModel KinodynamicsOCP::createStage(
   rcost.addCost("centroidal_derivative_cost",
                 QuadraticResidualCost(space, centder_mom, settings_.w_centder));
 
-  for (auto const &name : robot_model_handler_.getFeetNames()) {
+  for (auto const &name : model_handler_.getFeetNames()) {
     if (settings_.force_size == 6) {
       FramePlacementResidual frame_residual = FramePlacementResidual(
-          space.ndx(), nu_, robot_model_handler_.getModel(), contact_pose.at(name),
-          robot_model_handler_.getFootId(name));
+          space.ndx(), nu_, model_handler_.getModel(), contact_pose.at(name),
+          model_handler_.getFootId(name));
 
       rcost.addCost(
           name + "_pose_cost",
           QuadraticResidualCost(space, frame_residual, settings_.w_frame));
     } else {
       FrameTranslationResidual frame_residual = FrameTranslationResidual(
-          space.ndx(), nu_, robot_model_handler_.getModel(),
-          contact_pose.at(name).translation(), robot_model_handler_.getFootId(name));
+          space.ndx(), nu_, model_handler_.getModel(),
+          contact_pose.at(name).translation(), model_handler_.getFootId(name));
 
       rcost.addCost(
           name + "_pose_cost",
@@ -90,8 +89,8 @@ StageModel KinodynamicsOCP::createStage(
   }
 
   KinodynamicsFwdDynamics ode = KinodynamicsFwdDynamics(
-      space, robot_model_handler_.getModel(), settings_.gravity, contact_states,
-      robot_model_handler_.getFeetIds(), settings_.force_size);
+      space, model_handler_.getModel(), settings_.gravity, contact_states,
+      model_handler_.getFeetIds(), settings_.force_size);
   IntegratorSemiImplEuler dyn_model =
       IntegratorSemiImplEuler(ode, settings_.timestep);
   StageModel stm = StageModel(rcost, dyn_model);
@@ -110,11 +109,11 @@ StageModel KinodynamicsOCP::createStage(
 
   Motion v_ref = Motion::Zero();
   int i = 0;
-  for (auto const &name : robot_model_handler_.getFeetNames()) {
+  for (auto const &name : model_handler_.getFeetNames()) {
     if (contact_phase.at(name)) {
-      FrameVelocityResidual frame_vel =
-          FrameVelocityResidual(space.ndx(), nu_, robot_model_handler_.getModel(), v_ref,
-                                robot_model_handler_.getFootId(name), pinocchio::LOCAL);
+      FrameVelocityResidual frame_vel = FrameVelocityResidual(
+          space.ndx(), nu_, model_handler_.getModel(), v_ref,
+          model_handler_.getFootId(name), pinocchio::LOCAL);
       if (settings_.force_size == 6) {
         if (settings_.force_cone) {
           CentroidalWrenchConeResidual wrench_residual =
@@ -138,8 +137,9 @@ StageModel KinodynamicsOCP::createStage(
           std::vector<int> frame_id = {2};
 
           FrameTranslationResidual frame_residual = FrameTranslationResidual(
-              space.ndx(), nu_, robot_model_handler_.getModel(),
-              contact_pose.at(name).translation(), robot_model_handler_.getFootId(name));
+              space.ndx(), nu_, model_handler_.getModel(),
+              contact_pose.at(name).translation(),
+              model_handler_.getFootId(name));
 
           FunctionSliceXpr frame_slice =
               FunctionSliceXpr(frame_residual, frame_id);
@@ -173,13 +173,13 @@ void KinodynamicsOCP::setReferencePose(const std::size_t t,
 void KinodynamicsOCP::setReferencePoses(
     const std::size_t t,
     const std::map<std::string, pinocchio::SE3> &pose_refs) {
-  if (pose_refs.size() != robot_model_handler_.getFeetNames().size()) {
+  if (pose_refs.size() != model_handler_.getFeetNames().size()) {
     throw std::runtime_error(
         "pose_refs size does not match number of end effectors");
   }
 
   CostStack *cs = getCostStack(t);
-  for (auto ee_name : robot_model_handler_.getFeetNames()) {
+  for (auto ee_name : model_handler_.getFeetNames()) {
     QuadraticResidualCost *qrc =
         cs->getComponent<QuadraticResidualCost>(ee_name + "_pose_cost");
     if (settings_.force_size == 6) {
@@ -228,13 +228,14 @@ KinodynamicsOCP::getReferencePose(const std::size_t t,
 
 void KinodynamicsOCP::computeControlFromForces(
     const std::map<std::string, Eigen::VectorXd> &force_refs) {
-  for (std::size_t i = 0; i < robot_model_handler_.getFeetNames().size(); i++) {
-    if (settings_.force_size != force_refs.at(robot_model_handler_.getFootName(i)).size()) {
+  for (std::size_t i = 0; i < model_handler_.getFeetNames().size(); i++) {
+    if (settings_.force_size !=
+        force_refs.at(model_handler_.getFootName(i)).size()) {
       throw std::runtime_error(
           "force size in settings does not match reference force size");
     }
     control_ref_.segment((long)i * settings_.force_size, settings_.force_size) =
-        force_refs.at(robot_model_handler_.getFootName(i));
+        force_refs.at(model_handler_.getFootName(i));
   }
 }
 
@@ -248,7 +249,7 @@ void KinodynamicsOCP::setReferenceForces(
 void KinodynamicsOCP::setReferenceForce(const std::size_t i,
                                         const std::string &ee_name,
                                         const Eigen::VectorXd &force_ref) {
-  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
+  std::vector<std::string> hname = model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -260,7 +261,7 @@ void KinodynamicsOCP::setReferenceForce(const std::size_t i,
 const Eigen::VectorXd
 KinodynamicsOCP::getReferenceForce(const std::size_t i,
                                    const std::string &ee_name) {
-  std::vector<std::string> hname = robot_model_handler_.getFeetNames();
+  std::vector<std::string> hname = model_handler_.getFeetNames();
   std::vector<std::string>::iterator it =
       std::find(hname.begin(), hname.end(), ee_name);
   long id = it - hname.begin();
@@ -303,9 +304,7 @@ void KinodynamicsOCP::setPoseBase(const std::size_t t,
   qc->setTarget(x0_);
 }
 
-const Eigen::VectorXd KinodynamicsOCP::getProblemState() {
-  return x0_;
-}
+const Eigen::VectorXd KinodynamicsOCP::getProblemState() { return x0_; }
 
 size_t KinodynamicsOCP::getContactSupport(const std::size_t t) {
   KinodynamicsFwdDynamics *ode = problem_->stages_[t]
@@ -322,10 +321,11 @@ size_t KinodynamicsOCP::getContactSupport(const std::size_t t) {
 }
 
 CostStack KinodynamicsOCP::createTerminalCost() {
-  auto ter_space = MultibodyPhaseSpace(robot_model_handler_.getModel());
+  auto ter_space = MultibodyPhaseSpace(model_handler_.getModel());
   auto term_cost = CostStack(ter_space, nu_);
-  auto cent_mom = CentroidalMomentumResidual(
-      ter_space.ndx(), nu_, robot_model_handler_.getModel(), Eigen::VectorXd::Zero(6));
+  auto cent_mom = CentroidalMomentumResidual(ter_space.ndx(), nu_,
+                                             model_handler_.getModel(),
+                                             Eigen::VectorXd::Zero(6));
 
   term_cost.addCost("state_cost",
                     QuadraticStateCost(ter_space, nu_, x0_, settings_.w_x));
@@ -341,7 +341,7 @@ void KinodynamicsOCP::createTerminalConstraint() {
     throw std::runtime_error("Create problem first!");
   }
   CenterOfMassTranslationResidual com_cstr = CenterOfMassTranslationResidual(
-      ndx_, nu_, robot_model_handler_.getModel(), robot_data_handler_.getData().com[0]);
+      ndx_, nu_, model_handler_.getModel(), data_handler_.getData().com[0]);
 
   problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
   terminal_constraint_ = true;

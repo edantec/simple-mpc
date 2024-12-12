@@ -66,7 +66,9 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructors
-  explicit FullDynamicsOCP(const FullDynamicsSettings &settings, const RobotModelHandler &model_handler, const RobotDataHandler &data_handler);
+  explicit FullDynamicsOCP(const FullDynamicsSettings &settings,
+                           const RobotModelHandler &model_handler,
+                           const RobotDataHandler &data_handler);
 
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsOCP);
 
