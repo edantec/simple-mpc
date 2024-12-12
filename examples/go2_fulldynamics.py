@@ -162,24 +162,7 @@ nv = mpc.getModelHandler().getModel().nv
 
 x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
-""" device.showQuadrupedFeet(
-    mpc.getDataHandler().getFootPose("FL_foot"),
-    mpc.getDataHandler().getFootPose("FR_foot"),
-    mpc.getDataHandler().getFootPose("RL_foot"),
-    mpc.getDataHandler().getFootPose("RR_foot"),
-) """
-rmodel = model_handler.getModel()
-a1 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
-a2 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
-a3 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
-a4 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("RR_thigh")]
-a1.translation[2] = 0
-a2.translation[2] = 0
-a3.translation[2] = 0
-a4.translation[2] = 0
-device.showQuadrupedFeet(a1, a2, a3, a4)
 Tmpc = len(contact_phases)
-
 
 force_FL = []
 force_FR = []
