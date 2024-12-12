@@ -1,68 +1,32 @@
 import numpy as np
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, FullDynamicsOCP, MPC, IDSolver
-import example_robot_data
+from simple_mpc import RobotModelHandler, RobotDataHandler, FullDynamicsOCP, MPC, IDSolver
+import example_robot_data as erd
 import time
 from utils import save_trajectory, extract_forces
 import copy
 import pinocchio as pin
 
-SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
-URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
-
-modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
 # ####### CONFIGURATION  ############
-# ### RobotWrapper
-design_conf = dict(
-    urdf_path=modelPath + URDF_SUBPATH,
-    srdf_path=modelPath + SRDF_SUBPATH,
-    robot_description="",
-    root_name="root_joint",
-    base_configuration="standing",
-    controlled_joints_names=[
-        "root_joint",
-        "FL_hip_joint",
-        "FL_thigh_joint",
-        "FL_calf_joint",
-        "FR_hip_joint",
-        "FR_thigh_joint",
-        "FR_calf_joint",
-        "RL_hip_joint",
-        "RL_thigh_joint",
-        "RL_calf_joint",
-        "RR_hip_joint",
-        "RR_thigh_joint",
-        "RR_calf_joint",
-    ],
-    end_effector_names=[
-        "FL_foot",
-        "FR_foot",
-        "RL_foot",
-        "RR_foot",
-    ],
-    hip_names=[
-        "FL_thigh",
-        "FR_thigh",
-        "RL_thigh",
-        "RR_thigh",
-    ],
-    feet_to_base_trans=[
-        np.array([0.17, 0.15, 0.]),
-        np.array([0.17, -0.15, 0.]),
-        np.array([-0.24, 0.15, 0.]),
-        np.array([-0.24, -0.15, 0.]),
-    ]
-)
-handler = RobotHandler()
-handler.initialize(design_conf)
-model = handler.getModel()
+# Load robot
+URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
+base_joint_name ="root_joint"
+robot_wrapper = erd.load('go2')
+
+# Create Model and Data handler
+model_handler = RobotModelHandler(robot_wrapper.model, "standing", base_joint_name, [])
+model_handler.addFoot("FL_foot", base_joint_name, pin.XYZQUATToSE3(np.array([ 0.17, 0.15, 0.0, 0,0,0,1])))
+model_handler.addFoot("FR_foot", base_joint_name, pin.XYZQUATToSE3(np.array([ 0.17,-0.15, 0.0, 0,0,0,1])))
+model_handler.addFoot("RL_foot", base_joint_name, pin.XYZQUATToSE3(np.array([-0.24, 0.15, 0.0, 0,0,0,1])))
+model_handler.addFoot("RR_foot", base_joint_name, pin.XYZQUATToSE3(np.array([-0.24,-0.15, 0.0, 0,0,0,1])))
+data_handler = RobotDataHandler(model_handler)
 
 force_size = 3
-nk = len(handler.getFeetNames())
+nk = len(model_handler.getFeetNames())
 gravity = np.array([0, 0, -9.81])
 fref = np.zeros(force_size)
-fref[2] = -handler.getMass() / nk * gravity[2]
-u0 = np.zeros(handler.getModel().nv - 6)
+fref[2] = -model_handler.getMass() / nk * gravity[2]
+u0 = np.zeros(model_handler.getModel().nv - 6)
 
 w_basepos = [0, 0, 0, 0, 0, 0]
 w_legpos = [10, 10, 10]
@@ -85,10 +49,10 @@ problem_conf = dict(
     force_size=3,
     w_forces=np.diag(w_forces_lin),
     w_frame=w_frame,
-    umin=handler.getModel().lowerEffortLimit[6:],
-    umax=handler.getModel().upperEffortLimit[6:],
-    qmin=handler.getModel().lowerPositionLimit[7:],
-    qmax=handler.getModel().upperPositionLimit[7:],
+    umin=-model_handler.getModel().effortLimit[6:],
+    umax=model_handler.getModel().effortLimit[6:],
+    qmin=model_handler.getModel().lowerPositionLimit[7:],
+    qmax=model_handler.getModel().upperPositionLimit[7:],
     Kp_correction=np.array([0, 0, 0]),
     Kd_correction=np.array([0, 0, 0]),
     mu=0.8,
@@ -100,15 +64,15 @@ problem_conf = dict(
 )
 T = 50
 
-dynproblem = FullDynamicsOCP(problem_conf, handler)
-dynproblem.createProblem(handler.getState(), T, force_size, gravity[2], False)
+dynproblem = FullDynamicsOCP(problem_conf, model_handler, data_handler)
+dynproblem.createProblem(model_handler.getReferenceState(), T, force_size, gravity[2], False)
 
 T_ds = 10
 T_ss = 30
 N_simu = int(0.01 / 0.001)
 mpc_conf = dict(
     ddpIteration=1,
-    support_force=-handler.getMass() * gravity[2],
+    support_force=-model_handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
@@ -160,10 +124,10 @@ contact_phases += [contact_phase_quadru] * int(T_ds / 2) """
 mpc.generateCycleHorizon(contact_phases)
 
 """ Initialize whole-body inverse dynamics QP"""
-contact_ids = handler.getFeetIds()
+contact_ids = model_handler.getFeetIds()
 id_conf = dict(
     contact_ids=contact_ids,
-    x0=handler.getState(),
+    x0=model_handler.getReferenceState(),
     mu=0.8,
     Lfoot=0.01,
     Wfoot=0.01,
@@ -175,18 +139,18 @@ id_conf = dict(
     verbose=False,
 )
 
-qp = IDSolver(id_conf, handler.getModel())
+qp = IDSolver(id_conf, model_handler.getModel())
 
 """ Initialize simulation"""
 device = BulletRobot(
-    design_conf["controlled_joints_names"],
-    modelPath,
+    model_handler.getControlledJointNames(),
+    erd.getModelPath(URDF_SUBPATH),
     URDF_SUBPATH,
     1e-3,
-    handler.getModel(),
-    handler.getState()[:3],
+    model_handler.getModel(),
+    model_handler.getReferenceState()[:3],
 )
-device.initializeJoints(handler.getConfiguration())
+device.initializeJoints(model_handler.getReferenceState()[7:model_handler.getModel().nq])
 for i in range(40):
     device.setFrictionCoefficients(i, 10, 0)
 #device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
@@ -204,7 +168,7 @@ v_current = x_measured[nq:]
     mpc.getDataHandler().getFootPose("RL_foot"),
     mpc.getDataHandler().getFootPose("RR_foot"),
 ) """
-rmodel = handler.getModel()
+rmodel = model_handler.getModel()
 a1 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FL_thigh")]
 a2 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("FR_thigh")]
 a3 = mpc.getDataHandler().getData().oMf[rmodel.getFrameId("RL_thigh")]
@@ -266,7 +230,7 @@ for t in range(300):
     )
 
     start = time.time()
-    mpc.iterate(q_current, v_current)
+    mpc.iterate(model_handler.shapeState(q_current, v_current))
     end = time.time()
     solve_time.append(end - start)
 
@@ -288,16 +252,16 @@ for t in range(300):
     force_RL.append(RL_f)
     force_RR.append(RR_f)
 
-    FL_measured.append(mpc.getHandler().getFootPose("FL_foot").translation)
-    FR_measured.append(mpc.getHandler().getFootPose("FR_foot").translation)
-    RL_measured.append(mpc.getHandler().getFootPose("RL_foot").translation)
-    RR_measured.append(mpc.getHandler().getFootPose("RR_foot").translation)
+    FL_measured.append(mpc.getDataHandler().getFootPose("FL_foot").translation)
+    FR_measured.append(mpc.getDataHandler().getFootPose("FR_foot").translation)
+    RL_measured.append(mpc.getDataHandler().getFootPose("RL_foot").translation)
+    RR_measured.append(mpc.getDataHandler().getFootPose("RR_foot").translation)
     FL_references.append(mpc.getReferencePose(0, "FL_foot").translation)
     FR_references.append(mpc.getReferencePose(0, "FR_foot").translation)
     RL_references.append(mpc.getReferencePose(0, "RL_foot").translation)
     RR_references.append(mpc.getReferencePose(0, "RR_foot").translation)
-    com_measured.append(mpc.getHandler().getComPosition().copy())
-    L_measured.append(mpc.getHandler().getData().hg.angular.copy())
+    com_measured.append(mpc.getDataHandler().getData().com[0].copy())
+    L_measured.append(mpc.getDataHandler().getData().hg.angular.copy())
 
 
     for j in range(N_simu):
@@ -306,26 +270,25 @@ for t in range(300):
         a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
         x_interp = (N_simu - j) / N_simu * mpc.xs[0] + j / N_simu * mpc.xs[1]
         K_interp = (N_simu - j) / N_simu * mpc.Ks[0] + j / N_simu * mpc.Ks[1]
-        q_current, v_current = device.measureState()
 
-        x_measured = np.concatenate((q_current, v_current))
-        mpc.getHandler().updateState(q_current, v_current, True)
-
+        x_measured = model_handler.shapeState(*device.measureState())
         q_current = x_measured[:nq]
         v_current = x_measured[nq:]
 
-        current_torque = u_interp - 1. * mpc.Ks[0] @ handler.difference(
+        mpc.getDataHandler().updateInternalData(x_measured, True)
+
+        current_torque = u_interp - 1. * mpc.Ks[0] @ model_handler.difference(
             x_measured, x_interp
         )
 
         qp.solveQP(
-            mpc.getHandler().getData(),
+            mpc.getDataHandler().getData(),
             contact_states,
             v_current,
             a0,
             current_torque,
             total_forces,
-            mpc.getHandler().getMassMatrix(),
+            mpc.getDataHandler().getData().M,
         )
 
         device.execute(qp.solved_torque)

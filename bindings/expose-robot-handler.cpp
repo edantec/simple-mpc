@@ -30,6 +30,7 @@ void exposeHandler() {
         .def("getFeetIds", &RobotModelHandler::getFeetIds, bp::return_internal_reference<>())
         .def("getFootName", &RobotModelHandler::getFootName, bp::return_internal_reference<>())
         .def("getFeetNames", &RobotModelHandler::getFeetNames, bp::return_internal_reference<>())
+        .def("getControlledJointNames", &RobotModelHandler::getControlledJointNames)
         .def("getFootId", &RobotModelHandler::getFootId)
         .def("getRefFootId", &RobotModelHandler::getRefFootId)
         .def("getMass", &RobotModelHandler::getMass)
