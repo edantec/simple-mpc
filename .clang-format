@@ -1,4 +1,5 @@
 ---
 BasedOnStyle: LLVM
 SortIncludes: Never
+ColumnLimit: 120
 ...
