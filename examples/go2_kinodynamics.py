@@ -164,8 +164,6 @@ nq = mpc.getModelHandler().getModel().nq
 nv = mpc.getModelHandler().getModel().nv
 
 x_measured = mpc.getModelHandler().shapeState(*device.measureState())
-q_current = x_measured[:nq]
-v_current = x_measured[nq:]
 
 device.showQuadrupedFeet(
     mpc.getDataHandler().getFootPose("FL_foot"),
@@ -256,9 +254,7 @@ for t in range(300):
 
     for j in range(N_simu):
         # time.sleep(0.01)
-        q_current, v_current = device.measureState()
-
-        x_measured = model_handler.shapeState(q_current, v_current)
+        x_measured = model_handler.shapeState(*device.measureState())
         mpc.getDataHandler().updateInternalData(x_measured, True)
 
         a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
@@ -267,7 +263,7 @@ for t in range(300):
         qp.solveQP(
             mpc.getDataHandler().getData(),
             contact_states,
-            v_current,
+            x_measured[nq:],
             a_interp,
             np.zeros(12),
             f_interp,
