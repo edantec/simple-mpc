@@ -114,6 +114,14 @@ Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd &x1,
   return dx;
 }
 
+std::vector<std::string> RobotModelHandler::getControlledJointNames() const {
+  std::vector<std::string> joint_names;
+  for (JointIndex id : controlled_joints_ids_) {
+    joint_names.push_back(model_full_.names.at(id));
+  }
+  return joint_names;
+}
+
 RobotDataHandler::RobotDataHandler(const RobotModelHandler &model_handler)
     : model_handler_(model_handler), data_(model_handler.getModel()) {
   updateInternalData(model_handler.getReferenceState(), true);

@@ -136,13 +136,7 @@ public:
 
   const std::vector<std::string> &getFeetNames() const { return feet_names_; }
 
-  std::vector<std::string> getControlledJointNames() const {
-    std::vector<std::string> joint_names;
-    for (JointIndex id : controlled_joints_ids_) {
-      joint_names.push_back(model_.names.at(id));
-    }
-    return joint_names;
-  }
+  std::vector<std::string> getControlledJointNames() const;
 
   FrameIndex getBaseFrameId() const { return base_id_; }
 
