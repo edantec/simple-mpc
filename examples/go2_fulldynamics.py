@@ -5,7 +5,6 @@ import example_robot_data
 import time
 from utils import save_trajectory, extract_forces
 import copy
-import pinocchio as pin
 
 SRDF_SUBPATH = "/go2_description/srdf/go2.srdf"
 URDF_SUBPATH = "/go2_description/urdf/go2.urdf"
