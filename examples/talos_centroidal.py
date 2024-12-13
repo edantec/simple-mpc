@@ -31,12 +31,12 @@ model_handler.addFoot("right_sole_link", base_joint_name, pin.XYZQUATToSE3(np.ar
 data_handler = RobotDataHandler(model_handler)
 
 x0 = np.zeros(9)
-x0[:3] = handler.getComPosition()
-nu = handler.getModel().nv - 6 + len(handler.getFeetNames()) * 6
+x0[:3] = data_handler.getData().com[0]
+nu = model_handler.getModel().nv - 6 + len(model_handler.getFeetNames()) * 6
 
 gravity = np.array([0, 0, -9.81])
 fref = np.zeros(6)
-fref[2] = -handler.getMass() / len(handler.getFeetNames()) * gravity[2]
+fref[2] = -model_handler.getMass() / len(model_handler.getFeetNames()) * gravity[2]
 u0 = np.concatenate((fref, fref))
 
 w_control_linear = np.ones(3) * 0.001
@@ -68,15 +68,15 @@ problem_conf = dict(
 )
 T = 100
 
-problem = CentroidalOCP(problem_conf, handler)
-problem.createProblem(handler.getCentroidalState(), T, 6, gravity[2], False)
+problem = CentroidalOCP(problem_conf, model_handler, data_handler)
+problem.createProblem(data_handler.getCentroidalState(), T, 6, gravity[2], False)
 
 T_ds = 20
 T_ss = 80
 
 mpc_conf = dict(
     ddpIteration=1,
-    support_force=-handler.getMass() * gravity[2],
+    support_force=-model_handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
@@ -124,14 +124,14 @@ g_b = np.array([10, 10, 10])
 
 Kp_gains = [g_q, g_p, g_b]
 Kd_gains = [2 * np.sqrt(g_q), 2 * np.sqrt(g_p), 2 * np.sqrt(g_b)]
-contact_ids = handler.getFeetIds()
-fixed_frame_ids = [handler.getRootId(), handler.getModel().getFrameId("torso_2_link")]
+contact_ids = model_handler.getFeetIds()
+fixed_frame_ids = [model_handler.getBaseFrameId(), model_handler.getModel().getFrameId("torso_2_link")]
 ikid_conf = dict(
     Kp_gains=Kp_gains,
     Kd_gains=Kd_gains,
     contact_ids=contact_ids,
     fixed_frame_ids=fixed_frame_ids,
-    x0=handler.getState(),
+    x0=data_handler.getCentroidalState(),
     dt=0.01,
     mu=0.8,
     Lfoot=0.1,
@@ -145,34 +145,33 @@ ikid_conf = dict(
     verbose=False,
 )
 
-qp = IKIDSolver(ikid_conf, handler.getModel())
+qp = IKIDSolver(ikid_conf, model_handler.getModel())
 
 """ Initialize simulation"""
 device = BulletRobot(
-    design_conf["controlled_joints_names"],
-    modelPath + "/talos_data/robots/",
-    URDF_FILENAME,
+    model_handler.getControlledJointNames(),
+    erd.getModelPath(URDF_SUBPATH),
+    URDF_SUBPATH,
     1e-3,
-    handler.getCompleteModel(),
+    model_handler.getModel(),
+    model_handler.getReferenceState()[:3],
 )
-device.initializeJoints(handler.getCompleteConfiguration())
+device.initializeJoints(model_handler.getModel().referenceConfigurations[reference_configuration_name])
 device.changeCamera(1.0, 90, -5, [1.5, 0, 1])
-q_current, v_current = device.measureState()
-nq = mpc.getHandler().getModel().nq
-nv = mpc.getHandler().getModel().nv
 
-x_measured = mpc.getHandler().shapeState(q_current, v_current)
-q_current = x_measured[:nq]
-v_current = x_measured[nq:]
+nq = mpc.getModelHandler().getModel().nq
+nv = mpc.getModelHandler().getModel().nv
+
+x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
 Tmpc = len(contact_phases)
 nk = 2
 force_size = 6
-x_centroidal = mpc.getHandler().getCentroidalState()
+x_centroidal = mpc.getDataHandler().getCentroidalState()
 
 device.showTargetToTrack(
-    mpc.getHandler().getFootPose("left_sole_link"),
-    mpc.getHandler().getFootPose("right_sole_link"),
+    mpc.getDataHandler().getFootPose("left_sole_link"),
+    mpc.getDataHandler().getFootPose("right_sole_link"),
 )
 
 v = np.zeros(6)
@@ -195,7 +194,7 @@ for t in range(600):
         str(land_LF),
     )
 
-    mpc.iterate(q_current, v_current)
+    mpc.iterate(x_measured)
 
     device.moveMarkers(
         mpc.getReferencePose(0, "left_sole_link").translation,
@@ -207,26 +206,22 @@ for t in range(600):
         .stages[0]
         .dynamics.differential_dynamics.contact_map.contact_states.tolist()
     )
-    foot_ref = [mpc.getReferencePose(0, name) for name in handler.getFeetNames()]
-    foot_ref_next = [mpc.getReferencePose(1, name) for name in handler.getFeetNames()]
+    foot_ref = [mpc.getReferencePose(0, name) for name in model_handler.getFeetNames()]
+    foot_ref_next = [mpc.getReferencePose(1, name) for name in model_handler.getFeetNames()]
     dH = (
         mpc.getSolver()
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[3:9]
     )
     qp.computeDifferences(
-        mpc.getHandler().getData(), x_measured, foot_ref, foot_ref_next
+        mpc.getDataHandler().getData(), x_measured, foot_ref, foot_ref_next
     )
     for j in range(10):
         time.sleep(0.001)
-        q_current, v_current = device.measureState()
-        x_measured = mpc.getHandler().shapeState(q_current, v_current)
+        x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
-        q_current = x_measured[:nq]
-        v_current = x_measured[nq:]
-
-        mpc.getHandler().updateState(q_current, v_current, True)
-        x_centroidal = mpc.getHandler().getCentroidalState()
+        mpc.getDataHandler().updateInternalData(x_measured, True)
+        x_centroidal = mpc.getDataHandler().getCentroidalState()
         state_diff = mpc.xs[0] - x_centroidal
 
         forces = (
@@ -235,12 +230,12 @@ for t in range(600):
         )
 
         qp.solve_qp(
-            mpc.getHandler().getData(),
+            mpc.getDataHandler().getData(),
             contact_states,
-            v_current,
+            x_measured[nq:],
             forces,
             dH,
-            mpc.getHandler().getMassMatrix(),
+            mpc.getDataHandler().getData().M,
         )
 
         device.execute(qp.solved_torque)
