@@ -1,59 +1,34 @@
 import numpy as np
-import example_robot_data
+import pinocchio as pin
+import example_robot_data as erd
 from bullet_robot import BulletRobot
-from simple_mpc import RobotHandler, CentroidalOCP, MPC, IKIDSolver
+from simple_mpc import RobotModelHandler, RobotDataHandler, CentroidalOCP, MPC, IKIDSolver
 import time
 
-URDF_FILENAME = "talos_reduced.urdf"
-SRDF_FILENAME = "talos.srdf"
-SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
-URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
+# RobotWrapper
+URDF_SUBPATH = "/talos_data/robots/talos_reduced.urdf"
+base_joint_name ="root_joint"
+robot_wrapper = erd.load('talos')
 
-modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-# ####### CONFIGURATION  ############
-# ### RobotWrapper
-design_conf = dict(
-    urdf_path=modelPath + URDF_SUBPATH,
-    srdf_path=modelPath + SRDF_SUBPATH,
-    robot_description="",
-    root_name="root_joint",
-    base_configuration="half_sitting",
-    controlled_joints_names=[
-        "root_joint",
-        "leg_left_1_joint",
-        "leg_left_2_joint",
-        "leg_left_3_joint",
-        "leg_left_4_joint",
-        "leg_left_5_joint",
-        "leg_left_6_joint",
-        "leg_right_1_joint",
-        "leg_right_2_joint",
-        "leg_right_3_joint",
-        "leg_right_4_joint",
-        "leg_right_5_joint",
-        "leg_right_6_joint",
-        "torso_1_joint",
-        "torso_2_joint",
-        "arm_left_1_joint",
-        "arm_left_2_joint",
-        "arm_left_3_joint",
-        "arm_left_4_joint",
-        "arm_right_1_joint",
-        "arm_right_2_joint",
-        "arm_right_3_joint",
-        "arm_right_4_joint",
-    ],
-    end_effector_names=[
-        "left_sole_link",
-        "right_sole_link",
-    ],
-    feet_to_base_trans=[
-        np.array([0., 0.1, 0.]),
-        np.array([0., -0.1, 0.]),
-    ]
-)
-handler = RobotHandler()
-handler.initialize(design_conf)
+reference_configuration_name = "half_sitting"
+locked_joints = [
+    'arm_left_5_joint',
+    'arm_left_6_joint',
+    'arm_left_7_joint',
+    'gripper_left_joint',
+    'arm_right_5_joint',
+    'arm_right_6_joint',
+    'arm_right_7_joint',
+    'gripper_right_joint',
+    'head_1_joint',
+    'head_2_joint'
+]
+
+# Create Model and Data handler
+model_handler = RobotModelHandler(robot_wrapper.model, reference_configuration_name, base_joint_name, locked_joints)
+model_handler.addFoot("left_sole_link",  base_joint_name, pin.XYZQUATToSE3(np.array([ 0.0, 0.1, 0.0, 0,0,0,1])))
+model_handler.addFoot("right_sole_link", base_joint_name, pin.XYZQUATToSE3(np.array([ 0.0,-0.1, 0.0, 0,0,0,1])))
+data_handler = RobotDataHandler(model_handler)
 
 x0 = np.zeros(9)
 x0[:3] = handler.getComPosition()
