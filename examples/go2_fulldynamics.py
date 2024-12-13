@@ -5,7 +5,6 @@ import example_robot_data as erd
 import time
 from utils import save_trajectory, extract_forces
 import copy
-import pinocchio as pin
 
 # ####### CONFIGURATION  ############
 # Load robot

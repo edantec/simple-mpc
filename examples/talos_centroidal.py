@@ -2,7 +2,6 @@ import numpy as np
 import example_robot_data
 from bullet_robot import BulletRobot
 from simple_mpc import RobotHandler, CentroidalOCP, MPC, IKIDSolver
-import ndcurves
 import time
 
 URDF_FILENAME = "talos_reduced.urdf"

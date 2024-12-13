@@ -1,4 +1,31 @@
 ---
-BasedOnStyle: LLVM
-SortIncludes: Never
+Language: Cpp
+BasedOnStyle: Microsoft
+
+AlwaysBreakTemplateDeclarations: Yes
+BinPackParameters: false
+
+BreakBeforeBinaryOperators: NonAssignment
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 2
+
+IndentWidth: 2
+
+NamespaceIndentation: All
+
+PackConstructorInitializers: Never
+
+PenaltyReturnTypeOnItsOwnLine: 10
+PointerAlignment: Middle
+
+SpaceAfterTemplateKeyword: false
+
+ColumnLimit: 120
+
+IndentPPDirectives: BeforeHash
+
+AlignAfterOpenBracket: AlwaysBreak
 ...
