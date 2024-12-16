@@ -73,7 +73,7 @@ public:
   Vector6d velocity_base_;
   Vector7d pose_base_;
   Eigen::Vector3d next_pose_;
-  Eigen::Vector3d twist_vect_;
+  Eigen::Vector2d twist_vect_;
   MPCSettings settings_;
   std::shared_ptr<OCPHandler> ocp_handler_;
 
