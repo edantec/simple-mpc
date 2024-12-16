@@ -57,7 +57,8 @@ public:
 
   // Constructor
   explicit CentroidalOCP(const CentroidalSettings &settings,
-                         const RobotHandler &handler);
+                         const RobotModelHandler &model_handler,
+                         const RobotDataHandler &data_handler);
 
   SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(CentroidalOCP);
 

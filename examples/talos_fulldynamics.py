@@ -7,65 +7,42 @@ The contacts forces are modeled as 6D wrenches.
 import numpy as np
 import time
 from bullet_robot import BulletRobot
-import example_robot_data
-from simple_mpc import MPC, FullDynamicsOCP, RobotHandler
+import example_robot_data as erd
+import pinocchio as pin
+from simple_mpc import MPC, FullDynamicsOCP, RobotModelHandler, RobotDataHandler
 
 # ####### CONFIGURATION  ############
-# ### RobotWrapper
-URDF_FILENAME = "talos_reduced.urdf"
-SRDF_FILENAME = "talos.srdf"
-SRDF_SUBPATH = "/talos_data/srdf/" + SRDF_FILENAME
-URDF_SUBPATH = "/talos_data/robots/" + URDF_FILENAME
+# RobotWrapper
+URDF_SUBPATH = "/talos_data/robots/talos_reduced.urdf"
+base_joint_name ="root_joint"
+robot_wrapper = erd.load('talos')
 
-modelPath = example_robot_data.getModelPath(URDF_SUBPATH)
-design_conf = dict(
-    urdf_path=modelPath + URDF_SUBPATH,
-    srdf_path=modelPath + SRDF_SUBPATH,
-    robot_description="",
-    root_name="root_joint",
-    base_configuration="half_sitting",
-    controlled_joints_names=[
-        "root_joint",
-        "leg_left_1_joint",
-        "leg_left_2_joint",
-        "leg_left_3_joint",
-        "leg_left_4_joint",
-        "leg_left_5_joint",
-        "leg_left_6_joint",
-        "leg_right_1_joint",
-        "leg_right_2_joint",
-        "leg_right_3_joint",
-        "leg_right_4_joint",
-        "leg_right_5_joint",
-        "leg_right_6_joint",
-        "torso_1_joint",
-        "torso_2_joint",
-        "arm_left_1_joint",
-        "arm_left_2_joint",
-        "arm_left_3_joint",
-        "arm_left_4_joint",
-        "arm_right_1_joint",
-        "arm_right_2_joint",
-        "arm_right_3_joint",
-        "arm_right_4_joint",
-    ],
-    end_effector_names=[
-        "left_sole_link",
-        "right_sole_link",
-    ],
-    feet_to_base_trans=[
-        np.array([0., 0.1, 0.]),
-        np.array([0., -0.1, 0.]),
-    ]
-)
-handler = RobotHandler()
-handler.initialize(design_conf)
-nq = handler.getModel().nq
-nv = handler.getModel().nv
+reference_configuration_name = "half_sitting"
+locked_joints = [
+    'arm_left_5_joint',
+    'arm_left_6_joint',
+    'arm_left_7_joint',
+    'gripper_left_joint',
+    'arm_right_5_joint',
+    'arm_right_6_joint',
+    'arm_right_7_joint',
+    'gripper_right_joint',
+    'head_1_joint',
+    'head_2_joint'
+]
+
+# Create Model and Data handler
+model_handler = RobotModelHandler(robot_wrapper.model, reference_configuration_name, base_joint_name, locked_joints)
+model_handler.addFoot("left_sole_link",  base_joint_name, pin.XYZQUATToSE3(np.array([ 0.0, 0.1, 0.0, 0,0,0,1])))
+model_handler.addFoot("right_sole_link", base_joint_name, pin.XYZQUATToSE3(np.array([ 0.0,-0.1, 0.0, 0,0,0,1])))
+data_handler = RobotDataHandler(model_handler)
+
+nq = model_handler.getModel().nq
+nv = model_handler.getModel().nv
 nu = nv - 6
 
-x0 = handler.getState()
-nu = handler.getModel().nv - 6
+x0 = model_handler.getReferenceState()
+nu = model_handler.getModel().nv - 6
 w_basepos = [0, 0, 0, 10, 10, 10]
 w_legpos = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 w_torsopos = [1, 100]
@@ -100,10 +77,10 @@ problem_conf = dict(
     force_size=6,
     w_forces=np.diag(np.concatenate((w_forces_lin, w_forces_ang))),
     w_frame=np.eye(6) * 2000,
-    umin=handler.getModel().lowerEffortLimit[6:],
-    umax=handler.getModel().upperEffortLimit[6:],
-    qmin=handler.getModel().lowerPositionLimit[7:],
-    qmax=handler.getModel().upperPositionLimit[7:],
+    umin=-model_handler.getModel().effortLimit[6:],
+    umax=model_handler.getModel().effortLimit[6:],
+    qmin=model_handler.getModel().lowerPositionLimit[7:],
+    qmax=model_handler.getModel().upperPositionLimit[7:],
     Kp_correction=np.array([0, 0, 50, 0, 0, 0]),
     Kd_correction=np.array([100, 100, 100, 100, 100 ,100]),
     mu=0.8,
@@ -115,7 +92,7 @@ problem_conf = dict(
 )
 
 T = 100
-dynproblem = FullDynamicsOCP(settings=problem_conf, handler=handler)
+dynproblem = FullDynamicsOCP(problem_conf, model_handler, data_handler)
 dynproblem.createProblem(x0, T, 6, gravity[2], False)
 
 """ Define feet trajectory """
@@ -124,7 +101,7 @@ T_ds = 20
 totalSteps = 1
 mpc_conf = dict(
     ddpIteration=1,
-    support_force=-handler.getMass() * gravity[2],
+    support_force=-model_handler.getMass() * gravity[2],
     TOL=1e-4,
     mu_init=1e-8,
     max_iters=1,
@@ -161,30 +138,27 @@ mpc.generateCycleHorizon(contact_phases)
 problem = mpc.getTrajOptProblem()
 
 """ Initialize simulation"""
+
 device = BulletRobot(
-    design_conf["controlled_joints_names"],
-    modelPath + "/talos_data/robots/",
-    URDF_FILENAME,
+    model_handler.getControlledJointNames(),
+    erd.getModelPath(URDF_SUBPATH),
+    URDF_SUBPATH,
     1e-3,
-    handler.getCompleteModel(),
+    model_handler.getModel(),
+    model_handler.getReferenceState()[:3],
 )
-device.initializeJoints(handler.getCompleteConfiguration())
-# device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
+device.initializeJoints(model_handler.getModel().referenceConfigurations[reference_configuration_name])
 device.changeCamera(1.0, 90, -5, [1.5, 0, 1])
-q_current, v_current = device.measureState()
 
-x_measured = mpc.getHandler().shapeState(q_current, v_current)
-
-q_current = x_measured[:nq]
-v_current = x_measured[nq:]
+x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
 land_LF = -1
 land_RF = -1
 takeoff_LF = -1
 takeoff_RF = -1
 device.showTargetToTrack(
-    mpc.getHandler().getFootPose("left_sole_link"),
-    mpc.getHandler().getFootPose("right_sole_link"),
+    mpc.getDataHandler().getFootPose("left_sole_link"),
+    mpc.getDataHandler().getFootPose("right_sole_link"),
 )
 
 v = np.zeros(6)
@@ -207,7 +181,7 @@ for t in range(Tmpc + 800):
         str(land_LF),
     )
     start = time.time()
-    mpc.iterate(q_current, v_current)
+    mpc.iterate(x_measured)
     end = time.time()
     print("MPC iterate = " + str(end - start))
     device.moveMarkers(
@@ -216,14 +190,7 @@ for t in range(Tmpc + 800):
     )
 
     for j in range(10):
-        q_current, v_current = device.measureState()
+        x_measured = mpc.getModelHandler().shapeState(*device.measureState())
 
-        x_measured = np.concatenate((q_current, v_current))
-
-        x_measured = mpc.getHandler().shapeState(q_current, v_current)
-
-        q_current = x_measured[:nq]
-        v_current = x_measured[nq:]
-
-        current_torque = mpc.us[0] - mpc.Ks[0] @ handler.difference(x_measured, mpc.xs[0])
+        current_torque = mpc.us[0] - mpc.Ks[0] @ model_handler.difference(x_measured, mpc.xs[0])
         device.execute(current_torque)
