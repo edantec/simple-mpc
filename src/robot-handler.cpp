@@ -37,8 +37,8 @@ RobotModelHandler::RobotModelHandler(
 
   // Set reference state
   reference_state_ =
-      shapeState(model_.referenceConfigurations[reference_configuration_name],
-                 Eigen::VectorXd::Zero(model_.nv));
+      shapeState(model_full_.referenceConfigurations[reference_configuration_name],
+                 Eigen::VectorXd::Zero(model_full_.nv));
 
   // Mass
   mass_ = pinocchio::computeTotalMass(model_);
