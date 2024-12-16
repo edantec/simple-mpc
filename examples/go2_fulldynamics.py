@@ -151,17 +151,21 @@ device = BulletRobot(
     model_handler.getReferenceState()[:3],
 )
 
-device.initializeJoints(model_handler.getReferenceState()[:model_handler.getModel().nq])
+nq = mpc.getModelHandler().getModel().nq
+nv = mpc.getModelHandler().getModel().nv
+device.initializeJoints(model_handler.getReferenceState()[:nq])
 
 for i in range(40):
     device.setFrictionCoefficients(i, 10, 0)
 #device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
-q_current, v_current = device.measureState()
-nq = mpc.getModelHandler().getModel().nq
-nv = mpc.getModelHandler().getModel().nv
 
 x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+mpc.getDataHandler().updateInternalData(x_measured, False)
 
+ref_foot_pose = [mpc.getDataHandler().getRefFootPose(mpc.getModelHandler().getFeetNames()[i]) for i in range(4)]
+for pose in ref_foot_pose:
+    pose.translation[2] = 0
+device.showQuadrupedFeet(*ref_foot_pose)
 Tmpc = len(contact_phases)
 
 force_FL = []
