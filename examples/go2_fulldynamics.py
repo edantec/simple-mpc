@@ -159,7 +159,8 @@ for i in range(40):
     device.setFrictionCoefficients(i, 10, 0)
 #device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 
-x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+q_meas, v_meas = device.measureState()
+x_measured  = np.concatenate([q_meas, v_meas])
 mpc.getDataHandler().updateInternalData(x_measured, False)
 
 ref_foot_pose = [mpc.getDataHandler().getRefFootPose(mpc.getModelHandler().getFeetNames()[i]) for i in range(4)]
@@ -258,7 +259,8 @@ for t in range(500):
         x_interp = (N_simu - j) / N_simu * mpc.xs[0] + j / N_simu * mpc.xs[1]
         K_interp = (N_simu - j) / N_simu * mpc.Ks[0] + j / N_simu * mpc.Ks[1]
 
-        x_measured = model_handler.shapeState(*device.measureState())
+        q_meas, v_meas = device.measureState()
+        x_measured = np.concatenate([q_meas, v_meas])
 
         mpc.getDataHandler().updateInternalData(x_measured, True)
 

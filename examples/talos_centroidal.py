@@ -162,7 +162,8 @@ device.changeCamera(1.0, 90, -5, [1.5, 0, 1])
 nq = mpc.getModelHandler().getModel().nq
 nv = mpc.getModelHandler().getModel().nv
 
-x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+q_meas, v_meas = device.measureState()
+x_measured = np.concatenate([q_meas, v_meas])
 
 Tmpc = len(contact_phases)
 nk = 2
@@ -218,7 +219,8 @@ for t in range(600):
     )
     for j in range(10):
         time.sleep(0.001)
-        x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+        q_meas, v_meas = device.measureState()
+        x_measured = np.concatenate([q_meas, v_meas])
 
         mpc.getDataHandler().updateInternalData(x_measured, True)
         x_centroidal = mpc.getDataHandler().getCentroidalState()

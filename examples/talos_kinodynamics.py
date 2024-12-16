@@ -34,7 +34,7 @@ nq = model_handler.getModel().nq
 nv = model_handler.getModel().nv
 
 x0 = model_handler.getReferenceState()
-nu = nv - 6 + len(model_handler.getFeetNames()) * 6
+nu = nv - 6
 
 """ Define kinodynamics problem """
 gravity = np.array([0, 0, -9.81])
@@ -176,7 +176,8 @@ device = BulletRobot(
 device.initializeJoints(model_handler.getModel().referenceConfigurations[reference_configuration_name])
 device.changeCamera(1.0, 50, -15, [1.7, -0.5, 1.2])
 
-x_measured = model_handler.shapeState(*device.measureState())
+q_meas, v_meas = device.measureState()
+x_measured  = np.concatenate([q_meas, v_meas])
 
 Tmpc = len(contact_phases)
 nk = 2
@@ -234,7 +235,8 @@ for t in range(600):
     )
 
     for j in range(10):
-        x_measured = model_handler.shapeState(*device.measureState())
+        q_meas, v_meas = device.measureState()
+        x_measured  = np.concatenate([q_meas, v_meas])
 
         state_diff = model_handler.difference(x_measured, mpc.xs[0])
         mpc.getDataHandler().updateInternalData(x_measured, True)

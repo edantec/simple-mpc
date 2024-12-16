@@ -150,7 +150,8 @@ device = BulletRobot(
 device.initializeJoints(model_handler.getModel().referenceConfigurations[reference_configuration_name])
 device.changeCamera(1.0, 90, -5, [1.5, 0, 1])
 
-x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+q_meas, v_meas = device.measureState()
+x_measured  = np.concatenate([q_meas, v_meas])
 
 land_LF = -1
 land_RF = -1
@@ -190,7 +191,8 @@ for t in range(Tmpc + 800):
     )
 
     for j in range(10):
-        x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+        q_meas, v_meas = device.measureState()
+        x_measured  = np.concatenate([q_meas, v_meas])
 
         current_torque = mpc.us[0] - mpc.Ks[0] @ model_handler.difference(x_measured, mpc.xs[0])
         device.execute(current_torque)

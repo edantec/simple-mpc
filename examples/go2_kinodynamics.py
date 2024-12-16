@@ -161,7 +161,8 @@ device.changeCamera(1.0, 60, -15, [0.6, -0.2, 0.5])
 nq = mpc.getModelHandler().getModel().nq
 nv = mpc.getModelHandler().getModel().nv
 
-x_measured = mpc.getModelHandler().shapeState(*device.measureState())
+q_meas, v_meas = device.measureState()
+x_measured  = np.concatenate([q_meas, v_meas])
 
 device.showQuadrupedFeet(
     mpc.getDataHandler().getFootPose("FL_foot"),
@@ -252,7 +253,9 @@ for t in range(300):
 
     for j in range(N_simu):
         # time.sleep(0.01)
-        x_measured = model_handler.shapeState(*device.measureState())
+        q_meas, v_meas = device.measureState()
+        x_measured  = np.concatenate([q_meas, v_meas])
+
         mpc.getDataHandler().updateInternalData(x_measured, True)
 
         a_interp = (N_simu - j) / N_simu * a0 + j / N_simu * a1
