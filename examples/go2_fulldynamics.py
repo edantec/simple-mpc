@@ -2,8 +2,9 @@ import numpy as np
 from bullet_robot import BulletRobot
 from simple_mpc import RobotModelHandler, RobotDataHandler, FullDynamicsOCP, MPC, IDSolver
 import example_robot_data as erd
+import pinocchio as pin
 import time
-from utils import save_trajectory, extract_forces
+from utils import extract_forces
 import copy
 
 # ####### CONFIGURATION  ############
