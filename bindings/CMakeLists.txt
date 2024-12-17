@@ -1,7 +1,7 @@
 include("${JRL_CMAKE_MODULES}/python.cmake")
 include("${JRL_CMAKE_MODULES}/stubs.cmake")
 
-add_project_dependency(eigenpy 3.9.1 REQUIRED)
+ADD_PROJECT_DEPENDENCY(eigenpy 3.9.1 REQUIRED)
 
 set(
   ${PY_NAME}_SOURCES
@@ -28,12 +28,15 @@ install(TARGETS ${PY_NAME}_pywrap DESTINATION ${${PY_NAME}_INSTALL_DIR})
 set(${PY_NAME}_PYTHON __init__.py)
 
 foreach(python ${${PY_NAME}_PYTHON})
-  python_install_on_site(${PY_NAME} ${python})
+  PYTHON_INSTALL_ON_SITE(${PY_NAME} ${python})
 endforeach()
 
 if(GENERATE_PYTHON_STUBS)
-  load_stubgen()
-  generate_stubs(${CMAKE_CURRENT_BINARY_DIR} simple_mpc ${PYTHON_SITELIB}
-                 ${PY_NAME}_pywrap
+  LOAD_STUBGEN()
+  GENERATE_STUBS(
+    ${CMAKE_CURRENT_BINARY_DIR}
+    simple_mpc
+    ${PYTHON_SITELIB}
+    ${PY_NAME}_pywrap
   )
 endif()
