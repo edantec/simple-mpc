@@ -7,4 +7,4 @@
 namespace pin = pinocchio;
 using Model = pin::ModelTpl<double, 0>;
 
-void makeTalosReduced(Model &model_complete, Model &model, Eigen::VectorXd &q0);
+void makeTalosReduced(Model & model_complete, Model & model, Eigen::VectorXd & q0);

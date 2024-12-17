@@ -10,7 +10,8 @@ BOOST_AUTO_TEST_SUITE(lowlevel)
 
 using namespace simple_mpc;
 
-BOOST_AUTO_TEST_CASE(ID_solver) {
+BOOST_AUTO_TEST_CASE(ID_solver)
+{
   RobotModelHandler model_handler = getTalosModelHandler();
   RobotDataHandler data_handler(model_handler);
 
@@ -42,7 +43,8 @@ BOOST_AUTO_TEST_CASE(ID_solver) {
   ID_solver.solveQP(rdata, contact_states, v, a, tau, forces, M);
 }
 
-BOOST_AUTO_TEST_CASE(IKID_solver) {
+BOOST_AUTO_TEST_CASE(IKID_solver)
+{
   RobotModelHandler model_handler = getTalosModelHandler();
   RobotDataHandler data_handler(model_handler);
 
@@ -51,8 +53,7 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
   std::vector<Eigen::VectorXd> Kd;
 
   Eigen::VectorXd g_q(model_handler.getModel().nv);
-  g_q << 0, 0, 0, 100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10,
-      100, 100, 100, 100, 100, 100, 100, 100;
+  g_q << 0, 0, 0, 100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 100, 100, 100, 100, 100, 100, 100, 100;
 
   double g_p = 400;
   double g_b = 10;
@@ -70,8 +71,7 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
   settings.contact_ids = model_handler.getFeetIds();
   settings.fixed_frame_ids = vec_base;
   settings.x0 = model_handler.getReferenceState();
-  settings.Kp_gains = Kp, settings.Kd_gains = Kd, settings.dt = 0.01,
-  settings.mu = 0.8;
+  settings.Kp_gains = Kp, settings.Kd_gains = Kd, settings.dt = 0.01, settings.mu = 0.8;
   settings.Lfoot = 0.1;
   settings.Wfoot = 0.075;
   settings.force_size = 6;
@@ -91,7 +91,8 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
 
   std::vector<pinocchio::SE3> foot_refs;
   std::vector<pinocchio::SE3> foot_refs_next;
-  for (auto const &name : model_handler.getFeetNames()) {
+  for (auto const & name : model_handler.getFeetNames())
+  {
     pinocchio::SE3 foot_ref = data_handler.getFootPose(name);
     foot_refs.push_back(foot_ref);
     foot_ref.translation()[0] += 0.1;
@@ -104,8 +105,7 @@ BOOST_AUTO_TEST_CASE(IKID_solver) {
   Eigen::VectorXd dH = Eigen::VectorXd::Random(6);
   Eigen::VectorXd x0 = model_handler.getReferenceState();
   Eigen::VectorXd xm = model_handler.getReferenceState();
-  Eigen::VectorXd new_q = pinocchio::integrate(
-      model_handler.getModel(), x0.head(model_handler.getModel().nq), dq);
+  Eigen::VectorXd new_q = pinocchio::integrate(model_handler.getModel(), x0.head(model_handler.getModel().nq), dq);
   Eigen::VectorXd forces = Eigen::VectorXd::Random(6 * 2);
   xm << new_q, dv;
 

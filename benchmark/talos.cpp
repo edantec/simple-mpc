@@ -1,10 +1,10 @@
-#include <pinocchio/fwd.hpp>
-#include <pinocchio/parsers/urdf.hpp>
-#include <pinocchio/parsers/srdf.hpp>
 #include "simple-mpc/fulldynamics.hpp"
 #include "simple-mpc/mpc.hpp"
 #include "simple-mpc/ocp-handler.hpp"
 #include "simple-mpc/robot-handler.hpp"
+#include <pinocchio/fwd.hpp>
+#include <pinocchio/parsers/srdf.hpp>
+#include <pinocchio/parsers/urdf.hpp>
 
 using simple_mpc::ContactMap;
 using simple_mpc::RobotDataHandler;
@@ -16,53 +16,45 @@ using simple_mpc::MPC;
 using simple_mpc::MPCSettings;
 using simple_mpc::OCPHandler;
 
-int main() {
+int main()
+{
   // Load pinocchio model from example robot data
   pinocchio::Model model;
-  std::string urdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
-  std::string srdf_path =
-      EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
+  std::string urdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/robots/talos_reduced.urdf";
+  std::string srdf_path = EXAMPLE_ROBOT_DATA_MODEL_DIR "/talos_data/srdf/talos.srdf";
 
-  pinocchio::urdf::buildModel(urdf_path, pinocchio::JointModelFreeFlyer(),
-                              model);
+  pinocchio::urdf::buildModel(urdf_path, pinocchio::JointModelFreeFlyer(), model);
   pinocchio::srdf::loadReferenceConfigurations(model, srdf_path, false);
   pinocchio::srdf::loadRotorParameters(model, srdf_path, false);
 
   // Lock joint list
   const std::vector<std::string> controlled_joints_names{
-      "universe",          "root_joint",        "leg_left_1_joint",
-      "leg_left_2_joint",  "leg_left_3_joint",  "leg_left_4_joint",
-      "leg_left_5_joint",  "leg_left_6_joint",  "leg_right_1_joint",
-      "leg_right_2_joint", "leg_right_3_joint", "leg_right_4_joint",
-      "leg_right_5_joint", "leg_right_6_joint", "torso_1_joint",
-      "torso_2_joint",     "arm_left_1_joint",  "arm_left_2_joint",
-      "arm_left_3_joint",  "arm_left_4_joint",  "arm_right_1_joint",
-      "arm_right_2_joint", "arm_right_3_joint", "arm_right_4_joint",
+    "universe",          "root_joint",        "leg_left_1_joint",  "leg_left_2_joint",  "leg_left_3_joint",
+    "leg_left_4_joint",  "leg_left_5_joint",  "leg_left_6_joint",  "leg_right_1_joint", "leg_right_2_joint",
+    "leg_right_3_joint", "leg_right_4_joint", "leg_right_5_joint", "leg_right_6_joint", "torso_1_joint",
+    "torso_2_joint",     "arm_left_1_joint",  "arm_left_2_joint",  "arm_left_3_joint",  "arm_left_4_joint",
+    "arm_right_1_joint", "arm_right_2_joint", "arm_right_3_joint", "arm_right_4_joint",
   };
 
   std::vector<std::string> locked_joints_names{model.names};
   locked_joints_names.erase(
-      std::remove_if(locked_joints_names.begin(), locked_joints_names.end(),
-                     [&controlled_joints_names](const std::string &name) {
-                       return std::find(controlled_joints_names.begin(),
-                                        controlled_joints_names.end(),
-                                        name) != controlled_joints_names.end();
-                     }),
-      locked_joints_names.end());
+    std::remove_if(
+      locked_joints_names.begin(), locked_joints_names.end(),
+      [&controlled_joints_names](const std::string & name) {
+        return std::find(controlled_joints_names.begin(), controlled_joints_names.end(), name)
+               != controlled_joints_names.end();
+      }),
+    locked_joints_names.end());
 
   // Actually create handler
   std::string base_joint = "root_joint";
-  RobotModelHandler model_handler(model, "half_sitting", base_joint,
-                                  locked_joints_names);
+  RobotModelHandler model_handler(model, "half_sitting", base_joint, locked_joints_names);
 
   // Add feet
-  model_handler.addFoot("left_sole_link", base_joint,
-                        pinocchio::SE3(Eigen::Quaternion(0., 0., 0., 1.),
-                                       Eigen::Vector3d(0., 0.1, 0.)));
-  model_handler.addFoot("right_sole_link", base_joint,
-                        pinocchio::SE3(Eigen::Quaternion(0., 0., 0., 1.),
-                                       Eigen::Vector3d(0., -0.1, 0.)));
+  model_handler.addFoot(
+    "left_sole_link", base_joint, pinocchio::SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0., 0.1, 0.)));
+  model_handler.addFoot(
+    "right_sole_link", base_joint, pinocchio::SE3(Eigen::Quaternion(0., 0., 0., 1.), Eigen::Vector3d(0., -0.1, 0.)));
 
   RobotDataHandler data_handler(model_handler);
 
@@ -73,18 +65,18 @@ int main() {
   int ndx = model_handler.getModel().nv * 2;
 
   Eigen::VectorXd w_x_vec(ndx);
-  w_x_vec << 0, 0, 0, 100, 100, 100,  // Base pos/ori
-      0.1, 0.1, 0.1, 0.1, 0.1, 0.1,   // Left leg
-      0.1, 0.1, 0.1, 0.1, 0.1, 0.1,   // Right leg
-      10, 10,                         // Torso
-      1, 1, 1, 1,                     // Left arm
-      1, 1, 1, 1,                     // Right arm
-      1, 1, 1, 1, 1, 1,               // Base pos/ori vel
-      0.1, 0.1, 0.1, 0.1, 0.01, 0.01, // Left leg vel
-      0.1, 0.1, 0.1, 0.1, 0.01, 0.01, // Right leg vel
-      10, 10,                         // Torso vel
-      1, 1, 1, 1,                     // Left arm vel
-      1, 1, 1, 1;                     // Right arm vel
+  w_x_vec << 0, 0, 0, 100, 100, 100, // Base pos/ori
+    0.1, 0.1, 0.1, 0.1, 0.1, 0.1,    // Left leg
+    0.1, 0.1, 0.1, 0.1, 0.1, 0.1,    // Right leg
+    10, 10,                          // Torso
+    1, 1, 1, 1,                      // Left arm
+    1, 1, 1, 1,                      // Right arm
+    1, 1, 1, 1, 1, 1,                // Base pos/ori vel
+    0.1, 0.1, 0.1, 0.1, 0.01, 0.01,  // Left leg vel
+    0.1, 0.1, 0.1, 0.1, 0.01, 0.01,  // Right leg vel
+    10, 10,                          // Torso vel
+    1, 1, 1, 1,                      // Left arm vel
+    1, 1, 1, 1;                      // Right arm vel
   Eigen::VectorXd w_cent(6);
   w_cent << 0, 0, 0, 0.1, 0., 100;
   Eigen::VectorXd w_forces(6);
@@ -113,14 +105,11 @@ int main() {
   problem_settings.Lfoot = 0.1;
   problem_settings.Wfoot = 0.075;
 
-  std::shared_ptr<OCPHandler> ocpPtr = std::make_shared<FullDynamicsOCP>(
-      problem_settings, model_handler, data_handler);
-  ocpPtr->createProblem(model_handler.getReferenceState(), T, 6,
-                        problem_settings.gravity[2], true);
+  std::shared_ptr<OCPHandler> ocpPtr = std::make_shared<FullDynamicsOCP>(problem_settings, model_handler, data_handler);
+  ocpPtr->createProblem(model_handler.getReferenceState(), T, 6, problem_settings.gravity[2], true);
 
   MPCSettings mpc_settings;
-  mpc_settings.support_force =
-      -problem_settings.gravity[2] * model_handler.getMass();
+  mpc_settings.support_force = -problem_settings.gravity[2] * model_handler.getMass();
   mpc_settings.TOL = 1e-4;
   mpc_settings.mu_init = 1e-8;
   mpc_settings.max_iters = 1;
@@ -130,31 +119,36 @@ int main() {
 
   std::vector<std::map<std::string, bool>> contact_states;
   // std::vector<std::vector<bool>> contact_states;
-  for (std::size_t i = 0; i < 10; i++) {
+  for (std::size_t i = 0; i < 10; i++)
+  {
     std::map<std::string, bool> contact_state;
     contact_state.insert({model_handler.getFootName(0), true});
     contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
-  for (std::size_t i = 0; i < 50; i++) {
+  for (std::size_t i = 0; i < 50; i++)
+  {
     std::map<std::string, bool> contact_state;
     contact_state.insert({model_handler.getFootName(0), true});
     contact_state.insert({model_handler.getFootName(1), false});
     contact_states.push_back(contact_state);
   }
-  for (std::size_t i = 0; i < 10; i++) {
+  for (std::size_t i = 0; i < 10; i++)
+  {
     std::map<std::string, bool> contact_state;
     contact_state.insert({model_handler.getFootName(0), true});
     contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
-  for (std::size_t i = 0; i < 50; i++) {
+  for (std::size_t i = 0; i < 50; i++)
+  {
     std::map<std::string, bool> contact_state;
     contact_state.insert({model_handler.getFootName(0), false});
     contact_state.insert({model_handler.getFootName(1), true});
     contact_states.push_back(contact_state);
   }
-  for (std::size_t i = 0; i < 10; i++) {
+  for (std::size_t i = 0; i < 10; i++)
+  {
     std::map<std::string, bool> contact_state;
     contact_state.insert({model_handler.getFootName(0), true});
     contact_state.insert({model_handler.getFootName(1), true});

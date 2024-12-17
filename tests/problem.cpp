@@ -12,12 +12,12 @@ BOOST_AUTO_TEST_SUITE(problem)
 
 using namespace simple_mpc;
 
-BOOST_AUTO_TEST_CASE(fulldynamics) {
+BOOST_AUTO_TEST_CASE(fulldynamics)
+{
   RobotModelHandler model_handler = getTalosModelHandler();
   RobotDataHandler data_handler(model_handler);
 
-  std::vector<std::string> contact_names = {"left_sole_link",
-                                            "right_sole_link"};
+  std::vector<std::string> contact_names = {"left_sole_link", "right_sole_link"};
   std::map<std::string, bool> contact_states;
   std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
@@ -42,24 +42,18 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
 
   FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
   FullDynamicsOCP fdproblem(settings, model_handler, data_handler);
-  StageModel sm = fdproblem.createStage(contact_states, contact_poses,
-                                        force_refs, land_constraint);
-  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+  StageModel sm = fdproblem.createStage(contact_states, contact_poses, force_refs, land_constraint);
+  CostStack * cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 4);
 
-  fdproblem.createProblem(model_handler.getReferenceState(), 100, 6,
-                          settings.gravity[2], true);
+  fdproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2], true);
 
-  CostStack *csp =
-      dynamic_cast<CostStack *>(&*fdproblem.getProblem().stages_[0]->cost_);
-  QuadraticControlCost *cc =
-      csp->getComponent<QuadraticControlCost>("control_cost");
-  QuadraticResidualCost *crc =
-      csp->getComponent<QuadraticResidualCost>("centroidal_cost");
-  QuadraticResidualCost *cpc =
-      csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
+  CostStack * csp = dynamic_cast<CostStack *>(&*fdproblem.getProblem().stages_[0]->cost_);
+  QuadraticControlCost * cc = csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("centroidal_cost");
+  QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
   BOOST_CHECK_EQUAL(fdproblem.getSize(), 100);
   BOOST_CHECK_EQUAL(fdproblem.getContactSupport(2), 2);
@@ -70,8 +64,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
   fdproblem.setReferencePose(4, "left_sole_link", pose_left_random);
 
-  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(4, "left_sole_link"),
-                    pose_left_random);
+  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(4, "left_sole_link"), pose_left_random);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -82,24 +75,18 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   new_poses.insert({"right_sole_link", new_pose_right});
 
   fdproblem.setReferencePoses(3, new_poses);
-  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(3, "left_sole_link"),
-                    new_poses.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(3, "right_sole_link"),
-                    new_poses.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(3, "left_sole_link"), new_poses.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.getReferencePose(3, "right_sole_link"), new_poses.at("right_sole_link"));
 
   force_refs.at("left_sole_link")[1] = 1;
   force_refs.at("right_sole_link")[0] = 1;
   fdproblem.setReferenceForces(3, force_refs);
-  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(3, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(3, "right_sole_link"),
-                    force_refs.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(3, "left_sole_link"), force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(3, "right_sole_link"), force_refs.at("right_sole_link"));
 
   force_refs.at("left_sole_link")[2] = 250;
-  fdproblem.setReferenceForce(5, "left_sole_link",
-                              force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(5, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
+  fdproblem.setReferenceForce(5, "left_sole_link", force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(fdproblem.getReferenceForce(5, "left_sole_link"), force_refs.at("left_sole_link"));
 
   Eigen::VectorXd pose_base(7);
   pose_base << 0, 0, 2, 0, 0, 0, 1;
@@ -107,12 +94,12 @@ BOOST_AUTO_TEST_CASE(fulldynamics) {
   BOOST_CHECK_EQUAL(fdproblem.getPoseBase(2), pose_base);
 }
 
-BOOST_AUTO_TEST_CASE(kinodynamics) {
+BOOST_AUTO_TEST_CASE(kinodynamics)
+{
   RobotModelHandler model_handler = getTalosModelHandler();
   RobotDataHandler data_handler(model_handler);
 
-  std::vector<std::string> contact_names = {"left_sole_link",
-                                            "right_sole_link"};
+  std::vector<std::string> contact_names = {"left_sole_link", "right_sole_link"};
   std::map<std::string, bool> contact_states;
   std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
@@ -137,24 +124,18 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm = knproblem.createStage(contact_states, contact_poses,
-                                        force_refs, land_constraint);
-  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+  StageModel sm = knproblem.createStage(contact_states, contact_poses, force_refs, land_constraint);
+  CostStack * cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  knproblem.createProblem(model_handler.getReferenceState(), 100, 6,
-                          settings.gravity[2], true);
+  knproblem.createProblem(model_handler.getReferenceState(), 100, 6, settings.gravity[2], true);
 
-  CostStack *csp =
-      dynamic_cast<CostStack *>(&*knproblem.getProblem().stages_[0]->cost_);
-  QuadraticControlCost *cc =
-      csp->getComponent<QuadraticControlCost>("control_cost");
-  QuadraticResidualCost *crc =
-      csp->getComponent<QuadraticResidualCost>("centroidal_cost");
-  QuadraticResidualCost *cpc =
-      csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
+  CostStack * csp = dynamic_cast<CostStack *>(&*knproblem.getProblem().stages_[0]->cost_);
+  QuadraticControlCost * cc = csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("centroidal_cost");
+  QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
   BOOST_CHECK_EQUAL(knproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
@@ -165,8 +146,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
   knproblem.setReferencePose(4, "left_sole_link", pose_left_random);
 
-  BOOST_CHECK_EQUAL(knproblem.getReferencePose(4, "left_sole_link"),
-                    pose_left_random);
+  BOOST_CHECK_EQUAL(knproblem.getReferencePose(4, "left_sole_link"), pose_left_random);
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -178,24 +158,18 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
 
   knproblem.setReferencePoses(3, new_poses);
 
-  BOOST_CHECK_EQUAL(knproblem.getReferencePose(3, "left_sole_link"),
-                    new_poses.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(knproblem.getReferencePose(3, "right_sole_link"),
-                    new_poses.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.getReferencePose(3, "left_sole_link"), new_poses.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.getReferencePose(3, "right_sole_link"), new_poses.at("right_sole_link"));
 
   force_refs.at("left_sole_link")[1] = 1;
   force_refs.at("right_sole_link")[0] = 1;
   knproblem.setReferenceForces(3, force_refs);
-  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(3, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(3, "right_sole_link"),
-                    force_refs.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(3, "left_sole_link"), force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(3, "right_sole_link"), force_refs.at("right_sole_link"));
 
   force_refs.at("left_sole_link")[2] = 250;
-  knproblem.setReferenceForce(5, "left_sole_link",
-                              force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(5, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
+  knproblem.setReferenceForce(5, "left_sole_link", force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(knproblem.getReferenceForce(5, "left_sole_link"), force_refs.at("left_sole_link"));
 
   Eigen::VectorXd pose_base(7);
   pose_base << 0, 0, 2, 0, 0, 0, 1;
@@ -203,15 +177,15 @@ BOOST_AUTO_TEST_CASE(kinodynamics) {
   BOOST_CHECK_EQUAL(knproblem.getPoseBase(2), pose_base);
 }
 
-BOOST_AUTO_TEST_CASE(centroidal) {
+BOOST_AUTO_TEST_CASE(centroidal)
+{
   RobotModelHandler model_handler = getTalosModelHandler();
   RobotDataHandler data_handler(model_handler);
 
   CentroidalSettings settings = getCentroidalSettings();
   CentroidalOCP cproblem(settings, model_handler, data_handler);
 
-  std::vector<std::string> contact_names = {"left_sole_link",
-                                            "right_sole_link"};
+  std::vector<std::string> contact_names = {"left_sole_link", "right_sole_link"};
   std::map<std::string, bool> contact_states;
   std::map<std::string, bool> land_constraint;
   std::map<std::string, pinocchio::SE3> contact_poses;
@@ -233,24 +207,18 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   f1 << 0, 0, 800, 0, 0, 0;
   force_refs.insert({"left_sole_link", f1});
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
-  StageModel sm = cproblem.createStage(contact_states, contact_poses,
-                                       force_refs, land_constraint);
-  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+  StageModel sm = cproblem.createStage(contact_states, contact_poses, force_refs, land_constraint);
+  CostStack * cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 1);
 
-  cproblem.createProblem(data_handler.getCentroidalState(), 100, 6,
-                         settings.gravity[2], true);
+  cproblem.createProblem(data_handler.getCentroidalState(), 100, 6, settings.gravity[2], true);
 
-  CostStack *csp =
-      dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
-  QuadraticControlCost *cc =
-      csp->getComponent<QuadraticControlCost>("control_cost");
-  QuadraticResidualCost *crc =
-      csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
-  QuadraticResidualCost *cpc =
-      csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
+  CostStack * csp = dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
+  QuadraticControlCost * cc = csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
   BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
@@ -261,23 +229,17 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   force_refs.at("left_sole_link")[1] = 1;
   force_refs.at("right_sole_link")[0] = 1;
   cproblem.setReferenceForces(3, force_refs);
-  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "right_sole_link"),
-                    force_refs.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "left_sole_link"), force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "right_sole_link"), force_refs.at("right_sole_link"));
 
   force_refs.at("left_sole_link")[2] = 250;
-  cproblem.setReferenceForce(5, "left_sole_link",
-                             force_refs.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(5, "left_sole_link"),
-                    force_refs.at("left_sole_link"));
+  cproblem.setReferenceForce(5, "left_sole_link", force_refs.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(5, "left_sole_link"), force_refs.at("left_sole_link"));
 
   pinocchio::SE3 pose_left_random = pinocchio::SE3::Random();
   cproblem.setReferencePose(4, "left_sole_link", pose_left_random);
 
-  BOOST_CHECK_EQUAL(
-      cproblem.getReferencePose(4, "left_sole_link").translation(),
-      pose_left_random.translation());
+  BOOST_CHECK_EQUAL(cproblem.getReferencePose(4, "left_sole_link").translation(), pose_left_random.translation());
 
   pinocchio::SE3 new_pose_left = pinocchio::SE3::Identity();
   new_pose_left.translation() << 1, 0, 2;
@@ -289,10 +251,8 @@ BOOST_AUTO_TEST_CASE(centroidal) {
 
   cproblem.setReferencePoses(3, new_poses);
 
-  BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "left_sole_link"),
-                    new_poses.at("left_sole_link"));
-  BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "right_sole_link"),
-                    new_poses.at("right_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "left_sole_link"), new_poses.at("left_sole_link"));
+  BOOST_CHECK_EQUAL(cproblem.getReferencePose(3, "right_sole_link"), new_poses.at("right_sole_link"));
 
   Eigen::VectorXd pose_base(7);
   pose_base << 0, 0, 2, 0, 0, 0, 1;
@@ -300,7 +260,8 @@ BOOST_AUTO_TEST_CASE(centroidal) {
   BOOST_CHECK_EQUAL(cproblem.getPoseBase(2), pose_base.head(3));
 }
 
-BOOST_AUTO_TEST_CASE(centroidal_solo) {
+BOOST_AUTO_TEST_CASE(centroidal_solo)
+{
   RobotModelHandler model_handler = getSoloHandler();
   RobotDataHandler data_handler(model_handler);
 
@@ -309,8 +270,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
 
   CentroidalOCP cproblem(settings, model_handler, data_handler);
 
-  std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT",
-                                            "HL_FOOT"};
+  std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT", "HL_FOOT"};
   std::map<std::string, bool> contact_states;
   std::map<std::string, pinocchio::SE3> contact_poses;
 
@@ -335,24 +295,18 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   force_refs.insert({"FL_FOOT", f1});
   force_refs.insert({"HR_FOOT", f1});
   force_refs.insert({"HL_FOOT", Eigen::VectorXd::Zero(3)});
-  StageModel sm = cproblem.createStage(contact_states, contact_poses,
-                                       force_refs, contact_states);
-  CostStack *cs = dynamic_cast<CostStack *>(&*sm.cost_);
+  StageModel sm = cproblem.createStage(contact_states, contact_poses, force_refs, contact_states);
+  CostStack * cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
   BOOST_CHECK_EQUAL(cs->components_.size(), 6);
   BOOST_CHECK_EQUAL(sm.numConstraints(), 3);
 
-  cproblem.createProblem(data_handler.getCentroidalState(), 100, 3,
-                         settings.gravity[2], true);
+  cproblem.createProblem(data_handler.getCentroidalState(), 100, 3, settings.gravity[2], true);
 
-  CostStack *csp =
-      dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
-  QuadraticControlCost *cc =
-      csp->getComponent<QuadraticControlCost>("control_cost");
-  QuadraticResidualCost *crc =
-      csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
-  QuadraticResidualCost *cpc =
-      csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
+  CostStack * csp = dynamic_cast<CostStack *>(&*cproblem.getProblem().stages_[0]->cost_);
+  QuadraticControlCost * cc = csp->getComponent<QuadraticControlCost>("control_cost");
+  QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
+  QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
   BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 4);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
@@ -363,10 +317,8 @@ BOOST_AUTO_TEST_CASE(centroidal_solo) {
   force_refs.at("FR_FOOT")[1] = 1;
   force_refs.at("FL_FOOT")[0] = 1;
   cproblem.setReferenceForces(3, force_refs);
-  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "FR_FOOT"),
-                    force_refs.at("FR_FOOT"));
-  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "FL_FOOT"),
-                    force_refs.at("FL_FOOT"));
+  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "FR_FOOT"), force_refs.at("FR_FOOT"));
+  BOOST_CHECK_EQUAL(cproblem.getReferenceForce(3, "FL_FOOT"), force_refs.at("FL_FOOT"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

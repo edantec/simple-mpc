@@ -13,39 +13,40 @@
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
 
-namespace simple_mpc {
-namespace pin = pinocchio;
-using pin::FrameIndex;
-using std::shared_ptr;
-using ContactMap = aligator::ContactMapTpl<double>;
+namespace simple_mpc
+{
+  namespace pin = pinocchio;
+  using pin::FrameIndex;
+  using std::shared_ptr;
+  using ContactMap = aligator::ContactMapTpl<double>;
 
-/// ALIGATOR TYPEDEFS / USING-DECLS
+  /// ALIGATOR TYPEDEFS / USING-DECLS
 
-using aligator::context::SolverProxDDP;
-using aligator::context::StageData;
-using aligator::context::StageModel;
-using aligator::context::TrajOptProblem;
+  using aligator::context::SolverProxDDP;
+  using aligator::context::StageData;
+  using aligator::context::StageModel;
+  using aligator::context::TrajOptProblem;
 
-/// SIMPLE-MPC FORWARD DECLARATIONS
+  /// SIMPLE-MPC FORWARD DECLARATIONS
 
-struct Settings;
-struct FullDynamicsSettings;
-class RobotDataHandler;
-class FullDynamicsOCP;
-class KinodynamicsOCP;
-class CentroidalOCP;
-class OCPHandler;
-class IDSolver;
-class IKIDSolver;
+  struct Settings;
+  struct FullDynamicsSettings;
+  class RobotDataHandler;
+  class FullDynamicsOCP;
+  class KinodynamicsOCP;
+  class CentroidalOCP;
+  class OCPHandler;
+  class IDSolver;
+  class IKIDSolver;
 
-/// EIGEN TYPEDEFS
+  /// EIGEN TYPEDEFS
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
-using VectorRef = Eigen::Ref<VectorXd>;
-using ConstVectorRef = Eigen::Ref<const VectorXd>;
+  using Eigen::MatrixXd;
+  using Eigen::VectorXd;
+  using VectorRef = Eigen::Ref<VectorXd>;
+  using ConstVectorRef = Eigen::Ref<const VectorXd>;
 
-using Vector6d = Eigen::Matrix<double, 6, 1>;
-using Vector7d = Eigen::Matrix<double, 7, 1>;
+  using Vector6d = Eigen::Matrix<double, 6, 1>;
+  using Vector7d = Eigen::Matrix<double, 7, 1>;
 
 } // namespace simple_mpc

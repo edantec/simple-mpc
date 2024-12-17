@@ -131,7 +131,7 @@ ikid_conf = dict(
     Kd_gains=Kd_gains,
     contact_ids=contact_ids,
     fixed_frame_ids=fixed_frame_ids,
-    x0=data_handler.getCentroidalState(),
+    x0=model_handler.getReferenceState(),
     dt=0.01,
     mu=0.8,
     Lfoot=0.1,
@@ -217,6 +217,7 @@ for t in range(600):
     qp.computeDifferences(
         mpc.getDataHandler().getData(), x_measured, foot_ref, foot_ref_next
     )
+
     for j in range(10):
         time.sleep(0.001)
         q_meas, v_meas = device.measureState()
@@ -231,6 +232,7 @@ for t in range(600):
             - 1 * mpc.getSolver().results.controlFeedbacks()[0] @ state_diff
         )
 
+
         qp.solve_qp(
             mpc.getDataHandler().getData(),
             contact_states,
@@ -239,5 +241,6 @@ for t in range(600):
             dH,
             mpc.getDataHandler().getData().M,
         )
+
 
         device.execute(qp.solved_torque)
