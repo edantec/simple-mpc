@@ -76,6 +76,8 @@ namespace simple_mpc
     Eigen::Vector3d com0_;
     LocomotionType now_;
 
+    std::shared_ptr<RobotDataHandler> data_handler_;
+
   public:
     std::shared_ptr<SolverProxDDP> solver_;
     Vector6d velocity_base_;
@@ -136,7 +138,7 @@ namespace simple_mpc
     }
     const RobotDataHandler & getDataHandler() const
     {
-      return ocp_handler_->getDataHandler();
+      return *data_handler_;
     }
     const RobotModelHandler & getModelHandler() const
     {

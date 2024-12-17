@@ -69,10 +69,7 @@ namespace simple_mpc
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     // Constructors
-    explicit FullDynamicsOCP(
-      const FullDynamicsSettings & settings,
-      const RobotModelHandler & model_handler,
-      const RobotDataHandler & data_handler);
+    explicit FullDynamicsOCP(const FullDynamicsSettings & settings, const RobotModelHandler & model_handler);
 
     SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(FullDynamicsOCP);
 
@@ -87,7 +84,7 @@ namespace simple_mpc
 
     // Manage terminal cost and constraint
     CostStack createTerminalCost() override;
-    void createTerminalConstraint() override;
+    void createTerminalConstraint(const Eigen::Vector3d & com_ref) override;
     void updateTerminalConstraint(const Eigen::Vector3d & com_ref) override;
 
     // Getters and setters
@@ -103,7 +100,7 @@ namespace simple_mpc
     void setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base) override;
     const Eigen::VectorXd getPoseBase(const std::size_t t) override;
     void setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base) override;
-    const Eigen::VectorXd getProblemState() override;
+    const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) override;
     size_t getContactSupport(const std::size_t t) override;
     FullDynamicsSettings getSettings()
     {

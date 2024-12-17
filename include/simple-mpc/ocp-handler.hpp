@@ -47,7 +47,7 @@ namespace simple_mpc
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     /// Constructor
-    explicit OCPHandler(const RobotModelHandler & model_handler, const RobotDataHandler & data_handler);
+    explicit OCPHandler(const RobotModelHandler & model_handler);
     SIMPLE_MPC_DEFINE_DEFAULT_MOVE_CTORS(OCPHandler);
     virtual ~OCPHandler();
 
@@ -71,7 +71,7 @@ namespace simple_mpc
 
     virtual void updateTerminalConstraint(const Eigen::Vector3d & com_ref) = 0;
 
-    virtual void createTerminalConstraint() = 0;
+    virtual void createTerminalConstraint(const Eigen::Vector3d & com_ref) = 0;
 
     // Setter and getter for poses reference
     virtual void
@@ -93,7 +93,7 @@ namespace simple_mpc
     virtual void
     setReferenceForce(const std::size_t t, const std::string & ee_name, const Eigen::VectorXd & force_ref) = 0;
     virtual const Eigen::VectorXd getReferenceForce(const std::size_t t, const std::string & ee_name) = 0;
-    virtual const Eigen::VectorXd getProblemState() = 0;
+    virtual const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) = 0;
     virtual size_t getContactSupport(const std::size_t t) = 0;
 
     /// Common functions for all problems
@@ -135,14 +135,6 @@ namespace simple_mpc
     {
       return model_handler_;
     }
-    const RobotDataHandler & getDataHandler() const
-    {
-      return data_handler_;
-    }
-    RobotDataHandler & getDataHandler()
-    {
-      return data_handler_;
-    }
     int getNu()
     {
       return nu_;
@@ -158,7 +150,6 @@ namespace simple_mpc
     bool terminal_constraint_ = false;
 
     /// The robot model
-    RobotDataHandler data_handler_;
     RobotModelHandler model_handler_;
 
     /// The reference shooting problem storing all shooting nodes

@@ -104,7 +104,7 @@ problem_conf = dict(
 
 T = 100
 
-problem = KinodynamicsOCP(problem_conf, model_handler, data_handler)
+problem = KinodynamicsOCP(problem_conf, model_handler)
 problem.createProblem(model_handler.getReferenceState(), T, 6, gravity[2], False)
 
 """ Define MPC object """

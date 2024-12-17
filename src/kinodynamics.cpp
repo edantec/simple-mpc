@@ -26,11 +26,8 @@ namespace simple_mpc
   using CenterOfMassTranslationResidual = CenterOfMassTranslationResidualTpl<double>;
   using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-  KinodynamicsOCP::KinodynamicsOCP(
-    const KinodynamicsSettings & settings,
-    const RobotModelHandler & model_handler,
-    const RobotDataHandler & data_handler)
-  : Base(model_handler, data_handler)
+  KinodynamicsOCP::KinodynamicsOCP(const KinodynamicsSettings & settings, const RobotModelHandler & model_handler)
+  : Base(model_handler)
   , settings_(settings)
   {
 
@@ -304,9 +301,9 @@ namespace simple_mpc
     qc->setTarget(x0_);
   }
 
-  const Eigen::VectorXd KinodynamicsOCP::getProblemState()
+  const Eigen::VectorXd KinodynamicsOCP::getProblemState(const RobotDataHandler & data_handler)
   {
-    return data_handler_.getState();
+    return data_handler.getState();
   }
 
   size_t KinodynamicsOCP::getContactSupport(const std::size_t t)
@@ -338,14 +335,14 @@ namespace simple_mpc
     return term_cost;
   }
 
-  void KinodynamicsOCP::createTerminalConstraint()
+  void KinodynamicsOCP::createTerminalConstraint(const Eigen::Vector3d & com_ref)
   {
     if (!problem_initialized_)
     {
       throw std::runtime_error("Create problem first!");
     }
     CenterOfMassTranslationResidual com_cstr =
-      CenterOfMassTranslationResidual(ndx_, nu_, model_handler_.getModel(), data_handler_.getData().com[0]);
+      CenterOfMassTranslationResidual(ndx_, nu_, model_handler_.getModel(), com_ref);
 
     problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
     terminal_constraint_ = true;

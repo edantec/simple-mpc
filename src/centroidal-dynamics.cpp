@@ -24,9 +24,8 @@ namespace simple_mpc
   using CentroidalFrictionConeResidual = CentroidalFrictionConeResidualTpl<double>;
   using IntegratorEuler = dynamics::IntegratorEulerTpl<double>;
 
-  CentroidalOCP::CentroidalOCP(
-    const CentroidalSettings & settings, const RobotModelHandler & model_handler, const RobotDataHandler & data_handler)
-  : Base(model_handler, data_handler)
+  CentroidalOCP::CentroidalOCP(const CentroidalSettings & settings, const RobotModelHandler & model_handler)
+  : Base(model_handler)
   , settings_(settings)
   {
     nx_ = 9;
@@ -258,9 +257,9 @@ namespace simple_mpc
     cfr->setReference(com_ref_);
   }
 
-  const Eigen::VectorXd CentroidalOCP::getProblemState()
+  const Eigen::VectorXd CentroidalOCP::getProblemState(const RobotDataHandler & data_handler)
   {
-    return data_handler_.getCentroidalState();
+    return data_handler.getCentroidalState();
   }
 
   size_t CentroidalOCP::getContactSupport(const std::size_t t)
@@ -291,13 +290,13 @@ namespace simple_mpc
     return term_cost;
   }
 
-  void CentroidalOCP::createTerminalConstraint()
+  void CentroidalOCP::createTerminalConstraint(const Eigen::Vector3d & com_ref)
   {
     if (!problem_initialized_)
     {
       throw std::runtime_error("Create problem first!");
     }
-    CentroidalCoMResidual com_cstr = CentroidalCoMResidual(ndx_, nu_, data_handler_.getData().com[0]);
+    CentroidalCoMResidual com_cstr = CentroidalCoMResidual(ndx_, nu_, com_ref);
 
     // problem_->addTerminalConstraint(com_cstr, EqualityConstraint());
     terminal_constraint_ = false;

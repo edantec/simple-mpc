@@ -8,9 +8,8 @@ namespace simple_mpc
   {
   }
 
-  OCPHandler::OCPHandler(const RobotModelHandler & model_handler, const RobotDataHandler & data_handler)
-  : data_handler_(data_handler)
-  , model_handler_(model_handler)
+  OCPHandler::OCPHandler(const RobotModelHandler & model_handler)
+  : model_handler_(model_handler)
   , problem_(nullptr)
   {
     nq_ = model_handler.getModel().nq;
@@ -115,7 +114,7 @@ namespace simple_mpc
     for (auto & name : model_handler_.getFeetNames())
     {
       contact_phase.insert({name, true});
-      contact_pose.insert({name, data_handler_.getFootPose(name)});
+      contact_pose.insert({name, pinocchio::SE3::Identity()});
       contact_force.insert({name, force_ref});
     }
 
@@ -133,7 +132,7 @@ namespace simple_mpc
 
     if (terminal_constraint)
     {
-      createTerminalConstraint();
+      createTerminalConstraint(x0.head(3));
     }
   }
 } // namespace simple_mpc
