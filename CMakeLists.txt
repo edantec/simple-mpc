@@ -77,7 +77,7 @@ include("${JRL_CMAKE_MODULES}/base.cmake")
 include("${JRL_CMAKE_MODULES}/boost.cmake")
 
 # Project definition
-compute_project_args(PROJECT_ARGS LANGUAGES CXX)
+COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
 project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 add_compile_options(-Wno-error)
@@ -93,11 +93,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 find_package(example-robot-data 4.0.9 REQUIRED)
-add_project_dependency(OpenMP REQUIRED)
-add_project_dependency(proxsuite REQUIRED)
-add_project_dependency(pinocchio REQUIRED)
-add_project_dependency(aligator REQUIRED)
-add_project_dependency(ndcurves REQUIRED)
+ADD_PROJECT_DEPENDENCY(OpenMP REQUIRED)
+ADD_PROJECT_DEPENDENCY(proxsuite REQUIRED)
+ADD_PROJECT_DEPENDENCY(pinocchio REQUIRED)
+ADD_PROJECT_DEPENDENCY(aligator REQUIRED)
+ADD_PROJECT_DEPENDENCY(ndcurves REQUIRED)
 
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
