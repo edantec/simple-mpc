@@ -111,7 +111,7 @@ target_link_libraries(
     pinocchio::pinocchio
     aligator::aligator
     example-robot-data::example-robot-data
-    ndcurves
+    ndcurves::ndcurves
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${mpc_HEADER}")
