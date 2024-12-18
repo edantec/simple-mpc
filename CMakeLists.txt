@@ -92,19 +92,19 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   )
 endif()
 
-find_package(example-robot-data 4.0.9 REQUIRED)
-ADD_PROJECT_DEPENDENCY(OpenMP REQUIRED)
-ADD_PROJECT_DEPENDENCY(proxsuite REQUIRED)
-ADD_PROJECT_DEPENDENCY(pinocchio REQUIRED)
-ADD_PROJECT_DEPENDENCY(aligator REQUIRED)
-ADD_PROJECT_DEPENDENCY(ndcurves REQUIRED)
+include(dependencies.cmake)
 
 # Main Library
 file(GLOB mpc_SOURCE CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB mpc_HEADER CONFIGURE_DEPENDS include/${PROJECT_NAME}/*.hpp)
 
 add_library(${PROJECT_NAME} SHARED ${mpc_HEADER} ${mpc_SOURCE})
-target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
