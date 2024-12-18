@@ -244,8 +244,8 @@ namespace simple_mpc
     setReferenceControl(i, control_ref_);
   }
 
-  void KinodynamicsOCP::setReferenceForce(
-    const std::size_t i, const std::string & ee_name, const Eigen::VectorXd & force_ref)
+  void
+  KinodynamicsOCP::setReferenceForce(const std::size_t i, const std::string & ee_name, const ConstVectorRef & force_ref)
   {
     std::vector<std::string> hname = model_handler_.getFeetNames();
     std::vector<std::string>::iterator it = std::find(hname.begin(), hname.end(), ee_name);
@@ -270,7 +270,7 @@ namespace simple_mpc
     return qc->getTarget().segment(nq_, 6);
   }
 
-  void KinodynamicsOCP::setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base)
+  void KinodynamicsOCP::setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base)
   {
     if (velocity_base.size() != 6)
     {
@@ -289,7 +289,7 @@ namespace simple_mpc
     return qc->getTarget().head(7);
   };
 
-  void KinodynamicsOCP::setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base)
+  void KinodynamicsOCP::setPoseBase(const std::size_t t, const ConstVectorRef & pose_base)
   {
     if (pose_base.size() != 7)
     {

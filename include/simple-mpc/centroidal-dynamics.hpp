@@ -87,14 +87,13 @@ namespace simple_mpc
 
     // Getters and setters for contact forces
     void setReferenceForces(const std::size_t t, const std::map<std::string, Eigen::VectorXd> & force_refs) override;
-    void
-    setReferenceForce(const std::size_t t, const std::string & ee_name, const Eigen::VectorXd & force_ref) override;
+    void setReferenceForce(const std::size_t t, const std::string & ee_name, const ConstVectorRef & force_ref) override;
     const Eigen::VectorXd getReferenceForce(const std::size_t t, const std::string & ee_name) override;
     void computeControlFromForces(const std::map<std::string, Eigen::VectorXd> & force_refs);
     const Eigen::VectorXd getVelocityBase(const std::size_t t) override;
-    void setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base) override;
+    void setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base) override;
     const Eigen::VectorXd getPoseBase(const std::size_t t) override;
-    void setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base) override;
+    void setPoseBase(const std::size_t t, const ConstVectorRef & pose_base) override;
     const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) override;
     size_t getContactSupport(const std::size_t t) override;
 

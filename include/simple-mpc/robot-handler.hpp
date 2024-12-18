@@ -111,7 +111,7 @@ namespace simple_mpc
      * @return Eigen::VectorXd The vector that must be integrated during a unit of
      * time to go from x1 to x2.
      */
-    Eigen::VectorXd difference(const Eigen::VectorXd & x1, const Eigen::VectorXd & x2) const;
+    Eigen::VectorXd difference(const ConstVectorRef & x1, const ConstVectorRef & x2) const;
 
     /**
      * @brief Compute reduced state from measures by concatenating q,v of the
@@ -121,10 +121,10 @@ namespace simple_mpc
      * @param v Velocity vector of the full model
      * @return const Eigen::VectorXd State vector of the reduced model.
      */
-    Eigen::VectorXd shapeState(const Eigen::VectorXd & q, const Eigen::VectorXd & v) const;
+    Eigen::VectorXd shapeState(const ConstVectorRef & q, const ConstVectorRef & v) const;
 
     // Const getters
-    const Eigen::VectorXd & getReferenceState() const
+    const ConstVectorRef & getReferenceState() const
     {
       return reference_state_;
     }
@@ -195,8 +195,8 @@ namespace simple_mpc
     RobotDataHandler(const RobotModelHandler & model_handler);
 
     // Set new robot state
-    void updateInternalData(const Eigen::VectorXd & x, const bool updateJacobians);
-    void updateJacobiansMassMatrix(const Eigen::VectorXd & x);
+    void updateInternalData(const ConstVectorRef & x, const bool updateJacobians);
+    void updateJacobiansMassMatrix(const ConstVectorRef & x);
 
     // Const getters
     const SE3 & getRefFootPose(const std::string & foot_name) const

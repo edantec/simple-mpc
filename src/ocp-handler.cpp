@@ -55,7 +55,7 @@ namespace simple_mpc
     return stage_models;
   }
 
-  void OCPHandler::setReferenceControl(const std::size_t t, const Eigen::VectorXd & u_ref)
+  void OCPHandler::setReferenceControl(const std::size_t t, const ConstVectorRef & u_ref)
   {
     CostStack * cs = getCostStack(t);
     QuadraticControlCost * qc = cs->getComponent<QuadraticControlCost>("control_cost");
@@ -94,7 +94,7 @@ namespace simple_mpc
   }
 
   void OCPHandler::createProblem(
-    const Eigen::VectorXd & x0,
+    const ConstVectorRef & x0,
     const size_t horizon,
     const int force_size,
     const double gravity,

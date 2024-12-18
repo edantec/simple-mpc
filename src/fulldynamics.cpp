@@ -287,8 +287,8 @@ namespace simple_mpc
     }
   }
 
-  void FullDynamicsOCP::setReferenceForce(
-    const std::size_t i, const std::string & ee_name, const Eigen::VectorXd & force_ref)
+  void
+  FullDynamicsOCP::setReferenceForce(const std::size_t i, const std::string & ee_name, const ConstVectorRef & force_ref)
   {
     CostStack * cs = getCostStack(i);
     QuadraticResidualCost * qrc = cs->getComponent<QuadraticResidualCost>(ee_name + "_force_cost");
@@ -329,7 +329,7 @@ namespace simple_mpc
     return qc->getTarget().segment(nq_, 6);
   }
 
-  void FullDynamicsOCP::setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base)
+  void FullDynamicsOCP::setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base)
   {
     if (velocity_base.size() != 6)
     {
@@ -348,7 +348,7 @@ namespace simple_mpc
     return qc->getTarget().head(7);
   };
 
-  void FullDynamicsOCP::setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base)
+  void FullDynamicsOCP::setPoseBase(const std::size_t t, const ConstVectorRef & pose_base)
   {
     if (pose_base.size() != 7)
     {
