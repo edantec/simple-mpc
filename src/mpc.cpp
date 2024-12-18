@@ -37,7 +37,7 @@ namespace simple_mpc
     foot_trajectories_.updateApex(settings.swing_apex);
     x0_ = ocp_handler_->getProblemState(*data_handler_);
 
-    solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init, maxiters, aligator::QUIET);
+    solver_ = std::make_unique<SolverProxDDP>(settings_.TOL, settings_.mu_init, maxiters, aligator::QUIET);
     solver_->rollout_type_ = aligator::RolloutType::LINEAR;
 
     if (settings_.num_threads > 1)

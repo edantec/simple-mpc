@@ -79,7 +79,7 @@ namespace simple_mpc
     std::shared_ptr<RobotDataHandler> data_handler_;
 
   public:
-    std::shared_ptr<SolverProxDDP> solver_;
+    std::unique_ptr<SolverProxDDP> solver_;
     Vector6d velocity_base_;
     Vector7d pose_base_;
     Eigen::Vector3d next_pose_;
@@ -129,11 +129,6 @@ namespace simple_mpc
     // getters and setters
     TrajOptProblem & getTrajOptProblem();
 
-    SIMPLE_MPC_DEPRECATED_MESSAGE("The MPC::solver_ member is now public.")
-    SolverProxDDP & getSolver()
-    {
-      return *solver_;
-    }
     const RobotDataHandler & getDataHandler() const
     {
       return *data_handler_;
@@ -184,15 +179,14 @@ namespace simple_mpc
     std::map<std::string, std::vector<int>> foot_takeoff_times_, foot_land_times_;
 
     // Solution vectors for state and control
-    std::vector<Eigen::VectorXd> xs_;
-    std::vector<Eigen::VectorXd> us_;
-
+    std::vector<VectorXd> xs_;
+    std::vector<VectorXd> us_;
     // Riccati gains
-    std::vector<Eigen::MatrixXd> Ks_;
+    std::vector<MatrixXd> Ks_;
 
     // Initial quantities
-    Eigen::VectorXd x0_;
-    Eigen::VectorXd u0_;
+    VectorXd x0_;
+    VectorXd u0_;
   };
 
 } // namespace simple_mpc

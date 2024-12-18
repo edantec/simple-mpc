@@ -11,6 +11,7 @@
 
 #include <eigenpy/deprecation-policy.hpp>
 #include <eigenpy/eigenpy.hpp>
+#include <eigenpy/std-unique-ptr.hpp>
 #include <eigenpy/std-vector.hpp>
 
 #include "simple-mpc/mpc.hpp"
@@ -72,7 +73,7 @@ namespace simple_mpc
 
       StdVectorPythonVisitor<std::vector<MapBool>, true>::expose("StdVec_MapBool");
 
-      bp::class_<MPC>("MPC", bp::no_init)
+      bp::class_<MPC, boost::noncopyable>("MPC", bp::no_init)
         .def("__init__", bp::make_constructor(&createMPC, bp::default_call_policies()))
         .def("getSettings", &getSettings)
         .def("generateCycleHorizon", &MPC::generateCycleHorizon, bp::args("self", "contact_states"))
@@ -102,11 +103,7 @@ namespace simple_mpc
         .def(
           "getCycleHorizon", &MPC::getCycleHorizon, "self"_a, bp::return_internal_reference<>(),
           "Get the cycle horizon.")
-        .def(
-          "getSolver", &MPC::getSolver, "self"_a,
-          eigenpy::deprecated_member<eigenpy::DeprecationType::DEPRECATION, bp::return_internal_reference<>>(),
-          "Get the SolverProxDDP object")
-        .def_readonly("solver", &MPC::solver_)
+        .add_property("solver", bp::make_getter(&MPC::solver_, eigenpy::ReturnInternalStdUniquePtr{}))
         .add_property("xs", &MPC::xs_)
         .add_property("us", &MPC::us_)
         .add_property("Ks", &MPC::Ks_);
