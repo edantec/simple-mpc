@@ -6,8 +6,7 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SIMPLE_MPC_FOOTTRAJ_HPP_
-#define SIMPLE_MPC_FOOTTRAJ_HPP_
+#pragma once
 
 #include "simple-mpc/fwd.hpp"
 #include <ndcurves/fwd.h>
@@ -19,14 +18,11 @@ namespace simple_mpc
    * @brief Foot trajectory generation
    */
 
-  typedef Eigen::Vector3d point3_t;
-  typedef ndcurves::bezier_curve<float, double, false, point3_t> curve_translation;
-  typedef ndcurves::piecewise_curve<float, double, false, point3_t> piecewise_curve;
+  using point3_t = Eigen::Vector3d;
+  using piecewise_curve = ndcurves::piecewise_curve<float, double, false, point3_t>;
 
   class FootTrajectory
   {
-    /**
-     */
   protected:
     std::map<std::string, point3_t> initial_poses_;
     std::map<std::string, point3_t> final_poses_;
@@ -38,18 +34,21 @@ namespace simple_mpc
     size_t T_;
 
   public:
-    FootTrajectory() {};
-    virtual ~FootTrajectory() {};
+    explicit FootTrajectory() {};
     FootTrajectory(
       const std::map<std::string, point3_t> & initial_poses, double swing_apex, int T_fly, int T_contact, size_t T);
+    virtual ~FootTrajectory() {};
 
     void updateApex(double swing_apex)
     {
       swing_apex_ = swing_apex;
     }
+
     piecewise_curve defineTranslationBezier(const point3_t & trans_init, const point3_t & trans_final);
+
     std::vector<point3_t> createTrajectory(
       int time_to_land, point3_t & initial_trans, point3_t & final_trans, piecewise_curve trajectory_swing);
+
     void updateTrajectory(
       bool update,
       int landing_time,
@@ -63,9 +62,3 @@ namespace simple_mpc
   };
 
 } // namespace simple_mpc
-
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-
-#endif // SIMPLE_MPC_HPP_

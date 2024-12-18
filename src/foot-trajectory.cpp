@@ -15,6 +15,7 @@
 
 namespace simple_mpc
 {
+  using curve_translation = ndcurves::bezier_curve<float, double, false, point3_t>;
 
   FootTrajectory::FootTrajectory(
     const std::map<std::string, point3_t> & initial_poses, double swing_apex, int T_fly, int T_contact, size_t T)
