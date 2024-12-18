@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "simple-mpc/fwd.hpp"
+#include "simple-mpc/math-util.hpp"
 #include "simple-mpc/robot-handler.hpp"
 #include "test_utils.cpp"
 #include <pinocchio/algorithm/center-of-mass.hpp>
@@ -227,7 +228,7 @@ BOOST_AUTO_TEST_CASE(data_handler)
     pinocchio::computeJointJacobians(model, data);
     pinocchio::computeJointJacobiansTimeVariation(model, data, q, v);
     pinocchio::crba(model, data, q);
-    pinocchio::make_symmetric(data.M);
+    simple_mpc::math::make_symmetric(data.M);
     pinocchio::nonLinearEffects(model, data, q, v);
     pinocchio::dccrba(model, data, q, v);
 
