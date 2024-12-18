@@ -87,16 +87,14 @@ namespace simple_mpc
     MPCSettings settings_;
     std::shared_ptr<OCPHandler> ocp_handler_;
 
-    explicit MPC();
     explicit MPC(const MPCSettings & settings, std::shared_ptr<OCPHandler> problem);
-    void initialize(const MPCSettings & settings, std::shared_ptr<OCPHandler> problem);
 
     // Generate the cycle walking problem along which we will iterate
     // the receding horizon
     void generateCycleHorizon(const std::vector<std::map<std::string, bool>> & contact_states);
 
     // Perform one iteration of MPC
-    void iterate(const Eigen::VectorXd & x);
+    void iterate(const ConstVectorRef & x);
 
     void updateCycleTiming(const bool updateOnlyHorizon);
 

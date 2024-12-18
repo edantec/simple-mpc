@@ -24,7 +24,7 @@ namespace simple_mpc
     namespace bp = boost::python;
     using eigenpy::StdVectorPythonVisitor;
 
-    void initialize(MPC & self, const bp::dict & settings, std::shared_ptr<OCPHandler> problem)
+    MPC * createMPC(const bp::dict & settings, std::shared_ptr<OCPHandler> problem)
     {
       MPCSettings conf;
 
@@ -42,7 +42,7 @@ namespace simple_mpc
       conf.T_contact = bp::extract<int>(settings["T_contact"]);
       conf.timestep = bp::extract<double>(settings["timestep"]);
 
-      self.initialize(conf, problem);
+      return new MPC{conf, problem};
     }
 
     bp::dict getSettings(MPC & self)
@@ -73,8 +73,7 @@ namespace simple_mpc
       StdVectorPythonVisitor<std::vector<MapBool>, true>::expose("StdVec_MapBool");
 
       bp::class_<MPC>("MPC", bp::no_init)
-        .def(bp::init<>(bp::args("self")))
-        .def("initialize", &initialize)
+        .def("__init__", bp::make_constructor(&createMPC, bp::default_call_policies()))
         .def("getSettings", &getSettings)
         .def("generateCycleHorizon", &MPC::generateCycleHorizon, bp::args("self", "contact_states"))
         .def("iterate", &MPC::iterate, bp::args("self", "x"))

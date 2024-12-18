@@ -16,19 +16,11 @@ namespace simple_mpc
   using namespace aligator;
   constexpr std::size_t maxiters = 100;
 
-  MPC::MPC()
-  {
-  }
-
   MPC::MPC(const MPCSettings & settings, std::shared_ptr<OCPHandler> problem)
+  : settings_(settings)
+  , ocp_handler_(problem)
   {
-    initialize(settings, problem);
-  }
 
-  void MPC::initialize(const MPCSettings & settings, std::shared_ptr<OCPHandler> problem)
-  {
-    settings_ = settings;
-    ocp_handler_ = problem;
     data_handler_ = std::make_shared<RobotDataHandler>(ocp_handler_->getModelHandler());
     data_handler_->updateInternalData(ocp_handler_->getModelHandler().getReferenceState(), true);
     std::map<std::string, Eigen::Vector3d> starting_poses;
@@ -189,7 +181,7 @@ namespace simple_mpc
     }
   }
 
-  void MPC::iterate(const Eigen::VectorXd & x)
+  void MPC::iterate(const ConstVectorRef & x)
   {
 
     data_handler_->updateInternalData(x, false);
