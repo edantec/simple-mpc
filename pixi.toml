@@ -1,0 +1,72 @@
+[project]
+name = "simple-mpc"
+version = "0.1"
+channels = ["conda-forge"]
+description = "MPC schemes for locomotion"
+platforms = ["linux-64", "osx-arm64"]
+license = "BSD-2-Clause"
+license-file = "LICENSE"
+readme = "README.md"
+
+[build-dependencies]
+ccache = ">=4.9.1"
+cmake = ">=3.10"
+cxx-compiler = ">=1.7.0"
+ninja = ">=1.11"
+pkg-config = ">=0.29.2"
+
+[dependencies]
+libboost-python-devel = ">=1.80.0"
+python = "3.11"
+eigenpy = ">=3.10.1"
+aligator = ">=0.10"
+benchmark = ">=1.8.0"
+pytest = ">=8.3.0"
+matplotlib = ">=3.9"
+
+[activation]
+scripts = ["build_scripts/pixi/activation.sh"]
+
+[tasks]
+# We must avoid to set CMAKE_CXX_FLAGS because of WIN32
+# https://discourse.cmake.org/t/strictly-appending-to-cmake-lang-flags/6478
+configure = { cmd = [
+  "CXXFLAGS=$ALIGATOR_CXX_FLAGS",
+  "cmake",
+  "-G",
+  "Ninja",
+  "-B",
+  "build",
+  "-S",
+  ".",
+  "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
+  "-DCMAKE_BUILD_TYPE=$SIMPLE_MPC_BUILD_TYPE",
+  "-DBUILD_TESTING=ON",
+  "-DGENERATE_PYTHON_STUBS=ON",
+] }
+build = { cmd = "cmake --build build --target all", depends_on = ["configure"] }
+clean = { cmd = "rm -rf build" }
+test = { cmd = "ctest --test-dir build --output-on-failure", depends_on = [
+  "build",
+] }
+
+[feature.lint]
+dependencies = { pre-commit = ">=3.6.2" }
+tasks = { lint = { cmd = "pre-commit run --all" } }
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+# Use clang on GNU/Linux.
+# We must use scripts instead of env to setup CC and CXX
+# to avoid cxx-compiler to overwrite them.
+[feature.clang]
+platforms = ["linux-64"]
+activation = { scripts = ["build_scripts/pixi/activation_clang.sh"] }
+dependencies = { clangxx = "*" }
+
+[environments]
+default = { features = ["py311"], solve-group = "py311" }
+clang = { features = ["clang", "py311"] }
+lint = { features = ["lint"], solve-group = "py311" }
+all = { features = [], solve-group = "py311" }
