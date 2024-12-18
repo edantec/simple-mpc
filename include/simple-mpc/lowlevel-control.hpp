@@ -22,7 +22,6 @@
 namespace simple_mpc
 {
   using namespace proxsuite;
-  using pin::SE3;
 
   struct IDSettings
   {
@@ -88,11 +87,11 @@ namespace simple_mpc
     void computeMatrices(
       pin::Data & data,
       const std::vector<bool> & contact_state,
-      const Eigen::VectorXd & v,
-      const Eigen::VectorXd & a,
-      const Eigen::VectorXd & tau,
-      const Eigen::VectorXd & forces,
-      const Eigen::MatrixXd & M);
+      const ConstVectorRef & v,
+      const ConstVectorRef & a,
+      const ConstVectorRef & tau,
+      const ConstVectorRef & forces,
+      const ConstMatrixRef & M);
 
   public:
     explicit IDSolver(const IDSettings & settings, const pin::Model & model);
@@ -100,11 +99,11 @@ namespace simple_mpc
     void solveQP(
       pin::Data & data,
       const std::vector<bool> & contact_state,
-      const Eigen::VectorXd & v,
-      const Eigen::VectorXd & a,
-      const Eigen::VectorXd & tau,
-      const Eigen::VectorXd & forces,
-      const Eigen::MatrixXd & M);
+      const ConstVectorRef & v,
+      const ConstVectorRef & a,
+      const ConstVectorRef & tau,
+      const ConstVectorRef & forces,
+      const ConstMatrixRef & M);
 
     SIMPLE_MPC_DEPRECATED
     proxqp::dense::Model<double> getQP()
@@ -181,27 +180,27 @@ namespace simple_mpc
     void computeMatrices(
       pin::Data & data,
       const std::vector<bool> & contact_state,
-      const Eigen::VectorXd & x_measured,
-      const Eigen::VectorXd & forces,
-      const Eigen::VectorXd & dH,
-      const Eigen::MatrixXd & M);
+      const ConstVectorRef & x_measured,
+      const ConstVectorRef & forces,
+      const ConstVectorRef & dH,
+      const ConstMatrixRef & M);
 
   public:
     explicit IKIDSolver(const IKIDSettings & settings, const pin::Model & model);
 
     void computeDifferences(
       pin::Data & data,
-      const Eigen::VectorXd & x_measured,
-      const std::vector<pin::SE3> foot_refs,
-      const std::vector<pin::SE3> foot_refs_next);
+      const ConstVectorRef & x_measured,
+      const std::vector<pin::SE3> & foot_refs,
+      const std::vector<pin::SE3> & foot_refs_next);
 
     void solve_qp(
       pin::Data & data,
       const std::vector<bool> & contact_state,
-      const Eigen::VectorXd & x_measured,
-      const Eigen::VectorXd & forces,
-      const Eigen::VectorXd & dH,
-      const Eigen::MatrixXd & M);
+      const ConstVectorRef & x_measured,
+      const ConstVectorRef & forces,
+      const ConstVectorRef & dH,
+      const ConstMatrixRef & M);
 
     SIMPLE_MPC_DEPRECATED
     proxqp::dense::Model<double> getQP()
