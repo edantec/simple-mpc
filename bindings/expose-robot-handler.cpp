@@ -28,7 +28,7 @@ namespace simple_mpc
         .def("difference", &RobotModelHandler::difference)
         .def("shapeState", &RobotModelHandler::shapeState)
         .def("getBaseFrameId", &RobotModelHandler::getBaseFrameId)
-        .def("getReferenceState", &RobotModelHandler::getReferenceState, bp::return_internal_reference<>())
+        .def("getReferenceState", &RobotModelHandler::getReferenceState)
         .def("getFootNb", &RobotModelHandler::getFootNb)
         .def("getFeetIds", &RobotModelHandler::getFeetIds, bp::return_internal_reference<>())
         .def("getFootName", &RobotModelHandler::getFootName, bp::return_internal_reference<>())

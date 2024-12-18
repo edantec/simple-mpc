@@ -124,7 +124,7 @@ namespace simple_mpc
     Eigen::VectorXd shapeState(const ConstVectorRef & q, const ConstVectorRef & v) const;
 
     // Const getters
-    const ConstVectorRef & getReferenceState() const
+    ConstVectorRef getReferenceState() const
     {
       return reference_state_;
     }
