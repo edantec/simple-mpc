@@ -189,7 +189,7 @@ namespace simple_mpc
   }
 
   void
-  CentroidalOCP::setReferenceForce(const std::size_t t, const std::string & ee_name, const Eigen::VectorXd & force_ref)
+  CentroidalOCP::setReferenceForce(const std::size_t t, const std::string & ee_name, const ConstVectorRef & force_ref)
   {
     std::vector<std::string> hname = model_handler_.getFeetNames();
     std::vector<std::string>::iterator it = std::find(hname.begin(), hname.end(), ee_name);
@@ -223,7 +223,7 @@ namespace simple_mpc
     return v;
   }
 
-  void CentroidalOCP::setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base)
+  void CentroidalOCP::setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base)
   {
     CostStack * cs = getCostStack(t);
     QuadraticResidualCost * qcm = cs->getComponent<QuadraticResidualCost>("linear_mom_cost");
@@ -244,7 +244,7 @@ namespace simple_mpc
     return cfr->getReference();
   }
 
-  void CentroidalOCP::setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base)
+  void CentroidalOCP::setPoseBase(const std::size_t t, const ConstVectorRef & pose_base)
   {
     if (pose_base.size() != 7)
     {

@@ -93,8 +93,7 @@ mpc_conf = dict(
     timestep=0.01,
 )
 
-mpc = MPC()
-mpc.initialize(mpc_conf, dynproblem)
+mpc = MPC(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_quadru = {
@@ -227,12 +226,12 @@ for t in range(300):
     L_measured.append(mpc.getDataHandler().getData().hg.angular.copy())
 
     a0 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[nv:]
     )
     a1 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[1]
         .dynamics_data.continuous_data.xdot[nv:]
     )

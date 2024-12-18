@@ -66,7 +66,7 @@ namespace simple_mpc
     return frame_id;
   }
 
-  Eigen::VectorXd RobotModelHandler::shapeState(const Eigen::VectorXd & q, const Eigen::VectorXd & v) const
+  Eigen::VectorXd RobotModelHandler::shapeState(const ConstVectorRef & q, const ConstVectorRef & v) const
   {
     const long nq_full = model_full_.nq;
     const long nv_full = model_full_.nv;
@@ -97,7 +97,7 @@ namespace simple_mpc
     return x;
   }
 
-  Eigen::VectorXd RobotModelHandler::difference(const Eigen::VectorXd & x1, const Eigen::VectorXd & x2) const
+  Eigen::VectorXd RobotModelHandler::difference(const ConstVectorRef & x1, const ConstVectorRef & x2) const
   {
     const size_t nq = (size_t)model_.nq;
     const size_t nv = (size_t)model_.nv;
@@ -131,7 +131,7 @@ namespace simple_mpc
     updateInternalData(model_handler.getReferenceState(), true);
   }
 
-  void RobotDataHandler::updateInternalData(const Eigen::VectorXd & x, const bool updateJacobians)
+  void RobotDataHandler::updateInternalData(const ConstVectorRef & x, const bool updateJacobians)
   {
     const Eigen::Block q = x.head(model_handler_.getModel().nq);
     const Eigen::Block v = x.tail(model_handler_.getModel().nv);
@@ -147,7 +147,7 @@ namespace simple_mpc
     }
   }
 
-  void RobotDataHandler::updateJacobiansMassMatrix(const Eigen::VectorXd & x)
+  void RobotDataHandler::updateJacobiansMassMatrix(const ConstVectorRef & x)
   {
     const Eigen::Block q = x.head(model_handler_.getModel().nq);
     const Eigen::Block v = x.tail(model_handler_.getModel().nv);

@@ -82,16 +82,16 @@ namespace simple_mpc
 
     // Setter and getter for base velocity
     virtual const Eigen::VectorXd getVelocityBase(const std::size_t t) = 0;
-    virtual void setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base) = 0;
+    virtual void setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base) = 0;
 
     // Setter and getter for base pose
     virtual const Eigen::VectorXd getPoseBase(const std::size_t t) = 0;
-    virtual void setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base) = 0;
+    virtual void setPoseBase(const std::size_t t, const ConstVectorRef & pose_base) = 0;
 
     // Setter and getter for forces reference
     virtual void setReferenceForces(const std::size_t t, const std::map<std::string, Eigen::VectorXd> & force_refs) = 0;
     virtual void
-    setReferenceForce(const std::size_t t, const std::string & ee_name, const Eigen::VectorXd & force_ref) = 0;
+    setReferenceForce(const std::size_t t, const std::string & ee_name, const ConstVectorRef & force_ref) = 0;
     virtual const Eigen::VectorXd getReferenceForce(const std::size_t t, const std::string & ee_name) = 0;
     virtual const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) = 0;
     virtual size_t getContactSupport(const std::size_t t) = 0;
@@ -100,14 +100,14 @@ namespace simple_mpc
 
     // Create one TrajOptProblem from contact sequence
     void createProblem(
-      const Eigen::VectorXd & x0,
+      const ConstVectorRef & x0,
       const size_t horizon,
       const int force_size,
       const double gravity,
       const bool terminal_constraint);
 
     // Setter and getter for control reference
-    void setReferenceControl(const std::size_t t, const Eigen::VectorXd & u_ref);
+    void setReferenceControl(const std::size_t t, const ConstVectorRef & u_ref);
     ConstVectorRef getReferenceControl(const std::size_t t);
 
     // Getter for various objects and quantities

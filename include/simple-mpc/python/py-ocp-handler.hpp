@@ -125,7 +125,7 @@ namespace simple_mpc
       }
 
       void
-      setReferenceForce(const std::size_t t, const std::string & ee_name, const Eigen::VectorXd & force_ref) override
+      setReferenceForce(const std::size_t t, const std::string & ee_name, const ConstVectorRef & force_ref) override
       {
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setReferenceForce", t, ee_name, force_ref);
       }
@@ -135,7 +135,7 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getReferenceForce", t, ee_name);
       }
 
-      void setVelocityBase(const std::size_t t, const Eigen::VectorXd & velocity_base) override
+      void setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base) override
       {
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setVelocityBase", t, velocity_base);
       }
@@ -145,7 +145,7 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getVelocityBase", t);
       }
 
-      void setPoseBase(const std::size_t t, const Eigen::VectorXd & pose_base) override
+      void setPoseBase(const std::size_t t, const ConstVectorRef & pose_base) override
       {
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "setPoseBase", t, pose_base);
       }
@@ -165,7 +165,7 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(std::size_t, "getContactSupport", t);
       }
 
-      void setReferenceControl(const std::size_t t, const Eigen::VectorXd & u_ref)
+      void setReferenceControl(const std::size_t t, const ConstVectorRef & u_ref)
       {
         SIMPLE_MPC_PYTHON_OVERRIDE(void, OCPHandler, setReferenceControl, t, u_ref);
       }
