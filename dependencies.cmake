@@ -9,9 +9,9 @@ function(get_ndcurves)
   if(NOT ndcurves_FOUND)
     FetchContent_Declare(
       ndcurves
-      GIT_REPOSITORY "https://github.com/loco-3d/ndcurves"
+      GIT_REPOSITORY "https://github.com/ManifoldFR/ndcurves"
       GIT_PROGRESS True
-      GIT_TAG devel
+      GIT_TAG topic/cmake-disable-tests
       SYSTEM
       EXCLUDE_FROM_ALL
     )
