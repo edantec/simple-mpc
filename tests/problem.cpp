@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(fulldynamics)
   force_refs.insert({"right_sole_link", Eigen::VectorXd::Zero(6)});
 
   FullDynamicsSettings settings = getFullDynamicsSettings(model_handler);
-  FullDynamicsOCP fdproblem(settings, model_handler, data_handler);
+  FullDynamicsOCP fdproblem(settings, model_handler);
   StageModel sm = fdproblem.createStage(contact_states, contact_poses, force_refs, land_constraint);
   CostStack * cs = dynamic_cast<CostStack *>(&*sm.cost_);
 
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(kinodynamics)
   contact_poses.insert({contact_names[1], p2});
 
   KinodynamicsSettings settings = getKinodynamicsSettings(model_handler);
-  KinodynamicsOCP knproblem(settings, model_handler, data_handler);
+  KinodynamicsOCP knproblem(settings, model_handler);
 
   std::map<std::string, Eigen::VectorXd> force_refs;
   Eigen::VectorXd f1(6);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(centroidal)
   RobotDataHandler data_handler(model_handler);
 
   CentroidalSettings settings = getCentroidalSettings();
-  CentroidalOCP cproblem(settings, model_handler, data_handler);
+  CentroidalOCP cproblem(settings, model_handler);
 
   std::vector<std::string> contact_names = {"left_sole_link", "right_sole_link"};
   std::map<std::string, bool> contact_states;
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(centroidal_solo)
   CentroidalSettings settings = getCentroidalSettings();
   settings.force_size = 3;
 
-  CentroidalOCP cproblem(settings, model_handler, data_handler);
+  CentroidalOCP cproblem(settings, model_handler);
 
   std::vector<std::string> contact_names = {"FR_FOOT", "FL_FOOT", "HR_FOOT", "HL_FOOT"};
   std::map<std::string, bool> contact_states;

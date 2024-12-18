@@ -29,11 +29,8 @@ namespace simple_mpc
   using CenterOfMassTranslationResidual = CenterOfMassTranslationResidualTpl<double>;
   using IntegratorSemiImplEuler = dynamics::IntegratorSemiImplEulerTpl<double>;
 
-  FullDynamicsOCP::FullDynamicsOCP(
-    const FullDynamicsSettings & settings,
-    const RobotModelHandler & model_handler,
-    const RobotDataHandler & data_handler)
-  : Base(model_handler, data_handler)
+  FullDynamicsOCP::FullDynamicsOCP(const FullDynamicsSettings & settings, const RobotModelHandler & model_handler)
+  : Base(model_handler)
   , settings_(settings)
   {
 
@@ -57,7 +54,7 @@ namespace simple_mpc
       auto frame_ids = model_handler_.getFootId(name);
       auto joint_ids = model_handler_.getModel().frames[frame_ids].parentJoint;
       pinocchio::SE3 pl1 = model_handler_.getModel().frames[frame_ids].placement;
-      pinocchio::SE3 pl2 = data_handler_.getFootPose(name);
+      pinocchio::SE3 pl2 = pinocchio::SE3::Identity();
       if (settings_.force_size == 6)
       {
         pinocchio::RigidConstraintModel constraint_model = pinocchio::RigidConstraintModel(
@@ -363,9 +360,9 @@ namespace simple_mpc
     qc->setTarget(x0_);
   }
 
-  const Eigen::VectorXd FullDynamicsOCP::getProblemState()
+  const Eigen::VectorXd FullDynamicsOCP::getProblemState(const RobotDataHandler & data_handler)
   {
-    return data_handler_.getState();
+    return data_handler.getState();
   }
 
   size_t FullDynamicsOCP::getContactSupport(const std::size_t t)
@@ -391,18 +388,17 @@ namespace simple_mpc
     return term_cost;
   }
 
-  void FullDynamicsOCP::createTerminalConstraint()
+  void FullDynamicsOCP::createTerminalConstraint(const Eigen::Vector3d & com_ref)
   {
     if (!problem_initialized_)
     {
       throw std::runtime_error("Create problem first!");
     }
     CenterOfMassTranslationResidual com_cstr =
-      CenterOfMassTranslationResidual(ndx_, nu_, model_handler_.getModel(), data_handler_.getData().com[0]);
+      CenterOfMassTranslationResidual(ndx_, nu_, model_handler_.getModel(), com_ref);
 
-    double tau = sqrt(data_handler_.getData().com[0][2] / 9.81);
-    DCMPositionResidual dcm_cstr =
-      DCMPositionResidual(ndx_, nu_, model_handler_.getModel(), data_handler_.getData().com[0], tau);
+    double tau = sqrt(com_ref[2] / 9.81);
+    DCMPositionResidual dcm_cstr = DCMPositionResidual(ndx_, nu_, model_handler_.getModel(), com_ref, tau);
 
     problem_->addTerminalConstraint(dcm_cstr, EqualityConstraint());
 

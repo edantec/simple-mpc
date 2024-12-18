@@ -29,20 +29,21 @@ namespace simple_mpc
   {
     settings_ = settings;
     ocp_handler_ = problem;
+    data_handler_ = std::make_shared<RobotDataHandler>(ocp_handler_->getModelHandler());
+    data_handler_->updateInternalData(ocp_handler_->getModelHandler().getReferenceState(), true);
     std::map<std::string, Eigen::Vector3d> starting_poses;
     for (auto const & name : ocp_handler_->getModelHandler().getFeetNames())
     {
-      starting_poses.insert({name, ocp_handler_->getDataHandler().getFootPose(name).translation()});
+      starting_poses.insert({name, data_handler_->getFootPose(name).translation()});
 
       relative_feet_poses_.insert(
-        {name, ocp_handler_->getDataHandler().getBaseFramePose().inverse()
-                 * ocp_handler_->getDataHandler().getFootPose(name)});
+        {name, data_handler_->getBaseFramePose().inverse() * data_handler_->getFootPose(name)});
     }
     foot_trajectories_ = FootTrajectory(
       starting_poses, settings_.swing_apex, settings_.T_fly, settings_.T_contact, ocp_handler_->getSize());
 
     foot_trajectories_.updateApex(settings.swing_apex);
-    x0_ = ocp_handler_->getProblemState();
+    x0_ = ocp_handler_->getProblemState(*data_handler_);
 
     solver_ = std::make_shared<SolverProxDDP>(settings_.TOL, settings_.mu_init, maxiters, aligator::QUIET);
     solver_->rollout_type_ = aligator::RolloutType::LINEAR;
@@ -69,7 +70,7 @@ namespace simple_mpc
     {
       contact_states.insert({name, true});
       land_constraint.insert({name, false});
-      contact_poses.insert({name, ocp_handler_->getDataHandler().getFootPose(name)});
+      contact_poses.insert({name, data_handler_->getFootPose(name)});
       force_map.insert({name, force_ref});
     }
 
@@ -94,7 +95,7 @@ namespace simple_mpc
 
     solver_->max_iters = settings_.max_iters;
 
-    com0_ = ocp_handler_->getDataHandler().getData().com[0];
+    com0_ = data_handler_->getData().com[0];
     now_ = WALKING;
     pose_base_ = x0_.head<7>();
     velocity_base_.setZero();
@@ -161,7 +162,7 @@ namespace simple_mpc
 
       for (auto const & name : ee_names_)
       {
-        contact_poses.insert({name, ocp_handler_->getDataHandler().getFootPose(name)});
+        contact_poses.insert({name, data_handler_->getFootPose(name)});
         if (state.at(name))
           force_map.insert({name, force_ref});
         else
@@ -191,7 +192,7 @@ namespace simple_mpc
   void MPC::iterate(const Eigen::VectorXd & x)
   {
 
-    ocp_handler_->getDataHandler().updateInternalData(x, false);
+    data_handler_->updateInternalData(x, false);
 
     // Recede all horizons
     recedeWithCycle();
@@ -200,7 +201,7 @@ namespace simple_mpc
     updateStepTrackerReferences();
 
     // Recede previous solutions
-    x0_ << ocp_handler_->getProblemState();
+    x0_ << ocp_handler_->getProblemState(*data_handler_);
     xs_.erase(xs_.begin());
     xs_[0] = x0_;
     xs_.push_back(xs_.back());
@@ -291,17 +292,16 @@ namespace simple_mpc
 
       // Use the Raibert heuristics to compute the next foot pose
       twist_vect_[0] =
-        -(ocp_handler_->getDataHandler().getRefFootPose(name).translation()[1]
-          - ocp_handler_->getDataHandler().getBaseFramePose().translation()[1]);
-      twist_vect_[1] = ocp_handler_->getDataHandler().getRefFootPose(name).translation()[0]
-                       - ocp_handler_->getDataHandler().getBaseFramePose().translation()[0];
-      next_pose_.head(2) = ocp_handler_->getDataHandler().getRefFootPose(name).translation().head(2);
+        -(data_handler_->getRefFootPose(name).translation()[1] - data_handler_->getBaseFramePose().translation()[1]);
+      twist_vect_[1] =
+        data_handler_->getRefFootPose(name).translation()[0] - data_handler_->getBaseFramePose().translation()[0];
+      next_pose_.head(2) = data_handler_->getRefFootPose(name).translation().head(2);
       next_pose_.head(2) += (velocity_base_.head(2) + velocity_base_[5] * twist_vect_)
                             * (settings_.T_fly + settings_.T_contact) * settings_.timestep;
-      next_pose_[2] = ocp_handler_->getDataHandler().getFootPose(name).translation()[2];
+      next_pose_[2] = data_handler_->getFootPose(name).translation()[2];
 
       foot_trajectories_.updateTrajectory(
-        update, foot_land_time, ocp_handler_->getDataHandler().getFootPose(name).translation(), next_pose_, name);
+        update, foot_land_time, data_handler_->getFootPose(name).translation(), next_pose_, name);
       pinocchio::SE3 pose = pinocchio::SE3::Identity();
       for (unsigned long time = 0; time < ocp_handler_->getSize(); time++)
       {

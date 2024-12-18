@@ -44,7 +44,7 @@ namespace simple_mpc
     {
       bp::register_ptr_to_python<std::shared_ptr<OCPHandler>>();
       bp::class_<PyOCPHandler, boost::noncopyable>("OCPHandler", bp::no_init)
-        .def(bp::init<const RobotModelHandler &, const RobotDataHandler &>(("self"_a, "model_handler", "data_handler")))
+        .def(bp::init<const RobotModelHandler &>(("self"_a, "model_handler")))
         .def(
           "createStage", bp::pure_virtual(&OCPHandler::createStage),
           ("self"_a, "contact_map", "force_refs", "land_constraint"))
@@ -69,7 +69,7 @@ namespace simple_mpc
         .def("getVelocityBase", bp::pure_virtual(&OCPHandler::getVelocityBase), bp::args("self", "t"))
         .def("setPoseBase", bp::pure_virtual(&OCPHandler::setPoseBase), bp::args("self", "t", "pose_base"))
         .def("getPoseBase", bp::pure_virtual(&OCPHandler::getPoseBase), bp::args("self", "t"))
-        .def("getProblemState", bp::pure_virtual(&OCPHandler::getProblemState), bp::args("self"))
+        .def("getProblemState", bp::pure_virtual(&OCPHandler::getProblemState), bp::args("self", "data_handler"))
         .def("getContactSupport", bp::pure_virtual(&OCPHandler::getContactSupport), bp::args("self", "t"))
         .def(
           "createProblem", &OCPHandler::createProblem,

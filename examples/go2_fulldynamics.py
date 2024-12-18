@@ -64,7 +64,7 @@ problem_conf = dict(
 )
 T = 50
 
-dynproblem = FullDynamicsOCP(problem_conf, model_handler, data_handler)
+dynproblem = FullDynamicsOCP(problem_conf, model_handler)
 dynproblem.createProblem(model_handler.getReferenceState(), T, force_size, gravity[2], False)
 
 T_ds = 10

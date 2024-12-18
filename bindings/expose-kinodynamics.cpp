@@ -6,8 +6,7 @@
 namespace simple_mpc::python
 {
 
-  auto * createKinodynamics(
-    const bp::dict & settings, const RobotModelHandler & model_handler, const RobotDataHandler & data_handler)
+  auto * createKinodynamics(const bp::dict & settings, const RobotModelHandler & model_handler)
   {
     KinodynamicsSettings conf;
     conf.timestep = bp::extract<double>(settings["timestep"]);
@@ -30,7 +29,7 @@ namespace simple_mpc::python
     conf.kinematics_limits = bp::extract<bool>(settings["kinematics_limits"]);
     conf.force_cone = bp::extract<bool>(settings["force_cone"]);
 
-    return new KinodynamicsOCP(conf, model_handler, data_handler);
+    return new KinodynamicsOCP(conf, model_handler);
   }
 
   bp::dict getSettingsKino(KinodynamicsOCP & self)
@@ -122,8 +121,7 @@ namespace simple_mpc::python
     bp::class_<KinodynamicsOCP, bp::bases<OCPHandler>, boost::noncopyable>("KinodynamicsOCP", bp::no_init)
       .def(
         "__init__",
-        bp::make_constructor(
-          &createKinodynamics, bp::default_call_policies(), ("settings"_a, "model_handler", "data_handler")))
+        bp::make_constructor(&createKinodynamics, bp::default_call_policies(), ("settings"_a, "model_handler")))
       .def("getSettings", &getSettingsKino)
       .def("createStage", &createKinoStage);
   }

@@ -68,7 +68,7 @@ problem_conf = dict(
 )
 T = 100
 
-problem = CentroidalOCP(problem_conf, model_handler, data_handler)
+problem = CentroidalOCP(problem_conf, model_handler)
 problem.createProblem(data_handler.getCentroidalState(), T, 6, gravity[2], False)
 
 T_ds = 20

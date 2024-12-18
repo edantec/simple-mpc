@@ -89,9 +89,9 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(aligator::CostStackTpl<double>, "createTerminalCost", );
       }
 
-      void createTerminalConstraint() override
+      void createTerminalConstraint(const Eigen::Vector3d & com_ref) override
       {
-        SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint", );
+        SIMPLE_MPC_PYTHON_OVERRIDE_PURE(void, "createTerminalConstraint", com_ref);
       }
 
       void updateTerminalConstraint(const Eigen::Vector3d & com_ref) override
@@ -155,9 +155,9 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getPoseBase", t);
       }
 
-      const Eigen::VectorXd getProblemState() override
+      const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) override
       {
-        SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", );
+        SIMPLE_MPC_PYTHON_OVERRIDE_PURE(Eigen::VectorXd, "getProblemState", data_handler);
       }
 
       std::size_t getContactSupport(const std::size_t t) override
