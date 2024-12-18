@@ -123,8 +123,7 @@ mpc_conf = dict(
     timestep=problem_conf["timestep"],
 )
 
-mpc = MPC()
-mpc.initialize(mpc_conf, problem)
+mpc = MPC(mpc_conf, problem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_double = {
@@ -212,12 +211,12 @@ for t in range(600):
     end = time.time()
     print("MPC iterate = " + str(end - start))
     a0 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[nv:]
     )
     a1 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[1]
         .dynamics_data.continuous_data.xdot[nv:]
     )

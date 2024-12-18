@@ -83,8 +83,7 @@ mpc_conf = dict(
     timestep=dt,
 )
 
-mpc = MPC()
-mpc.initialize(mpc_conf, dynproblem)
+mpc = MPC(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_quadru = {
@@ -223,17 +222,17 @@ for t in range(500):
     solve_time.append(end - start)
 
     a0 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[nv:]
     )
     a1 = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[1]
         .dynamics_data.continuous_data.xdot[nv:]
     )
 
-    FL_f, FR_f, RL_f, RR_f, contact_states = extract_forces(mpc.getTrajOptProblem(), mpc.getSolver().workspace, 0)
+    FL_f, FR_f, RL_f, RR_f, contact_states = extract_forces(mpc.getTrajOptProblem(), mpc.solver.workspace, 0)
     total_forces = np.concatenate((FL_f, FR_f, RL_f, RR_f))
     force_FL.append(FL_f)
     force_FR.append(FR_f)

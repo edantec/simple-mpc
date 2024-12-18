@@ -112,8 +112,7 @@ mpc_conf = dict(
     timestep=problem_conf["timestep"],
 )
 
-mpc = MPC()
-mpc.initialize(mpc_conf, dynproblem)
+mpc = MPC(mpc_conf, dynproblem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_double = {

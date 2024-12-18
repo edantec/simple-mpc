@@ -87,8 +87,7 @@ mpc_conf = dict(
     timestep=problem_conf["timestep"],
 )
 
-mpc = MPC()
-mpc.initialize(mpc_conf, problem)
+mpc = MPC(mpc_conf, problem)
 
 """ Define contact sequence throughout horizon"""
 contact_phase_double = {
@@ -210,7 +209,7 @@ for t in range(600):
     foot_ref = [mpc.getReferencePose(0, name) for name in model_handler.getFeetNames()]
     foot_ref_next = [mpc.getReferencePose(1, name) for name in model_handler.getFeetNames()]
     dH = (
-        mpc.getSolver()
+        mpc.solver
         .workspace.problem_data.stage_data[0]
         .dynamics_data.continuous_data.xdot[3:9]
     )
@@ -229,7 +228,7 @@ for t in range(600):
 
         forces = (
             mpc.us[0][: nk * force_size]
-            - 1 * mpc.getSolver().results.controlFeedbacks()[0] @ state_diff
+            - 1 * mpc.solver.results.controlFeedbacks()[0] @ state_diff
         )
 
 
