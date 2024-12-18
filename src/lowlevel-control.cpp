@@ -99,11 +99,11 @@ namespace simple_mpc
   void IDSolver::computeMatrices(
     pinocchio::Data & data,
     const std::vector<bool> & contact_state,
-    const Eigen::VectorXd & v,
-    const Eigen::VectorXd & a,
-    const Eigen::VectorXd & tau,
-    const Eigen::VectorXd & forces,
-    const Eigen::MatrixXd & M)
+    const ConstVectorRef & v,
+    const ConstVectorRef & a,
+    const ConstVectorRef & tau,
+    const ConstVectorRef & forces,
+    const ConstMatrixRef & M)
   {
     // Reset matrices
     Jc_.setZero();
@@ -160,11 +160,11 @@ namespace simple_mpc
   void IDSolver::solveQP(
     pinocchio::Data & data,
     const std::vector<bool> & contact_state,
-    const Eigen::VectorXd & v,
-    const Eigen::VectorXd & a,
-    const Eigen::VectorXd & tau,
-    const Eigen::VectorXd & forces,
-    const Eigen::MatrixXd & M)
+    const ConstVectorRef & v,
+    const ConstVectorRef & a,
+    const ConstVectorRef & tau,
+    const ConstVectorRef & forces,
+    const ConstMatrixRef & M)
   {
 
     computeMatrices(data, contact_state, v, a, tau, forces, M);
@@ -292,9 +292,9 @@ namespace simple_mpc
 
   void IKIDSolver::computeDifferences(
     pinocchio::Data & data,
-    const Eigen::VectorXd & x_measured,
-    const std::vector<pinocchio::SE3> foot_refs,
-    const std::vector<pinocchio::SE3> foot_refs_next)
+    const ConstVectorRef & x_measured,
+    const std::vector<pinocchio::SE3> & foot_refs,
+    const std::vector<pinocchio::SE3> & foot_refs_next)
   {
     difference(model_, x_measured.head(model_.nq), settings_.x0.head(model_.nq), q_diff_);
     dq_diff_ = settings_.x0.tail(model_.nv) - x_measured.tail(model_.nv);
@@ -322,10 +322,10 @@ namespace simple_mpc
   void IKIDSolver::computeMatrices(
     pinocchio::Data & data,
     const std::vector<bool> & contact_state,
-    const Eigen::VectorXd & v_current,
-    const Eigen::VectorXd & forces,
-    const Eigen::VectorXd & dH,
-    const Eigen::MatrixXd & M)
+    const ConstVectorRef & v_current,
+    const ConstVectorRef & forces,
+    const ConstVectorRef & dH,
+    const ConstMatrixRef & M)
   {
 
     H_.topLeftCorner(model_.nv, model_.nv) = settings_.w_qref * Eigen::MatrixXd::Identity(model_.nv, model_.nv);
@@ -409,10 +409,10 @@ namespace simple_mpc
   void IKIDSolver::solve_qp(
     pinocchio::Data & data,
     const std::vector<bool> & contact_state,
-    const Eigen::VectorXd & v_current,
-    const Eigen::VectorXd & forces,
-    const Eigen::VectorXd & dH,
-    const Eigen::MatrixXd & M)
+    const ConstVectorRef & v_current,
+    const ConstVectorRef & forces,
+    const ConstVectorRef & dH,
+    const ConstMatrixRef & M)
   {
     computeMatrices(data, contact_state, v_current, forces, dH, M);
 
