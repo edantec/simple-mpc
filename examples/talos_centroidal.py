@@ -201,11 +201,7 @@ for t in range(600):
         mpc.getReferencePose(0, "right_sole_link").translation,
     )
 
-    contact_states = (
-        mpc.getTrajOptProblem()
-        .stages[0]
-        .dynamics.differential_dynamics.contact_map.contact_states.tolist()
-    )
+    contact_states = mpc.ocp_handler.getContactState(0)
     foot_ref = [mpc.getReferencePose(0, name) for name in model_handler.getFeetNames()]
     foot_ref_next = [mpc.getReferencePose(1, name) for name in model_handler.getFeetNames()]
     dH = (

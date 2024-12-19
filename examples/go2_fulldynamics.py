@@ -232,7 +232,8 @@ for t in range(500):
         .dynamics_data.continuous_data.xdot[nv:]
     )
 
-    FL_f, FR_f, RL_f, RR_f, contact_states = extract_forces(mpc.getTrajOptProblem(), mpc.solver.workspace, 0)
+    FL_f, FR_f, RL_f, RR_f = extract_forces(mpc.getTrajOptProblem(), mpc.solver.workspace, 0)
+    contact_states = mpc.ocp_handler.getContactState(0)
     total_forces = np.concatenate((FL_f, FR_f, RL_f, RR_f))
     force_FL.append(FL_f)
     force_FR.append(FR_f)

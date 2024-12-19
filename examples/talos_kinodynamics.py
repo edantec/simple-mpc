@@ -224,9 +224,7 @@ for t in range(600):
     a1[6:] = mpc.us[1][nk * force_size :]
     forces0 = mpc.us[0][: nk * force_size]
     forces1 = mpc.us[1][: nk * force_size]
-    contact_states = (
-        mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
-    )
+    contact_states = mpc.ocp_handler.getContactState(0)
 
     device.moveMarkers(
         mpc.getReferencePose(0, "left_sole_link").translation,
