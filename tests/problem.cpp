@@ -55,8 +55,10 @@ BOOST_AUTO_TEST_CASE(fulldynamics)
   QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("centroidal_cost");
   QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
+  std::vector<bool> cs2 = {true, true};
   BOOST_CHECK_EQUAL(fdproblem.getSize(), 100);
   BOOST_CHECK_EQUAL(fdproblem.getContactSupport(2), 2);
+  BOOST_TEST(fdproblem.getContactState(2) == cs2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
@@ -137,7 +139,9 @@ BOOST_AUTO_TEST_CASE(kinodynamics)
   QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("centroidal_cost");
   QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("left_sole_link_pose_cost");
 
+  std::vector<bool> cs2 = {true, true};
   BOOST_CHECK_EQUAL(knproblem.getContactSupport(2), 2);
+  BOOST_TEST(knproblem.getContactState(2) == cs2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_cent);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_frame);
@@ -220,7 +224,9 @@ BOOST_AUTO_TEST_CASE(centroidal)
   QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
   QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
+  std::vector<bool> cs2 = {true, true};
   BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 2);
+  BOOST_TEST(cproblem.getContactState(2) == cs2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);
@@ -308,7 +314,9 @@ BOOST_AUTO_TEST_CASE(centroidal_solo)
   QuadraticResidualCost * crc = csp->getComponent<QuadraticResidualCost>("linear_mom_cost");
   QuadraticResidualCost * cpc = csp->getComponent<QuadraticResidualCost>("angular_acc_cost");
 
+  std::vector<bool> cs2 = {true, true, true, true};
   BOOST_CHECK_EQUAL(cproblem.getContactSupport(2), 4);
+  BOOST_TEST(cproblem.getContactState(2) == cs2);
   BOOST_CHECK_EQUAL(cc->weights_, settings.w_u);
   BOOST_CHECK_EQUAL(crc->weights_, settings.w_linear_mom);
   BOOST_CHECK_EQUAL(cpc->weights_, settings.w_angular_acc);

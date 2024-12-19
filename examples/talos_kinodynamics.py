@@ -210,23 +210,14 @@ for t in range(600):
     mpc.iterate(x_measured)
     end = time.time()
     print("MPC iterate = " + str(end - start))
-    a0 = (
-        mpc.solver
-        .workspace.problem_data.stage_data[0]
-        .dynamics_data.continuous_data.xdot[nv:]
-    )
-    a1 = (
-        mpc.solver
-        .workspace.problem_data.stage_data[1]
-        .dynamics_data.continuous_data.xdot[nv:]
-    )
+
+    a0 = mpc.getStateDerivative(0)[nv:]
+    a1 = mpc.getStateDerivative(1)[nv:]
     a0[6:] = mpc.us[0][nk * force_size :]
     a1[6:] = mpc.us[1][nk * force_size :]
     forces0 = mpc.us[0][: nk * force_size]
     forces1 = mpc.us[1][: nk * force_size]
-    contact_states = (
-        mpc.getTrajOptProblem().stages[0].dynamics.differential_dynamics.contact_states
-    )
+    contact_states = mpc.ocp_handler.getContactState(0)
 
     device.moveMarkers(
         mpc.getReferencePose(0, "left_sole_link").translation,

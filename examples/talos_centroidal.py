@@ -201,18 +201,10 @@ for t in range(600):
         mpc.getReferencePose(0, "right_sole_link").translation,
     )
 
-    contact_states = (
-        mpc.getTrajOptProblem()
-        .stages[0]
-        .dynamics.differential_dynamics.contact_map.contact_states.tolist()
-    )
+    contact_states = mpc.ocp_handler.getContactState(0)
     foot_ref = [mpc.getReferencePose(0, name) for name in model_handler.getFeetNames()]
     foot_ref_next = [mpc.getReferencePose(1, name) for name in model_handler.getFeetNames()]
-    dH = (
-        mpc.solver
-        .workspace.problem_data.stage_data[0]
-        .dynamics_data.continuous_data.xdot[3:9]
-    )
+    dH = mpc.getStateDerivative(0)[3:9]
     qp.computeDifferences(
         mpc.getDataHandler().getData(), x_measured, foot_ref, foot_ref_next
     )
