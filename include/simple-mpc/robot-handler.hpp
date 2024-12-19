@@ -130,7 +130,7 @@ namespace simple_mpc
     }
     size_t getFootNb(const std::string & foot_name) const
     {
-      return std::find(feet_names_.begin(), feet_names_.end(), foot_name) - feet_names_.begin();
+      return size_t(std::find(feet_names_.begin(), feet_names_.end(), foot_name) - feet_names_.begin());
     }
 
     const std::vector<FrameIndex> & getFeetIds() const
