@@ -88,6 +88,8 @@ BOOST_AUTO_TEST_CASE(mpc_fulldynamics)
   BOOST_CHECK_EQUAL(mpc.foot_takeoff_times_.at("right_sole_link")[0], 100);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("left_sole_link")[0], 209);
   BOOST_CHECK_EQUAL(mpc.foot_land_times_.at("right_sole_link")[0], 150);
+
+  Eigen::VectorXd xdot = mpc.getStateDerivative(0);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_kinodynamics)
@@ -161,6 +163,8 @@ BOOST_AUTO_TEST_CASE(mpc_kinodynamics)
   {
     mpc.iterate(model_handler.getReferenceState());
   }
+
+  Eigen::VectorXd xdot = mpc.getStateDerivative(0);
 }
 
 BOOST_AUTO_TEST_CASE(mpc_centroidal)
@@ -236,6 +240,8 @@ BOOST_AUTO_TEST_CASE(mpc_centroidal)
   {
     mpc.iterate(x_multibody);
   }
+
+  Eigen::VectorXd xdot = mpc.getStateDerivative(0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

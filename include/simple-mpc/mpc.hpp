@@ -7,6 +7,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <aligator/core/stage-data.hpp>
+#include <aligator/fwd.hpp>
+#include <aligator/modelling/dynamics/fwd.hpp>
+#include <aligator/modelling/dynamics/integrator-explicit.hpp>
 #include <aligator/solvers/proxddp/solver-proxddp.hpp>
 
 #include "simple-mpc/deprecated.hpp"
@@ -17,6 +21,7 @@
 
 namespace simple_mpc
 {
+  using ExplicitIntegratorData = dynamics::ExplicitIntegratorDataTpl<double>;
 
   struct MPCSettings
   {
@@ -169,6 +174,13 @@ namespace simple_mpc
       {
         return foot_land_times_.at(ee_name)[0];
       }
+    }
+
+    const Eigen::VectorXd getStateDerivative(const std::size_t t)
+    {
+      ExplicitIntegratorData * int_data =
+        dynamic_cast<ExplicitIntegratorData *>(&*solver_->workspace_.problem_data.stage_data[t]->dynamics_data);
+      return int_data->continuous_data->xdot_;
     }
 
     void switchToWalk(const Vector6d & velocity_base);

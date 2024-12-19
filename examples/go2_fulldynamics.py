@@ -221,16 +221,8 @@ for t in range(500):
     end = time.time()
     solve_time.append(end - start)
 
-    a0 = (
-        mpc.solver
-        .workspace.problem_data.stage_data[0]
-        .dynamics_data.continuous_data.xdot[nv:]
-    )
-    a1 = (
-        mpc.solver
-        .workspace.problem_data.stage_data[1]
-        .dynamics_data.continuous_data.xdot[nv:]
-    )
+    a0 = mpc.getStateDerivative(0)[nv:]
+    a1 = mpc.getStateDerivative(1)[nv:]
 
     FL_f, FR_f, RL_f, RR_f = extract_forces(mpc.getTrajOptProblem(), mpc.solver.workspace, 0)
     contact_states = mpc.ocp_handler.getContactState(0)
