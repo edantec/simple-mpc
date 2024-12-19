@@ -71,6 +71,7 @@ namespace simple_mpc
         .def("getPoseBase", bp::pure_virtual(&OCPHandler::getPoseBase), bp::args("self", "t"))
         .def("getProblemState", bp::pure_virtual(&OCPHandler::getProblemState), bp::args("self", "data_handler"))
         .def("getContactSupport", bp::pure_virtual(&OCPHandler::getContactSupport), bp::args("self", "t"))
+        .def("getContactState", bp::pure_virtual(&OCPHandler::getContactState), bp::args("self", "t"))
         .def(
           "createProblem", &OCPHandler::createProblem,
           ("self"_a, "x0", "horizon", "force_size", "gravity", "terminal_constraint"))

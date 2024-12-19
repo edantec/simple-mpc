@@ -89,6 +89,7 @@ namespace simple_mpc
     void setVelocityBase(const std::size_t t, const ConstVectorRef & velocity_base) override;
     const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) override;
     size_t getContactSupport(const std::size_t t) override;
+    std::vector<bool> getContactState(const std::size_t t) override;
 
     void computeControlFromForces(const std::map<std::string, Eigen::VectorXd> & force_refs);
 

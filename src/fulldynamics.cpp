@@ -373,6 +373,31 @@ namespace simple_mpc
     return ode->constraint_models_.size();
   }
 
+  std::vector<bool> FullDynamicsOCP::getContactState(const std::size_t t)
+  {
+    std::vector<bool> contact_state;
+    MultibodyConstraintFwdDynamics * ode =
+      problem_->stages_[t]->getDynamics<IntegratorSemiImplEuler>()->getDynamics<MultibodyConstraintFwdDynamics>();
+
+    for (auto name : model_handler_.getFeetNames())
+    {
+      std::size_t i;
+      for (i = 0; i < ode->constraint_models_.size(); i++)
+      {
+        if (ode->constraint_models_[i].name == name)
+        {
+          contact_state.push_back(true);
+          break;
+        }
+      }
+      if (i == ode->constraint_models_.size())
+      {
+        contact_state.push_back(false);
+      }
+    }
+    return contact_state;
+  }
+
   CostStack FullDynamicsOCP::createTerminalCost()
   {
     auto ter_space = MultibodyPhaseSpace(model_handler_.getModel());

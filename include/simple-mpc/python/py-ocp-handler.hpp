@@ -165,6 +165,11 @@ namespace simple_mpc
         SIMPLE_MPC_PYTHON_OVERRIDE_PURE(std::size_t, "getContactSupport", t);
       }
 
+      std::vector<bool> getContactState(const std::size_t t) override
+      {
+        SIMPLE_MPC_PYTHON_OVERRIDE_PURE(std::vector<bool>, "getContactState", t);
+      }
+
       void setReferenceControl(const std::size_t t, const ConstVectorRef & u_ref)
       {
         SIMPLE_MPC_PYTHON_OVERRIDE(void, OCPHandler, setReferenceControl, t, u_ref);
