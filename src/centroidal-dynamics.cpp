@@ -283,7 +283,7 @@ namespace simple_mpc
     std::vector<bool> contact_state;
     CentroidalFwdDynamics * ode =
       problem_->stages_[t]->getDynamics<IntegratorEuler>()->getDynamics<CentroidalFwdDynamics>();
-
+    assert(ode != nullptr);
     for (auto name : model_handler_.getFeetNames())
       contact_state.push_back(ode->contact_map_.getContactState(name));
 

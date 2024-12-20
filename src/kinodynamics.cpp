@@ -326,7 +326,7 @@ namespace simple_mpc
   {
     KinodynamicsFwdDynamics * ode =
       problem_->stages_[t]->getDynamics<IntegratorSemiImplEuler>()->getDynamics<KinodynamicsFwdDynamics>();
-
+    assert(ode != nullptr);
     return ode->contact_states_;
   }
 

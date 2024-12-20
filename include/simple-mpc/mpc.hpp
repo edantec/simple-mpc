@@ -176,10 +176,11 @@ namespace simple_mpc
       }
     }
 
-    const Eigen::VectorXd getStateDerivative(const std::size_t t)
+    const ConstVectorRef getStateDerivative(const std::size_t t)
     {
       ExplicitIntegratorData * int_data =
         dynamic_cast<ExplicitIntegratorData *>(&*solver_->workspace_.problem_data.stage_data[t]->dynamics_data);
+      assert(int_data != nullptr);
       return int_data->continuous_data->xdot_;
     }
 

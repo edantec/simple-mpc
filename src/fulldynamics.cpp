@@ -378,7 +378,7 @@ namespace simple_mpc
     std::vector<bool> contact_state;
     MultibodyConstraintFwdDynamics * ode =
       problem_->stages_[t]->getDynamics<IntegratorSemiImplEuler>()->getDynamics<MultibodyConstraintFwdDynamics>();
-
+    assert(ode != nullptr);
     for (auto name : model_handler_.getFeetNames())
     {
       std::size_t i;
