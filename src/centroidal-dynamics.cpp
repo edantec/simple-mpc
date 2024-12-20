@@ -278,6 +278,18 @@ namespace simple_mpc
     return active_contacts;
   }
 
+  std::vector<bool> CentroidalOCP::getContactState(const std::size_t t)
+  {
+    std::vector<bool> contact_state;
+    CentroidalFwdDynamics * ode =
+      problem_->stages_[t]->getDynamics<IntegratorEuler>()->getDynamics<CentroidalFwdDynamics>();
+    assert(ode != nullptr);
+    for (auto name : model_handler_.getFeetNames())
+      contact_state.push_back(ode->contact_map_.getContactState(name));
+
+    return contact_state;
+  }
+
   CostStack CentroidalOCP::createTerminalCost()
   {
     auto ter_space = VectorSpace(nx_);

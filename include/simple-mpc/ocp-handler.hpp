@@ -95,6 +95,7 @@ namespace simple_mpc
     virtual const Eigen::VectorXd getReferenceForce(const std::size_t t, const std::string & ee_name) = 0;
     virtual const Eigen::VectorXd getProblemState(const RobotDataHandler & data_handler) = 0;
     virtual size_t getContactSupport(const std::size_t t) = 0;
+    virtual std::vector<bool> getContactState(const std::size_t t) = 0;
 
     /// Common functions for all problems
 

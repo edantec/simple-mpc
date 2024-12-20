@@ -71,21 +71,15 @@ def extract_forces(problem, workspace, id):
     force_FR = np.zeros(3)
     force_RL = np.zeros(3)
     force_RR = np.zeros(3)
-    contact_states = [False, False, False, False]
     in_contact = problem.stages[id].dynamics.differential_dynamics.constraint_models.__len__()
-
     for i in range(in_contact):
         if problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'FL_foot':
-            contact_states[0] = True
             force_FL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
         elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'FR_foot':
-            contact_states[1] = True
             force_FR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
         elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'RL_foot':
-            contact_states[2] = True
             force_RL = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
         elif problem.stages[id].dynamics.differential_dynamics.constraint_models[i].name == 'RR_foot':
-            contact_states[3] = True
             force_RR = workspace.problem_data.stage_data[id].dynamics_data.continuous_data.constraint_datas[i].contact_force.linear
 
-    return force_FL, force_FR, force_RL, force_RR, contact_states
+    return force_FL, force_FR, force_RL, force_RR

@@ -322,6 +322,14 @@ namespace simple_mpc
     return active_contacts;
   }
 
+  std::vector<bool> KinodynamicsOCP::getContactState(const std::size_t t)
+  {
+    KinodynamicsFwdDynamics * ode =
+      problem_->stages_[t]->getDynamics<IntegratorSemiImplEuler>()->getDynamics<KinodynamicsFwdDynamics>();
+    assert(ode != nullptr);
+    return ode->contact_states_;
+  }
+
   CostStack KinodynamicsOCP::createTerminalCost()
   {
     auto ter_space = MultibodyPhaseSpace(model_handler_.getModel());
